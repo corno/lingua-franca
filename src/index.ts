@@ -5,9 +5,7 @@ export * from "./ResolvePromise"
 export * from "./ResolveReporter"
 export * from "./assertUnreachable"
 
-
-
-import { Dictionary, ResolvePromise, TypePair } from "../Types"
+import { Dictionary, ResolvePromise, TypePair } from "lingua-franca"
 
 export interface IListBuilder<Type> {
     push(element: Type): void

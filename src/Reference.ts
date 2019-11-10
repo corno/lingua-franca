@@ -1,5 +1,5 @@
+import { ForwardReference, Reference, ResolvePromise } from "lingua-franca"
 import { UnsureForwardLookup, UnsureLookup } from "."
-import { ForwardReference, Reference, ResolvePromise } from "../Types"
 import { CallerObject, promisify } from "./ResolvePromise"
 import { IResolveReporter } from "./ResolveReporter"
 

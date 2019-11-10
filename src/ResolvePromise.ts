@@ -1,4 +1,4 @@
-import { ResolvePromise} from "../Types"
+import { ResolvePromise} from "lingua-franca"
 
 type CallerFunction<ResultType> = (onFailed: (failed: null) => void, onResult: (result: ResultType) => void) => void
 
@@ -33,7 +33,7 @@ class ResolvePromiseImp<T> implements ResolvePromise<T> {
                     const castResult = callback(result)
                     if (castResult[0] === false) {
                         // tslint:disable-next-line: no-console
-                        console.log("wrong state")
+                        //console.log("wrong state")
                         onNewError(null)
                     } else {
                         onNewResult(castResult[1])

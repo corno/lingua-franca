@@ -10,7 +10,10 @@ export interface IResolveReporter {
     reportConflictingEntry(type: string, key: string): void
 }
 export class ResolveReporter implements IResolveReporter {
-    private _errorCount = 0
+    private readonly reportError: (dependent: boolean, message: string) => void
+    constructor(reportError: (dependent: boolean, message: string) => void) {
+        this.reportError = reportError
+    }
     public reportUnresolvedReference(type: string, key: string, options: string[]) {
         this.reportError(false, "unresolved reference: " + key + " (" + type + "). found entries: " + options.join(", "))
     }
@@ -37,21 +40,5 @@ export class ResolveReporter implements IResolveReporter {
     }
     public reportConflictingEntry(type: string, key: string) {
         this.reportError(false, "conflicting entry: " + key + " (" + type + ")")
-    }
-    get hasErrors() {
-        return this.errorCount > 0
-    }
-    get errorCount() {
-        return this._errorCount
-    }
-    private reportError(dependent: boolean, message: string) {
-        if (dependent && !this.hasErrors) {
-            console.error("Unexpected state, found dependent error, but not a source error")
-            //throw new Error("Unexpected state, found dependent error, but not a source error")
-        }
-        //if (!dependent) {
-        console.error(message)
-        //}
-        this._errorCount++
     }
 }

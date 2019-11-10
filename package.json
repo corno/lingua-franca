@@ -11,8 +11,7 @@
     "test": "tsc && node ./dist/test",
     "u2l": "ncu -u --packageFile package.json && nsi"
   },
-  "keywords": [
-  ],
+  "keywords": [],
   "author": "corno",
   "license": "ISC",
   "types": "dist/index.d.ts",
@@ -23,5 +22,8 @@
   },
   "files": [
     "dist/*"
-  ]
+  ],
+  "dependencies": {
+    "lingua-franca": "^0.1.1"
+  }
 }

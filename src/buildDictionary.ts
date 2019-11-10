@@ -1,4 +1,5 @@
 // tslint:disable: max-classes-per-file
+import { DecoratingDictionary, FulfillingDictionary, RequiringDictionary, ResolvePromise, TypePair } from "lingua-franca"
 import {
     IDictionaryBuilder,
     IForwardLookup,
@@ -7,7 +8,6 @@ import {
     IIntermediateFulfillingDictionary,
     ILookup,
 } from "."
-import { DecoratingDictionary, FulfillingDictionary, RequiringDictionary, ResolvePromise, TypePair } from "../Types"
 import { CallerObject, promisify } from "./ResolvePromise"
 import { IResolveReporter } from "./ResolveReporter"
 
@@ -88,7 +88,7 @@ class FilteredForwardLookup<OldType, NewType> implements IForwardLookup<NewType>
                     onNewSuccess(filterResult[1])
                 } else {
                     // tslint:disable-next-line: no-console
-                    console.log("The entry is there before filtering")
+                    //console.log("The entry is there before filtering")
                     onNewFailed(null)
                 }
             })
