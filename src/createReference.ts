@@ -1,5 +1,6 @@
-import { ForwardReference, Reference } from "lingua-franca"
+import { ForwardReference } from "lingua-franca"
 import { CallerObject } from "./createResolvePromise"
+import { IIntermediateReference } from "./IIntermediateReference"
 import { UnsureForwardLookup, UnsureLookup } from "./ILookup"
 import { IUnsure } from "./IUnsure"
 import { IResolveReporter } from "./ResolveReporter"
@@ -19,7 +20,7 @@ class UnsureImp<Type> implements IUnsure<Type> {
 }
 
 // tslint:disable-next-line: max-classes-per-file
-class ReferenceImp<ReferencedType> implements Reference<ReferencedType> {
+class ReferenceImp<ReferencedType> implements IIntermediateReference<ReferencedType> {
     public readonly nonForward: true = true
     public readonly value: null | ReferencedType
     private readonly key: string
@@ -62,7 +63,7 @@ export function createReference<ReferencedType>(
     key: string,
     resolvedLookup: UnsureLookup<ReferencedType>,
     resolver: IResolveReporter,
-): Reference<ReferencedType> {
+): IIntermediateReference<ReferencedType> {
     return new ReferenceImp(key, resolvedLookup, resolver, typeInfo)
 }
 

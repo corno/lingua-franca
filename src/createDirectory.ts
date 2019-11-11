@@ -1,7 +1,8 @@
 // tslint:disable: max-classes-per-file
 import { DecoratingDictionary, FulfillingDictionary, RequiringDictionary, ResolvePromise, TypePair } from "lingua-franca"
 import { CallerObject, promisify } from "./createResolvePromise"
-import { IDictionaryBuilder, IIntermediateDecoratingDictionary, IIntermediateDictionary, IIntermediateFulfillingDictionary } from "./IDictionary"
+import { IDictionaryBuilder } from "./IDictionaryBuilder"
+import { IIntermediateDecoratingDictionary, IIntermediateDictionary, IIntermediateFulfillingDictionary } from "./IIntermediateDictionary"
 import { ILookup } from "./ILookup"
 import { IUnsure } from "./IUnsure"
 import { IResolveReporter } from "./ResolveReporter"
