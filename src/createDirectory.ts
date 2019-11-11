@@ -6,7 +6,6 @@ import { ILookup } from "./ILookup"
 import { IUnsure } from "./IUnsure"
 import { IResolveReporter } from "./ResolveReporter"
 
-
 type RawDictionary<Type> = { [key: string]: Type }
 
 type KeyValuePair<Type> = { key: string; value: Type }
@@ -145,7 +144,6 @@ class FulfillingDictionaryImp<Type, ReferencedType> extends DictionaryImp<Type> 
 //     //     return new FilteredLookup<NewType, EvenNewerType>(this, callback)
 //     // }
 // }
-
 
 class FilteredLookup<OldType, NewType> implements ILookup<NewType> {
     private readonly oldLookup: ILookup<OldType>
@@ -287,7 +285,6 @@ export function createStackedDictionary<Type>(
     referencedDictionary: IUnsure<IIntermediateDictionary<Type>>,
     missingEntryCreator: (key: string, previousEntry: Type) => Type,
 ): IIntermediateDictionary<Type> {
-    
     const missingEntryContext: null | MissingEntryContext<Type> =
         referencedDictionary.value === null
             ? null

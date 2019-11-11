@@ -1,7 +1,7 @@
 import { ForwardReference, Reference } from "lingua-franca"
+import { CallerObject } from "./createResolvePromise"
 import { UnsureForwardLookup, UnsureLookup } from "./ILookup"
 import { IUnsure } from "./IUnsure"
-import { CallerObject } from "./createResolvePromise"
 import { IResolveReporter } from "./ResolveReporter"
 
 class UnsureImp<Type> implements IUnsure<Type> {
