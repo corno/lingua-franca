@@ -7,8 +7,9 @@ export * from "./IDictionaryBuilder"
 export * from "./IIntermediateDictionary"
 export * from "./IList"
 export * from "./ILookup"
+export * from "./IResolveReporter"
 export * from "./IUnsure"
 
-export * from "./ResolveReporter"
+export * from "./SimpleResolveReporter"
 
 export * from "./assertUnreachable"

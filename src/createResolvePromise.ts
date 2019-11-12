@@ -44,16 +44,6 @@ class ResolvePromiseImp<T> implements ResolvePromise<T> {
     }
 }
 
-export function createPromise<T>(t: null | T): ResolvePromise<T> {
-    return new ResolvePromiseImp<T>((onFailed, onResolved) => {
-        if (t !== null) {
-            onResolved(t)
-        } else {
-            onFailed(null)
-        }
-    })
-}
-
-export function promisify<T>(cf: CallerFunction<T>): ResolvePromise<T> {
+export function createResolvePromise<T>(cf: CallerFunction<T>): ResolvePromise<T> {
     return new ResolvePromiseImp<T>(cf)
 }

@@ -1,4 +1,4 @@
-import { Dictionary, TypePair } from "lingua-franca"
+import { Dictionary, OrderedDictionary, TypePair } from "lingua-franca"
 import { IForwardLookup, ILookup } from "./ILookup"
 
 export interface IIntermediateDictionary<Type> extends Dictionary<Type>, ILookup<Type> , IForwardLookup<Type> {
@@ -6,9 +6,12 @@ export interface IIntermediateDictionary<Type> extends Dictionary<Type>, ILookup
     has(key: string): boolean
 }
 
-export interface IIntermediateFulfillingDictionary<Type, ReferencedType> extends IIntermediateDictionary<Type>, ILookup<Type> {
+export interface IIntermediateOrderedDictionary<Type> extends OrderedDictionary<Type>, IIntermediateDictionary<Type> {
+}
+
+export interface IIntermediateFulfillingDictionary<Type, ReferencedType> extends IIntermediateDictionary<TypePair<Type, ReferencedType>> {
     readonly fulfilling: true
-    getMatchedEntry(name: string, targetEntry: ReferencedType): void
+    //getMatchedEntry(name: string, targetEntry: ReferencedType): void
 }
 
 export interface IIntermediateDecoratingDictionary<Type, ReferencedType>

@@ -1,4 +1,5 @@
 import { ResolvePromise} from "lingua-franca"
+import { IUnsure } from "./IUnsure"
 
 export interface ILookup<Type> {
     getEntry(name: string): null | Type
@@ -11,6 +12,10 @@ export interface IForwardLookup<Type> {
     //filter<NewType>(callback: (entry: Type) => [false] | [ true, NewType]): IForwardLookup<NewType>
 }
 
-export type UnsureLookup<Type> = null | ILookup<Type>
+export interface IUnsureLookup<Type> extends IUnsure<ILookup<Type>> {}
 
-export type UnsureForwardLookup<Type> = null | IForwardLookup<Type>
+export type IStackedLookup<Type> = null | ILookup<Type>
+
+export function initializeStackedLookup() {
+    return null
+}
