@@ -36,9 +36,6 @@ class DictionaryImp<Type> implements ILookup<Type>, IIntermediateDictionary<Type
             return entry
         }
     }
-    public filter<NewType>(): ILookup<NewType> {
-        throw new Error("IMPLEMENT ME")
-    }
     public forEachAlphabetically(callback: (entry: Type, isFirst: boolean) => void) {
         this.getKeys().forEach((key, index) => callback(this.dictionary[key], index === 0))
     }
@@ -58,79 +55,6 @@ class DictionaryImp<Type> implements ILookup<Type>, IIntermediateDictionary<Type
     }
     get isEmpty(): boolean {
         return this.getKeys().length === 0
-    }
-}
-
-// class FilteredForwardLookup<OldType, NewType> implements IForwardLookup<NewType> {
-//     private readonly oldLookup: IForwardLookup<OldType>
-//     private readonly filterCallback: (entry: OldType) => [false] | [true, NewType]
-//     constructor(oldLookup: IForwardLookup<OldType>, filterCallback: (entry: OldType) => [false] | [true, NewType]) {
-//         this.oldLookup = oldLookup
-//         this.filterCallback = filterCallback
-//     }
-//     public getEntryPromise(name: string): ResolvePromise<NewType> {
-//         return promisify<NewType>((onNewFailed, onNewSuccess) => {
-//             this.oldLookup.getEntryPromise(name).handlePromise(onNewFailed, oldEntry => {
-//                 const filterResult = this.filterCallback(oldEntry)
-//                 if (filterResult[0] === true) {
-//                     onNewSuccess(filterResult[1])
-//                 } else {
-//                     // tslint:disable-next-line: no-console
-//                     //console.log("The entry is there before filtering")
-//                     onNewFailed(null)
-//                 }
-//             })
-//         })
-//     }
-//     // public getKeys(): string[] {
-//     //     const oldKeys = this.oldLookup.getKeys()
-//     //     const newKeys: string[] = []
-//     //     oldKeys.forEach(oldKey => {
-//     //         const newEntry = this.getEntry(oldKey)
-//     //         if (newEntry !== null) {
-//     //             newKeys.push(oldKey)
-//     //         }
-//     //     })
-//     //     return newKeys
-//     // }
-//     // public filter<EvenNewerType>(callback: (entry: NewType) => [false] | [true, EvenNewerType]): ILookup<EvenNewerType> {
-//     //     return new FilteredLookup<NewType, EvenNewerType>(this, callback)
-//     // }
-// }
-
-class FilteredLookup<OldType, NewType> implements ILookup<NewType> {
-    private readonly oldLookup: ILookup<OldType>
-    private readonly filterCallback: (entry: OldType) => [false] | [true, NewType]
-    constructor(oldLookup: ILookup<OldType>, filterCallback: (entry: OldType) => [false] | [true, NewType]) {
-        this.oldLookup = oldLookup
-        this.filterCallback = filterCallback
-    }
-    public getEntry(key: string): NewType | null {
-        const oldEntry = this.oldLookup.getEntry(key)
-        if (oldEntry === null) {
-            return null
-        } else {
-            const filterResult = this.filterCallback(oldEntry)
-            if (filterResult[0] === true) {
-                return filterResult[1]
-            } else {
-                return null
-            }
-        }
-    }
-    public getKeys(): string[] {
-        const oldKeys = this.oldLookup.getKeys()
-        const newKeys: string[] = []
-        oldKeys.forEach(oldKey => {
-            const newEntry = this.getEntry(oldKey)
-            if (newEntry !== null) {
-                newKeys.push(oldKey)
-            }
-        })
-        return newKeys
-    }
-    public filter<EvenNewerType>(callback: (entry: NewType) => [false] | [true, EvenNewerType]): ILookup<EvenNewerType> {
-        return new FilteredLookup<NewType, EvenNewerType>(this, callback)
     }
 }
 
@@ -188,9 +112,6 @@ class DictionaryBuilder<Type> implements IDictionaryBuilder<Type> {
         return Object.keys(this.dictionary).sort((a, b) => {
             return a.toLowerCase().localeCompare(b.toLowerCase())
         })
-    }
-    public filter<NewType>(callback: (entry: Type) => [false] | [true, NewType]): ILookup<NewType> {
-        return new FilteredLookup<Type, NewType>(this, callback)
     }
     public finalize() {
         if (this.finalized) {
