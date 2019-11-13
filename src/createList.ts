@@ -1,5 +1,6 @@
 import { List} from "lingua-franca"
-import { IListBuilder } from "./IList"
+import { IIntermediateList } from "./IIntermediateList"
+import { IListBuilder } from "./IListBuilder"
 
 class ListImp<Type> implements List<Type> {
     private readonly imp: Type[]
@@ -30,7 +31,7 @@ class ListBuilder<Type> implements IListBuilder<Type> {
     }
 }
 
-export function createList<Type>(callback: (arrayBuilder: ListBuilder<Type>) => void): ListImp<Type> {
+export function createList<Type>(callback: (arrayBuilder: ListBuilder<Type>) => void): IIntermediateList<Type> {
     const list = new ListBuilder<Type>()
     callback(list)
     return list.finalize()
