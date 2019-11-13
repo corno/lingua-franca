@@ -52,7 +52,9 @@ class DictionaryImp<Type> implements ILookup<Type>, IIntermediateDictionary<Type
         return this.dictionary[key] !== undefined
     }
     public getKeys() {
-        return Object.keys(this.dictionary).sort()
+        return Object.keys(this.dictionary).sort((a, b) => {
+            return a.toLowerCase().localeCompare(b.toLowerCase())
+        })
     }
     get isEmpty(): boolean {
         return this.getKeys().length === 0
@@ -183,7 +185,9 @@ class DictionaryBuilder<Type> implements IDictionaryBuilder<Type> {
         }
     }
     public getKeys() {
-        return Object.keys(this.dictionary).sort()
+        return Object.keys(this.dictionary).sort((a, b) => {
+            return a.toLowerCase().localeCompare(b.toLowerCase())
+        })
     }
     public filter<NewType>(callback: (entry: Type) => [false] | [true, NewType]): ILookup<NewType> {
         return new FilteredLookup<Type, NewType>(this, callback)
