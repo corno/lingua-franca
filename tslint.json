@@ -2,6 +2,7 @@
     "extends": "tslint:recommended",
     "rulesDirectory": [],
     "rules": {
+        "array-type": false,
         "prefer-readonly": true,
         "semicolon": false,
         "max-line-length": {
