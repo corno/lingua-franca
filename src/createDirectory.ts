@@ -1,15 +1,16 @@
 // tslint:disable: max-classes-per-file
-import { DecoratingDictionary, FulfillingDictionary, OrderedDictionary, RequiringDictionary, ResolvePromise, TypePair } from "lingua-franca"
+import { DecoratingDictionary, FulfillingDictionary, OrderedDictionary, RequiringDictionary, Sanitizer, TypePair } from "lingua-franca"
 import { CallerObject, createResolvePromise } from "./createResolvePromise"
 import { IDictionaryBuilder } from "./IDictionaryBuilder"
 import { IIntermediateDecoratingDictionary, IIntermediateDictionary, IIntermediateFulfillingDictionary, IIntermediateOrderedDictionary } from "./IIntermediateDictionary"
 import { ILookup, IStackedLookup } from "./ILookup"
+import { IResolvePromise } from "./IResolvePromise"
 import { IResolveReporter } from "./IResolveReporter"
 import { IUnsure } from "./IUnsure"
 
 type RawDictionary<Type> = { [key: string]: Type }
 
-type KeyValuePair<Type> = { key: string; value: Type }
+//type KeyValuePair<Type> = { key: string; value: Type }
 
 type FinishedInsertion = boolean
 
@@ -18,7 +19,7 @@ class DictionaryImp<Type> implements ILookup<Type>, IIntermediateDictionary<Type
     constructor(dictionary: { [key: string]: Type }) {
         this.dictionary = dictionary
     }
-    public getEntryPromise(name: string): ResolvePromise<Type> {
+    public getEntryPromise(name: string): IResolvePromise<Type> {
         return createResolvePromise<Type>((onFailed, onResult) => {
             const entry = this.dictionary[name]
             if (entry === undefined) {
@@ -36,14 +37,14 @@ class DictionaryImp<Type> implements ILookup<Type>, IIntermediateDictionary<Type
             return entry
         }
     }
-    public forEachAlphabetically(callback: (entry: Type, isFirst: boolean) => void) {
-        this.getKeys().forEach((key, index) => callback(this.dictionary[key], index === 0))
-    }
-    public forEachAlphabeticallyWithKey(sanitize: (rawKey: string) => string, callback: (entry: Type, key: string, isFirst: boolean) => void) {
-        this.getKeys().forEach((key, index) => callback(this.dictionary[key], sanitize(key), index === 0))
-    }
-    public mapToArray<NewType>(callback: (entry: Type, name: string) => NewType) {
-        return this.getKeys().map(key => callback(this.dictionary[key], key))
+    public forEachAlphabetically(
+        onElement: (element: Type, getKey: (sanitizer: Sanitizer) => string) => void,
+        onSepartor?: () => void,
+        onBeforeFirst?: () => void,
+        onAfterLast?: () => void,
+        onEmpty?: () => void,
+    ) {
+        this.forEachImp(this.getKeys(), onElement, onSepartor, onBeforeFirst, onAfterLast, onEmpty)
     }
     public has(key: string) {
         return this.dictionary[key] !== undefined
@@ -53,8 +54,33 @@ class DictionaryImp<Type> implements ILookup<Type>, IIntermediateDictionary<Type
             return a.toLowerCase().localeCompare(b.toLowerCase())
         })
     }
-    get isEmpty(): boolean {
-        return this.getKeys().length === 0
+    protected forEachImp(
+        keys: string[],
+        onElement: (element: Type, getKey: (sanitizer: Sanitizer) => string) => void,
+        onSepartor?: () => void,
+        onBeforeFirst?: () => void,
+        onAfterLast?: () => void,
+        onEmpty?: () => void,
+    ) {
+        const isEmpty = keys.length === 0
+        if (isEmpty) {
+            if (onEmpty !== undefined) {
+                onEmpty()
+            }
+            return
+        }
+        if (isEmpty && onBeforeFirst !== undefined) {
+            onBeforeFirst()
+        }
+        keys.forEach((key, index) => {
+            if (index !== 0 && onSepartor !== undefined) {
+                onSepartor()
+            }
+            onElement(this.dictionary[key], sanitizer => sanitizer(key))
+        })
+        if (!isEmpty && onAfterLast !== undefined) {
+            onAfterLast()
+        }
     }
 }
 
@@ -85,7 +111,7 @@ class DictionaryBuilder<Type> implements IDictionaryBuilder<Type> {
         }
         this.dictionary[key] = entry
     }
-    public getEntryPromise(name: string): ResolvePromise<Type> {
+    public getEntryPromise(name: string): IResolvePromise<Type> {
         if (this.finalized) {
             throw new Error("DictionaryBuilder is already finalized, use the resulting dictionary")
         }
@@ -176,22 +202,25 @@ export function createStackedDictionary<Type>(
 
 class OrderedDictionaryImp<Type> extends DictionaryImp<Type> implements OrderedDictionary<Type> {
     public readonly decorating = true
-    private readonly orderedArray: Array<KeyValuePair<Type>>
-    constructor(dictionary: RawDictionary<Type>, orderedArray: Array<KeyValuePair<Type>>) {
+    private readonly orderedArray: Array<string>
+    constructor(dictionary: RawDictionary<Type>, orderedArray: Array<string>) {
         super(dictionary)
         this.orderedArray = orderedArray
     }
-    public forEachWithKey(
-        //getDependencies: (entry: Type) => string[],
-        sanitizer: (rawKey: string) => string,
-        callback: (entry: Type, key: string, isFirst: boolean) => void,
+    public forEach(
+        onElement: (element: Type, getKey: (sanitizer: Sanitizer) => string) => void,
+        onSepartor?: () => void,
+        onBeforeFirst?: () => void,
+        onAfterLast?: () => void,
+        onEmpty?: () => void,
     ) {
-        this.orderedArray.forEach((kvPair, index) => {
-            callback(kvPair.value, sanitizer(kvPair.key), index === 0)
-        })
+        this.forEachImp(this.orderedArray, onElement, onSepartor, onBeforeFirst, onAfterLast, onEmpty)
     }
-    public forEach(callback: (entry: Type, isFirst: boolean) => void) {
-        this.forEachWithKey(key => key, (entry, _key, isFirst) => callback(entry, isFirst))
+    public mapToArray<NewType>(callback: (entry: Type, name: string) => NewType) {
+        return this.getKeys().map(key => ({
+            key: key,
+            value: callback(this.dictionary[key], key),
+        }))
     }
 }
 
@@ -204,7 +233,7 @@ export function createOrderedDictionary<Type>(
     const dict = new DictionaryBuilder<Type>(resolveReporter, null, typeInfo)
     callback(dict)
     dict.finalize()
-    const array: Array<KeyValuePair<Type>> = []
+    const array: Array<string> = []
     const alreadyInserted: { [key: string]: FinishedInsertion } = {}
     const process = (key: string) => {
         const isInserted = alreadyInserted[key]
@@ -217,7 +246,7 @@ export function createOrderedDictionary<Type>(
             }
             alreadyInserted[key] = false
             getDependencies(entry).forEach(process)
-            array.push({ key: key, value: entry })
+            array.push(key)
         } else {
             if (!isInserted) {
                 throw new Error("Circular dependency detected")

@@ -1,6 +1,6 @@
 import { IResolveReporter } from "./IResolveReporter"
 
-export class ResolveReporter implements IResolveReporter {
+export class SimpleResolveReporter implements IResolveReporter {
     private readonly reportError: (dependent: boolean, message: string) => void
     constructor(reportError: (dependent: boolean, message: string) => void) {
         this.reportError = reportError

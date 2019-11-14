@@ -1,4 +1,4 @@
-import { ResolvePromise} from "lingua-franca"
+import { IResolvePromise} from "./IResolvePromise"
 
 type CallerFunction<ResultType> = (onFailed: (failed: null) => void, onResult: (result: ResultType) => void) => void
 
@@ -7,7 +7,7 @@ export type CallerObject<ResultType> = {
     onResult: (result: ResultType) => void
 }
 
-class ResolvePromiseImp<T> implements ResolvePromise<T> {
+class ResolvePromiseImp<T> implements IResolvePromise<T> {
     private readonly callerFunction: CallerFunction<T>
     constructor(callerFunction: CallerFunction<T>) {
         this.callerFunction = callerFunction
@@ -15,7 +15,7 @@ class ResolvePromiseImp<T> implements ResolvePromise<T> {
     public handlePromise(onFailed: (failed: null) => void, onResult: (result: T) => void): void {
         this.callerFunction(onFailed, onResult)
     }
-    public map<NewType>(callback: (type: T) => NewType): ResolvePromise<NewType> {
+    public map<NewType>(callback: (type: T) => NewType): IResolvePromise<NewType> {
         return new ResolvePromiseImp<NewType>((onNewError, onNewResult) => {
             this.callerFunction(
                 _failed => onNewError(null),
@@ -25,7 +25,7 @@ class ResolvePromiseImp<T> implements ResolvePromise<T> {
             )
         })
     }
-    public cast<NewType>(callback: (type: T) => [false] | [true, NewType]): ResolvePromise<NewType> {
+    public cast<NewType>(callback: (type: T) => [false] | [true, NewType]): IResolvePromise<NewType> {
         return new ResolvePromiseImp<NewType>((onNewError, onNewResult) => {
             this.callerFunction(
                 _failed => onNewError(null),
@@ -44,6 +44,6 @@ class ResolvePromiseImp<T> implements ResolvePromise<T> {
     }
 }
 
-export function createResolvePromise<T>(cf: CallerFunction<T>): ResolvePromise<T> {
+export function createResolvePromise<T>(cf: CallerFunction<T>): IResolvePromise<T> {
     return new ResolvePromiseImp<T>(cf)
 }

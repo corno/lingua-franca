@@ -1,4 +1,4 @@
-import { ResolvePromise} from "lingua-franca"
+import { IResolvePromise} from "./IResolvePromise"
 import { IUnsure } from "./IUnsure"
 
 export interface ILookup<Type> {
@@ -7,7 +7,7 @@ export interface ILookup<Type> {
 }
 
 export interface IForwardLookup<Type> {
-    getEntryPromise(name: string): ResolvePromise<Type>
+    getEntryPromise(name: string): IResolvePromise<Type>
 }
 
 export interface IUnsureLookup<Type> extends IUnsure<ILookup<Type>> {}

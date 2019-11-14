@@ -7,11 +7,35 @@ class ListImp<Type> implements List<Type> {
     constructor(imp: Type[])  {
         this.imp = imp
     }
-    public forEach(callback: (element: Type, isFirst: boolean) => void) {
-        this.imp.forEach((element, index) => callback(element, index === 0))
+    public forEach(
+        onElement: (element: Type) => void,
+        onSepartor?: () => void,
+        onBeforeFirst?: () => void,
+        onAfterLast?: () => void,
+        onEmpty?: () => void,
+    ) {
+        const isEmpty = this.imp.length === 0
+        if (isEmpty) {
+            if (onEmpty !== undefined) {
+                onEmpty()
+            }
+            return
+        }
+        if (!isEmpty && onBeforeFirst !== undefined) {
+            onBeforeFirst()
+        }
+        this.imp.forEach((element, index) => {
+            if (index !== 0 && onSepartor !== undefined) {
+                onSepartor()
+            }
+            onElement(element)
+        })
+        if (!isEmpty && onAfterLast !== undefined) {
+            onAfterLast()
+        }
     }
-    get isEmpty() {
-        return this.imp.length === 0
+    public map<NewType>(onElement: (e: Type) => NewType) {
+        return this.imp.map(onElement)
     }
 }
 
