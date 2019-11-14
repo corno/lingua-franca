@@ -2,19 +2,20 @@
   "name": "lingua-franca-building",
   "version": "0.2.0",
   "description": "package for building up 'AST's'",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "scripts": {
     "build": "rd /s /q .\\dist && tsc",
     "lint": "tslint --project tsconfig.json ./src/*",
     "pubMin": "git diff --exit-code && ncu -u --packageFile package.json && npm install && rd /s /q .\\dist && tsc && npm run lint && npm run test && npm version minor && git push && npm publish",
     "pubPatch": "git diff --exit-code && ncu -u --packageFile package.json && npm install && rd /s /q .\\dist && tsc && npm run lint && npm run test && npm version patch && git push && npm publish",
-    "test": "tsc && node ./dist/test",
-    "u2l": "ncu -u --packageFile package.json && nsi"
+    "test": "cross-env TS_NODE_FILES=true mocha --exit --require ts-node/register --colors test/**/*.ts",
+    "u2l": "ncu -u --packageFile package.json && nsi",
+    "coverage": "nyc npm run test"
   },
   "keywords": [],
   "author": "corno",
   "license": "ISC",
-  "types": "dist/index.d.ts",
+  "types": "dist/src/index.d.ts",
   "prepublish": "tsc",
   "repository": {
     "type": "git",
@@ -25,5 +26,16 @@
   ],
   "dependencies": {
     "lingua-franca": "^0.2.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.2.5",
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^12.12.7",
+    "chai": "^4.2.0",
+    "cross-env": "^5.2.0",
+    "mocha": "^6.2.0",
+    "nyc": "^14.1.1",
+    "ts-node": "^8.3.0",
+    "typescript": "^3.5.3"
   }
 }
