@@ -82,6 +82,9 @@ class DictionaryImp<Type> implements ILookup<Type>, IIntermediateDictionary<Type
             onAfterLast()
         }
     }
+    get isEmpty() {
+        return this.getKeys().length === 0
+    }
 }
 
 class DictionaryBuilder<Type> implements IDictionaryBuilder<Type> {
@@ -314,42 +317,57 @@ class FulfillingDictionaryImp<Type, ReferencedType> extends DictionaryImp<TypePa
 export function createFulfillingDictionary<Type, ReferencedType>(
     typeInfo: string,
     resolveReporter: IResolveReporter,
-    referencedDictionary: IUnsure<RequiringDictionary<ReferencedType>>,
+    referencedDictionary: IResolvePromise<RequiringDictionary<ReferencedType>> | false, //FIXME remove 'false' as a option. (TEMPORARY HACK)
     callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
 ): IIntermediateFulfillingDictionary<Type, ReferencedType> {
     const dict = new DictionaryBuilder<Type>(resolveReporter, null, typeInfo)
     callback(dict)
     dict.finalize()
     const pairedDictionary: RawDictionary<TypePair<Type, ReferencedType>> = {}
-    if (referencedDictionary.value === null) {
+    if (referencedDictionary === false) {
+        console.error("FULFILLING DICTIONARY HACK")
         resolveReporter.reportDependentUnresolvedDictionary(typeInfo)
-    } else {
-        const rd = referencedDictionary.value
         const keys = Object.keys(dict.dictionary)
-        const referencedKeys = rd.getKeys()
-        // if (keys.length < referencedKeys.length) {
-        //     resolveReporter.reportMissingEntries(type, referencedDictionary.getKeys().filter(key => dict.dictionary[key] === undefined))
-        // }
-        // if (Object.keys(dict.dictionary).length > keys.length) {
-        //     resolveReporter.reportSuperfluousEntries(type, keys.filter(key => referencedDictionary.has(key) === undefined))
-        // }
         keys.forEach(key => {
             //console.log(key, referencedDictionary.has(key), referencedKeys)
-            const referencedEntry = rd.getEntry(key)
-            if (referencedEntry === null) {
-                resolveReporter.reportSuperfluousFulfillingEntry(typeInfo, key, referencedKeys)
-            }
             pairedDictionary[key] = {
                 entry: dict.dictionary[key],
-                referencedEntry: referencedEntry,
+                referencedEntry: null,
             }
         })
-        referencedKeys.forEach(key => {
-            const entry = dict.dictionary[key]
-            if (entry === undefined) {
-                resolveReporter.reportMissingRequiredEntry(typeInfo, key, keys)
-            }
-        })
+        return new FulfillingDictionaryImp<Type, ReferencedType>(pairedDictionary)
     }
+    referencedDictionary.handlePromise(
+        _error => {
+            resolveReporter.reportDependentUnresolvedDictionary(typeInfo)
+        },
+        rd => {
+            const keys = Object.keys(dict.dictionary)
+            const referencedKeys = rd.getKeys()
+            // if (keys.length < referencedKeys.length) {
+            //     resolveReporter.reportMissingEntries(type, referencedDictionary.getKeys().filter(key => dict.dictionary[key] === undefined))
+            // }
+            // if (Object.keys(dict.dictionary).length > keys.length) {
+            //     resolveReporter.reportSuperfluousEntries(type, keys.filter(key => referencedDictionary.has(key) === undefined))
+            // }
+            keys.forEach(key => {
+                //console.log(key, referencedDictionary.has(key), referencedKeys)
+                const referencedEntry = rd.getEntry(key)
+                if (referencedEntry === null) {
+                    resolveReporter.reportSuperfluousFulfillingEntry(typeInfo, key, referencedKeys)
+                }
+                pairedDictionary[key] = {
+                    entry: dict.dictionary[key],
+                    referencedEntry: referencedEntry,
+                }
+            })
+            referencedKeys.forEach(key => {
+                const entry = dict.dictionary[key]
+                if (entry === undefined) {
+                    resolveReporter.reportMissingRequiredEntry(typeInfo, key, keys)
+                }
+            })
+        }
+    )
     return new FulfillingDictionaryImp<Type, ReferencedType>(pairedDictionary)
 }

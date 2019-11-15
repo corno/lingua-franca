@@ -37,6 +37,9 @@ class ListImp<Type> implements List<Type> {
     public map<NewType>(onElement: (e: Type) => NewType) {
         return this.imp.map(onElement)
     }
+    get isEmpty() {
+        return this.imp.length === 0
+    }
 }
 
 // tslint:disable-next-line: max-classes-per-file
