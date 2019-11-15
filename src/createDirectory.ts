@@ -183,6 +183,18 @@ type MissingEntryContext<Type> = {
     missingEntryCreator: (key: string, previousEntry: Type) => Type
 }
 
+export function createHackedStackedDictionary<Type>(
+    typeInfo: string,
+    resolveReporter: IResolveReporter,
+    callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
+): IIntermediateDictionary<Type> {
+    console.error("HACKED STACKED")
+    const dict = new DictionaryBuilder<Type>(resolveReporter, null, typeInfo)
+    callback(dict)
+    dict.finalize()
+    return new DictionaryImp(dict.dictionary)
+}
+
 export function createStackedDictionary<Type>(
     typeInfo: string,
     resolveReporter: IResolveReporter,
