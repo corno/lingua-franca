@@ -2,23 +2,20 @@ import { IResolveReporter } from "./IResolveReporter"
 
 export class SimpleResolveReporter implements IResolveReporter {
     private readonly reportError: (dependent: boolean, message: string) => void
-    constructor(reportError: (dependent: boolean, message: string) => void) {
+    private readonly reportWarning: (message: string) => void
+    constructor(
+        reportError: (dependent: boolean, message: string) => void,
+        reportWarning: (message: string) => void,
+    ) {
         this.reportError = reportError
+        this.reportWarning = reportWarning
     }
+    //errors
     public reportUnresolvedReference(type: string, key: string, options: string[]) {
         this.reportError(false, "unresolved reference: " + key + " (" + type + "). found entries: " + options.join(", "))
     }
-    public reportDependentUnresolvedReference(type: string, key: string) {
-        this.reportError(true, "unresolved reference: " + key + " (" + type + ")")
-    }
-    public reportUnresolvedForwardReference(type: string, key: string) {
+    public reportUnresolvedIntraReference(type: string, key: string) {
         this.reportError(false, "unresolved forward reference: " + key + " (" + type + ")")
-    }
-    public reportDependentUnresolvedForwardReference(type: string, key: string) {
-        this.reportError(true, "unresolved forward reference: " + key + " (" + type + ")")
-    }
-    public reportDependentUnresolvedDictionary(type: string) {
-        this.reportError(true, "unmatched dictionary: " + type)
     }
     public reportSuperfluousDecoratingEntry(type: string, key: string, options: string[]) {
         this.reportError(false, "superfluous decorating entry: " + key + " (" + type + "). found entries: " + options.join(", "))
@@ -31,5 +28,22 @@ export class SimpleResolveReporter implements IResolveReporter {
     }
     public reportConflictingEntry(type: string, key: string) {
         this.reportError(false, "conflicting entry: " + key + " (" + type + ")")
+    }
+    //dependent errors
+    public reportDependentUnresolvedReference(type: string, key: string) {
+        this.reportError(true, "unresolved reference: " + key + " (" + type + ")")
+    }
+    public reportDependentUnresolvedIntraReference(type: string, key: string) {
+        this.reportError(true, "unresolved forward reference: " + key + " (" + type + ")")
+    }
+    public reportDependentUnresolvedDictionary(type: string) {
+        this.reportError(true, "unmatched dictionary: " + type)
+    }
+    //warnings
+    public reportShouldNotBeDeclaredForward(type: string, key: string) {
+        this.reportWarning("entry should *not* be marked 'forward': " + key + " (" + type + ")")
+    }
+    public reportShouldBeDeclaredForward(type: string, key: string) {
+        this.reportWarning("entry should be marked 'forward': " + key + " (" + type + ")")
     }
 }

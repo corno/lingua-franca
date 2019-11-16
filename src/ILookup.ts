@@ -6,8 +6,11 @@ export interface ILookup<Type> {
     getKeys(): string[]
 }
 
-export interface IForwardLookup<Type> {
-    getEntryPromise(name: string): IResolvePromise<Type>
+export type EntryPromiseType<Type> =
+    ["already registered", Type] | [ "not yet registered", IResolvePromise<Type> ]
+
+export interface IIntraLookup<Type> {
+    getEntryOrEntryPromise(name: string): EntryPromiseType<Type>
 }
 
 export interface IUnsureLookup<Type> extends IUnsure<ILookup<Type>> {}

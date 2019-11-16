@@ -7,9 +7,14 @@ import { SimpleResolveReporter } from "../src/SimpleResolveReporter"
 
 describe("createReference", () => {
     it("basic operations", () => {
-        const rr = new SimpleResolveReporter((_dependent, _message) => {
-            //console.log("message")
-        })
+        const rr = new SimpleResolveReporter(
+            (_dependent, _message) => {
+                //console.log("message")
+            },
+            _message => {
+                //console.log("message")
+            }
+        )
         const dict = createDictionary<number>("FUBAR", rr, x => {
             x.add("A", 5)
         })
