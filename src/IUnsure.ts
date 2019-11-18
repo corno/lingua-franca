@@ -1,4 +1,11 @@
-export interface IUnsure<Type> {
+import { ILookup } from "./ILookup"
+import { IResolveReporter } from "./IResolveReporter";
+
+export interface IUnsureReference<Type> {
     value: Type | null
-    convert<NewType>(callback: (value: Type) => NewType): IUnsure<NewType>
+    getLookup<NewType>(callback: (value: Type) => ILookup<NewType>): IUnsureLookup<NewType>
+}
+
+export interface IUnsureLookup<Type> {
+    getEntry(key: string, resolveReporter: IResolveReporter, type: string): null | Type
 }

@@ -1,26 +1,35 @@
 // tslint:disable: max-classes-per-file
-import { DependentReference, Reference, StackedReference } from "lingua-franca"
+import { DependentReference, StackedReference } from "lingua-franca"
 import { assertUnreachable } from "./assertUnreachable"
 import { CallerObject, createResolvePromise } from "./createResolvePromise"
-import { IIntermediateDependentReference, IIntermediateIntraReference, IIntermediateReference, IIntermediateStackedReference } from "./IIntermediateReference"
-import { IIntraLookup, ILookup, IStackedLookup, IUnsureLookup } from "./ILookup"
+import { IIntermediateDependentReference, IIntermediateIntraReference, IIntermediateIntraResolved, IIntermediateReference, IIntermediateStackedReference } from "./IIntermediateReference"
+import { EntryPromiseType, IIntraLookup, ILookup, IStackedLookup } from "./ILookup"
 import { IResolvePromise } from "./IResolvePromise"
 import { IResolveReporter } from "./IResolveReporter"
-import { IUnsure } from "./IUnsure"
+import { IUnsureLookup } from "./IUnsure"
 
-class UnsureImp<Type> implements IUnsure<Type> {
-    public readonly value: null | Type
-    constructor(value: null | Type) {
-        this.value = value
+class UnresolvedLookupImp<Type> implements IUnsureLookup<Type> {
+    public getEntry(key: string, resolveReporter: IResolveReporter, type: string) {
+        resolveReporter.reportDependentUnresolvedReference(type, key)
+        return null
     }
-    public convert<NewType>(
-        callback: (value: Type) => NewType | null
-    ): IUnsure<NewType> {
-        if (this.value === null) {
-            return new UnsureImp<NewType>(null)
-        } else {
-            return new UnsureImp(callback(this.value))
+}
+
+export function createEmptyUnsureLookup<Type>(): IUnsureLookup<Type> {
+    return new UnresolvedLookupImp<Type>()
+}
+
+class ResolvedLookupImp<Type> implements IUnsureLookup<Type> {
+    public readonly lookup: ILookup<Type>
+    constructor(lookup: ILookup<Type>) {
+        this.lookup = lookup
+    }
+    public getEntry(key: string, resolveReporter: IResolveReporter, type: string) {
+        const entry = this.lookup.getEntry(key)
+        if (entry === null) {
+            resolveReporter.reportUnresolvedReference(type, key, this.lookup.getKeys())
         }
+        return entry
     }
 }
 
@@ -28,12 +37,16 @@ class UnsureImp<Type> implements IUnsure<Type> {
 class ReferenceBaseImp<ReferencedType> {
     public readonly value: null | ReferencedType
     private readonly key: string
-    constructor(name: string, value: null | ReferencedType) {
-        this.key = name
+    constructor(key: string, value: null | ReferencedType) {
+        this.key = key
         this.value = value
     }
-    public convert<NewType>(callback: (value: ReferencedType) => NewType | null) {
-        return new UnsureImp(this.value).convert(callback)
+    public getLookup<NewType>(callback: (value: ReferencedType) => ILookup<NewType>): IUnsureLookup<NewType> {
+        if (this.value === null) {
+            return new UnresolvedLookupImp()
+        } else {
+            return new ResolvedLookupImp(callback(this.value))
+        }
     }
     public mapResolved<NewType>(
         callback: (type: ReferencedType) => NewType,
@@ -60,7 +73,7 @@ class ReferenceBaseImp<ReferencedType> {
     }
 }
 
-class ReferenceImp<ReferencedType> extends ReferenceBaseImp<ReferencedType> implements Reference<ReferencedType> {
+class ReferenceImp<ReferencedType> extends ReferenceBaseImp<ReferencedType> implements IIntermediateReference<ReferencedType> {
     public readonly regular: true = true
 }
 
@@ -97,89 +110,59 @@ export function createDependentReference<ReferencedType>(
     unsureResolvedLookup: IUnsureLookup<ReferencedType>,
     resolver: IResolveReporter
 ): IIntermediateDependentReference<ReferencedType> {
-    if (unsureResolvedLookup.value === null) {
-        resolver.reportDependentUnresolvedReference(typeInfo, key)
-        return new DependentReferenceImp<ReferencedType>(key, null)
-    }
-    const value = unsureResolvedLookup.value.getEntry(key)
-    if (value === null) {
-        resolver.reportUnresolvedReference(typeInfo, key, unsureResolvedLookup.value.getKeys())
-    }
-    return new DependentReferenceImp(key, value)
+    const entry = unsureResolvedLookup.getEntry(key, resolver, typeInfo)
+    return new DependentReferenceImp(key, entry)
 
 }
 
-export function createStackedReference<ReferencedType>(
+export function createReferenceToStackParent<ReferencedType>(
     typeInfo: string,
     key: string,
-    unsureResolvedLookup: IStackedLookup<ReferencedType>,
+    stackedLookup: IStackedLookup<ReferencedType>,
     resolver: IResolveReporter
 ): IIntermediateStackedReference<ReferencedType> {
-    if (unsureResolvedLookup === null) {
+    if (stackedLookup === null) {
         resolver.reportDependentUnresolvedReference(typeInfo, key)
         return new StackedReferenceImp<ReferencedType>(key, null)
     }
-    const value = unsureResolvedLookup.getEntry(key)
+    const value = stackedLookup.getEntry(key)
     if (value === null) {
-        resolver.reportUnresolvedReference(typeInfo, key, unsureResolvedLookup.getKeys())
+        resolver.reportUnresolvedReference(typeInfo, key, stackedLookup.getKeys())
     }
     return new StackedReferenceImp(key, value)
 
 }
 
 // tslint:disable-next-line: max-classes-per-file
-class IntraReferenceImp<ReferencedType>
-    implements IIntermediateIntraReference<ReferencedType> {
-    public pending: true = true
-    private readonly key: string
-    private resolvedEntry: undefined | null | ReferencedType
+export class IntraResolvedImp<ReferencedType> implements IIntermediateIntraResolved<ReferencedType> { //FIXME don't export this class
     private readonly subscribers: Array<CallerObject<ReferencedType>> = []
+    private resolvedEntry: undefined | null | ReferencedType
     constructor(
-        key: string,
-        resolvedLookup: IIntraLookup<ReferencedType> | false, //FIX remove the false option, temporary hack
-        resolver: IResolveReporter,
-        typeInfo: string,
-        entryIsDeclaredAfterMe: boolean
+        entryPromiseType: EntryPromiseType<ReferencedType>,
     ) {
-        this.key = key
-        if (resolvedLookup === false) {
-            console.error("REMOVE LOOKUP HACK")
-            resolver.reportUnresolvedIntraReference(typeInfo, key)
-            this.subscribers.forEach(subscriber => subscriber.onFailed(null))
-            return
-        }
-        const getResult = resolvedLookup.getEntryOrEntryPromise(key)
-        switch (getResult[0]) {
+        switch (entryPromiseType[0]) {
             case "already registered": {
-                const entry = getResult[1]
+                const entry = entryPromiseType[1]
                 this.resolvedEntry = entry
                 this.subscribers.forEach(subscriber => subscriber.onResult(entry))
-                if (entryIsDeclaredAfterMe) {
-                    resolver.reportShouldNotBeDeclaredForward(typeInfo, key)
-                }
                 break
             }
             case "not yet registered": {
-                const promise = getResult[1]
+                const promise = entryPromiseType[1]
                 promise.handlePromise(
                     () => {
-                        //not found
-                        resolver.reportUnresolvedIntraReference(typeInfo, key)
                         this.subscribers.forEach(subscriber => subscriber.onFailed(null))
                     },
                     entry => {
                         this.resolvedEntry = entry
                         this.subscribers.forEach(subscriber => subscriber.onResult(entry))
-                        if (!entryIsDeclaredAfterMe) {
-                            resolver.reportShouldBeDeclaredForward(typeInfo, key)
-                        }
                     }
                 )
 
                 break
             }
             default:
-                assertUnreachable(getResult[0])
+                assertUnreachable(entryPromiseType[0])
                 throw new Error("UNREACHABLE")
         }
     }
@@ -207,9 +190,6 @@ class IntraReferenceImp<ReferencedType>
             }
         )
     }
-    public getKey(sanitize: (rawKey: string) => string) {
-        return sanitize(this.key)
-    }
     public getResolvedEntryPromise(): IResolvePromise<ReferencedType> {
         return createResolvePromise<ReferencedType>((onFailed, onResult) => {
             if (this.resolvedEntry === undefined) {
@@ -228,12 +208,57 @@ class IntraReferenceImp<ReferencedType>
     }
 }
 
+// tslint:disable-next-line: max-classes-per-file
+class IntraReferenceImp<ReferencedType> extends IntraResolvedImp<ReferencedType>
+    implements IIntermediateIntraReference<ReferencedType> {
+    public intraReference: true = true
+    private readonly key: string
+    constructor(
+        key: string,
+        entryPromiseType: EntryPromiseType<ReferencedType>
+    ) {
+        super(entryPromiseType)
+        this.key = key
+    }
+    public getKey(sanitize: (rawKey: string) => string) {
+        return sanitize(this.key)
+    }
+}
+
 export function createIntraReference<ReferencedType>(
     typeInfo: string,
     key: string,
-    resolvedLookup: IIntraLookup<ReferencedType> | false,
+    resolvedLookup: IIntraLookup<ReferencedType>,
     resolver: IResolveReporter,
     entryIsDeclaredAfterMe: boolean,
 ): IIntermediateIntraReference<ReferencedType> {
-    return new IntraReferenceImp(key, resolvedLookup, resolver, typeInfo, entryIsDeclaredAfterMe)
+    const entryPromiseType = resolvedLookup.getEntryOrEntryPromise(key)
+    switch (entryPromiseType[0]) {
+        case "already registered": {
+            if (entryIsDeclaredAfterMe) {
+                resolver.reportShouldNotBeDeclaredForward(typeInfo, key)
+            }
+            break
+        }
+        case "not yet registered": {
+            const promise = entryPromiseType[1]
+            promise.handlePromise(
+                () => {
+                    //not found
+                    resolver.reportUnresolvedIntraReference(typeInfo, key)
+                },
+                _entry => {
+                    if (!entryIsDeclaredAfterMe) {
+                        resolver.reportShouldBeDeclaredForward(typeInfo, key)
+                    }
+                }
+            )
+
+            break
+        }
+        default:
+            assertUnreachable(entryPromiseType[0])
+            throw new Error("UNREACHABLE")
+    }
+    return new IntraReferenceImp(key, entryPromiseType)
 }

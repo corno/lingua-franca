@@ -1,12 +1,12 @@
 // tslint:disable: max-classes-per-file
-import { DecoratingDictionary, FulfillingDictionary, FulfillingData, OrderedDictionary, RequiringDictionary, Sanitizer, TypePair } from "lingua-franca"
+import { DecoratingDictionary, FulfilledPair, FulfillingDictionary, OrderedDictionary, RequiringDictionary, Sanitizer } from "lingua-franca"
 import { CallerObject, createResolvePromise } from "./createResolvePromise"
 import { IDictionaryBuilder } from "./IDictionaryBuilder"
 import { IIntermediateDecoratingDictionary, IIntermediateDictionary, IIntermediateFulfillingDictionary, IIntermediateOrderedDictionary } from "./IIntermediateDictionary"
 import { EntryPromiseType, ILookup, IStackedLookup } from "./ILookup"
 import { IResolvePromise } from "./IResolvePromise"
 import { IResolveReporter } from "./IResolveReporter"
-import { IUnsure } from "./IUnsure"
+import { IUnsureReference } from "./IUnsure"
 
 type RawDictionary<Type> = { [key: string]: Type }
 
@@ -19,13 +19,13 @@ class DictionaryImp<Type> implements ILookup<Type>, IIntermediateDictionary<Type
     constructor(dictionary: { [key: string]: Type }) {
         this.dictionary = dictionary
     }
-    public getEntryOrEntryPromise(name: string): EntryPromiseType<Type> {
-        const entry = this.getEntry(name)
+    public getEntryOrEntryPromise(key: string): EntryPromiseType<Type> {
+        const entry = this.getEntry(key)
         if (entry !== null) {
             return ["already registered", entry]
         }
         return ["not yet registered", createResolvePromise<Type>((onFailed, onResult) => {
-            const entry2 = this.dictionary[name]
+            const entry2 = this.dictionary[key]
             if (entry2 === undefined) {
                 onFailed(null)
             } else {
@@ -33,8 +33,8 @@ class DictionaryImp<Type> implements ILookup<Type>, IIntermediateDictionary<Type
             }
         })]
     }
-    public getEntry(name: string): null | Type {
-        const entry = this.dictionary[name]
+    public getEntry(key: string): null | Type {
+        const entry = this.dictionary[key]
         if (entry === undefined) {
             return null
         } else {
@@ -93,7 +93,7 @@ class DictionaryImp<Type> implements ILookup<Type>, IIntermediateDictionary<Type
 
 class DictionaryBuilder<Type> implements IDictionaryBuilder<Type> {
     public readonly dictionary: RawDictionary<Type> = {}
-    private readonly subscribers: Array<{ name: string; caller: CallerObject<Type> }> = []
+    private readonly subscribers: Array<{ key: string; caller: CallerObject<Type> }> = []
     private finalized = false
     private readonly resolveReporter: IResolveReporter
     private readonly missingEntryContext: null | MissingEntryContext<Type>
@@ -113,17 +113,17 @@ class DictionaryBuilder<Type> implements IDictionaryBuilder<Type> {
         }
         this.dictionary[key] = entry
     }
-    public getEntryOrEntryPromise(name: string): EntryPromiseType<Type> {
+    public getEntryOrEntryPromise(key: string): EntryPromiseType<Type> {
         if (this.finalized) {
             throw new Error("DictionaryBuilder is already finalized, use the resulting dictionary")
         }
-        const entry = this.getEntry(name)
+        const entry = this.getEntry(key)
         if (entry !== null) {
             return ["already registered", entry]
         }
         return ["not yet registered", createResolvePromise<Type>((onFailed, onResult) => {
             this.subscribers.push({
-                name: name,
+                key: key,
                 caller: {
                     onFailed: onFailed,
                     onResult: onResult,
@@ -131,8 +131,8 @@ class DictionaryBuilder<Type> implements IDictionaryBuilder<Type> {
             })
         })]
     }
-    public getEntry(name: string): null | Type {
-        const entry = this.dictionary[name]
+    public getEntry(key: string): null | Type {
+        const entry = this.dictionary[key]
         if (entry === undefined) {
             return null
         } else {
@@ -150,10 +150,10 @@ class DictionaryBuilder<Type> implements IDictionaryBuilder<Type> {
         }
         this.finalized = true
         this.subscribers.forEach(subscriber => {
-            const entry = this.dictionary[subscriber.name]
+            const entry = this.dictionary[subscriber.key]
             if (entry === undefined) {
                 if (this.missingEntryContext !== null) {
-                    const precedingEntry = this.missingEntryContext.referencedDictionary.getEntry(subscriber.name)
+                    const precedingEntry = this.missingEntryContext.referencedDictionary.getEntry(subscriber.key)
                     if (precedingEntry === null) {
                         subscriber.caller.onFailed(null)
                     } else {
@@ -233,7 +233,7 @@ class OrderedDictionaryImp<Type> extends DictionaryImp<Type> implements OrderedD
     ) {
         this.forEachImp(this.orderedArray, onElement, onSepartor, onBeforeFirst, onAfterLast, onEmpty)
     }
-    public mapToArray<NewType>(callback: (entry: Type, name: string) => NewType) {
+    public mapToArray<NewType>(callback: (entry: Type, key: string) => NewType) {
         return this.getKeys().map(key => ({
             key: key,
             value: callback(this.dictionary[key], key),
@@ -276,51 +276,52 @@ export function createOrderedDictionary<Type>(
     return new OrderedDictionaryImp(dict.dictionary, array)
 }
 
-class DecoratingDictionaryImp<Type, ReferencedType> extends DictionaryImp<TypePair<Type, ReferencedType>>
-    implements DecoratingDictionary<Type, ReferencedType> {
+class DecoratingDictionaryImp<Type> extends DictionaryImp<Type>
+    implements DecoratingDictionary<Type> {
     public readonly decorating = true
 }
+
+export interface IUnsureDecoratableLookup<Type> {
+    getDecoratableEntry(key: string, resolveReporter: IResolveReporter, type: string): IUnsureReference<Type>
+}
+
+// class UnresolvedDecoratableLookupImp<Type> implements IUnsureDecoratableLookup<Type> {
+//     public getEntry(key: string, resolveReporter: IResolveReporter, type: string) {
+//         resolveReporter.reportDependentUnresolvedDecoratingEntry(type, key)
+//         return null
+//     }
+// }
+
+// class ResolvedDecoratableLookupImp<Type> implements IUnsureDecoratableLookup<Type> {
+//     public readonly lookup: ILookup<Type>
+//     constructor(lookup: ILookup<Type>) {
+//         this.lookup = lookup
+//     }
+//     public getEntry(key: string, resolveReporter: IResolveReporter, type: string) {
+//         const entry = this.lookup.getEntry(key)
+//         if (entry === null) {
+//             resolveReporter.reportUnresolvedDecoratingEntry(type, key, this.lookup.getKeys())
+//         }
+//         return entry
+//     }
+// }
+
 
 export function createDecoratingDictionary<Type, ReferencedType>(
     typeInfo: string,
     resolveReporter: IResolveReporter,
-    referencedDictionary: IUnsure<IIntermediateDictionary<ReferencedType>>,
-    callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
-): IIntermediateDecoratingDictionary<Type, ReferencedType> {
+    referencedDictionary: IUnsureDecoratableLookup<ReferencedType>,
+    callback: (dictBuilder: IDictionaryBuilder<Type>, referencedDictionary: IUnsureDecoratableLookup<ReferencedType>) => void,
+): IIntermediateDecoratingDictionary<Type> {
     const dict = new DictionaryBuilder<Type>(resolveReporter, null, typeInfo)
-    callback(dict)
+    callback(dict, referencedDictionary)
     dict.finalize()
-
-    const dictionary: RawDictionary<TypePair<Type, ReferencedType>> = {}
-    if (referencedDictionary.value !== null) {
-        const refDict = referencedDictionary.value
-        Object.keys(dict.dictionary).forEach(key => {
-            const entry = dict.dictionary[key]
-            const referencedEntry = refDict.getEntry(key)
-            if (referencedEntry === null) {
-                resolveReporter.reportSuperfluousDecoratingEntry(typeInfo, key, refDict.getKeys())
-            }
-            dictionary[key] = {
-                entry: entry,
-                referencedEntry: referencedEntry,
-            }
-        })
-    } else {
-        Object.keys(dict.dictionary).forEach(key => {
-            const entry = dict.dictionary[key]
-            dictionary[key] = {
-                entry: entry,
-                referencedEntry: null,
-            }
-        })
-    }
-
-    return new DecoratingDictionaryImp<Type, ReferencedType>(dictionary)
+    return new DecoratingDictionaryImp<Type>(dict.dictionary)
 }
 
-class FulfillingDictionaryImp<Type, ReferencedType, Constraints>
-    extends DictionaryImp<FulfillingData<Type, ReferencedType, Constraints>>
-    implements FulfillingDictionary<Type, ReferencedType, Constraints> {
+class FulfillingDictionaryImp<Type, ReferencedType>
+    extends DictionaryImp<FulfilledPair<Type, ReferencedType>>
+    implements FulfillingDictionary<Type, ReferencedType> {
     public readonly fulfilling = true
     // public getMatchedEntry(key: string, _targetEntry: ReferencedType) {
     //     const entry = this.dictionary[key]
@@ -330,17 +331,16 @@ class FulfillingDictionaryImp<Type, ReferencedType, Constraints>
     // }
 }
 
-export function createFulfillingDictionary<Type, ReferencedType, Constraints>(
+export function createFulfillingDictionary<Type, ReferencedType>(
     typeInfo: string,
     resolveReporter: IResolveReporter,
     referencedDictionary: IResolvePromise<RequiringDictionary<ReferencedType>> | false, //FIXME remove 'false' as a option. (TEMPORARY HACK)
-    constraintsCallback: (reference: ReferencedType | null) => Constraints,
     callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
-): IIntermediateFulfillingDictionary<Type, ReferencedType, Constraints> {
+): IIntermediateFulfillingDictionary<Type, ReferencedType> {
     const dict = new DictionaryBuilder<Type>(resolveReporter, null, typeInfo)
     callback(dict)
     dict.finalize()
-    const pairedDictionary: RawDictionary<FulfillingData<Type, ReferencedType, Constraints>> = {}
+    const pairedDictionary: RawDictionary<FulfilledPair<Type, ReferencedType>> = {}
     if (referencedDictionary === false) {
         console.error("FULFILLING DICTIONARY HACK")
         resolveReporter.reportDependentUnresolvedDictionary(typeInfo)
@@ -349,11 +349,10 @@ export function createFulfillingDictionary<Type, ReferencedType, Constraints>(
             //console.log(key, referencedDictionary.has(key), referencedKeys)
             pairedDictionary[key] = {
                 entry: dict.dictionary[key],
-                referencedEntry: null,
-                constraints: constraintsCallback(null)
+                fulfilledEntry: null,
             }
         })
-        return new FulfillingDictionaryImp<Type, ReferencedType, Constraints>(pairedDictionary)
+        return new FulfillingDictionaryImp<Type, ReferencedType>(pairedDictionary)
     }
     referencedDictionary.handlePromise(
         _error => {
@@ -376,8 +375,7 @@ export function createFulfillingDictionary<Type, ReferencedType, Constraints>(
                 }
                 pairedDictionary[key] = {
                     entry: dict.dictionary[key],
-                    referencedEntry: referencedEntry,
-                    constraints: constraintsCallback(referencedEntry),
+                    fulfilledEntry: referencedEntry,
                 }
             })
             referencedKeys.forEach(key => {
@@ -388,5 +386,5 @@ export function createFulfillingDictionary<Type, ReferencedType, Constraints>(
             })
         }
     )
-    return new FulfillingDictionaryImp<Type, ReferencedType, Constraints>(pairedDictionary)
+    return new FulfillingDictionaryImp<Type, ReferencedType>(pairedDictionary)
 }
