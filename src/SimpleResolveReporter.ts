@@ -20,10 +20,6 @@ export class SimpleResolveReporter implements IResolveReporter {
     public reportIntraConstraintViolation(type: string) {
         this.reportError(false, "constraint violation: (" + type + ")")
     }
-
-    public reportUnresolvedDecoratingEntry(type: string, key: string, options: string[]) {
-        this.reportError(false, "unresolved entry: " + key + " (" + type + "). found entries: " + options.join(", "))
-    }
     public reportSuperfluousFulfillingEntry(type: string, key: string, requiredEntries: string[]) {
         this.reportError(false, "superfluous fulfilling entry: " + key + " (" + type + "). found entries: " + requiredEntries.join(", "))
     }
@@ -36,9 +32,6 @@ export class SimpleResolveReporter implements IResolveReporter {
     //dependent errors
     public reportDependentUnresolvedReference(type: string, key: string) {
         this.reportError(true, "unresolved reference: " + key + " (" + type + ")")
-    }
-    public reportDependentUnresolvedDecoratingEntry(type: string, key: string) {
-        this.reportError(true, "unresolved entry: " + key + " (" + type + ")")
     }
     public reportDependentUnresolvedIntraReference(type: string, key: string) {
         this.reportError(true, "unresolved forward reference: " + key + " (" + type + ")")

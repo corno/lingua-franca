@@ -14,9 +14,3 @@ export interface IIntermediateFulfillingDictionary<Type, ReferencedType>
     readonly fulfilling: true
     //getMatchedEntry(key: string, targetEntry: ReferencedType): void
 }
-
-export interface IIntermediateDecoratingDictionary<Type>
-    extends IIntermediateDictionary<Type>,
-    ILookup<Type> {
-    readonly decorating: true
-}

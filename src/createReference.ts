@@ -88,14 +88,9 @@ class StackedReferenceImp<ReferencedType> extends ReferenceBaseImp<ReferencedTyp
 export function createReference<ReferencedType>(
     typeInfo: string,
     key: string,
-    resolvedLookup: ILookup<ReferencedType> | false,
+    resolvedLookup: ILookup<ReferencedType>,
     resolver: IResolveReporter
 ): IIntermediateReference<ReferencedType> {
-    if (resolvedLookup === false) {
-        console.error("REMOVE LOOKUP HACK")
-        resolver.reportUnresolvedReference(typeInfo, key, [])
-        return new ReferenceImp<ReferencedType>(key, null)
-    }
     const value = resolvedLookup.getEntry(key)
     if (value === null) {
         resolver.reportUnresolvedReference(typeInfo, key, resolvedLookup.getKeys())

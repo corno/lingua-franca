@@ -1,12 +1,11 @@
 // tslint:disable: max-classes-per-file
-import { DecoratingDictionary, FulfilledPair, FulfillingDictionary, OrderedDictionary, RequiringDictionary, Sanitizer } from "lingua-franca"
+import { FulfilledPair, FulfillingDictionary, OrderedDictionary, RequiringDictionary, Sanitizer } from "lingua-franca"
 import { CallerObject, createResolvePromise } from "./createResolvePromise"
 import { IDictionaryBuilder } from "./IDictionaryBuilder"
-import { IIntermediateDecoratingDictionary, IIntermediateDictionary, IIntermediateFulfillingDictionary, IIntermediateOrderedDictionary } from "./IIntermediateDictionary"
+import { IIntermediateDictionary, IIntermediateFulfillingDictionary, IIntermediateOrderedDictionary } from "./IIntermediateDictionary"
 import { EntryPromiseType, ILookup, IStackedLookup } from "./ILookup"
 import { IResolvePromise } from "./IResolvePromise"
 import { IResolveReporter } from "./IResolveReporter"
-import { IUnsureReference } from "./IUnsure"
 
 type RawDictionary<Type> = { [key: string]: Type }
 
@@ -218,7 +217,7 @@ export function createStackedDictionary<Type>(
 }
 
 class OrderedDictionaryImp<Type> extends DictionaryImp<Type> implements OrderedDictionary<Type> {
-    public readonly decorating = true
+    //public readonly ordered = true
     private readonly orderedArray: Array<string>
     constructor(dictionary: RawDictionary<Type>, orderedArray: Array<string>) {
         super(dictionary)
@@ -276,49 +275,6 @@ export function createOrderedDictionary<Type>(
     return new OrderedDictionaryImp(dict.dictionary, array)
 }
 
-class DecoratingDictionaryImp<Type> extends DictionaryImp<Type>
-    implements DecoratingDictionary<Type> {
-    public readonly decorating = true
-}
-
-export interface IUnsureDecoratableLookup<Type> {
-    getDecoratableEntry(key: string, resolveReporter: IResolveReporter, type: string): IUnsureReference<Type>
-}
-
-// class UnresolvedDecoratableLookupImp<Type> implements IUnsureDecoratableLookup<Type> {
-//     public getEntry(key: string, resolveReporter: IResolveReporter, type: string) {
-//         resolveReporter.reportDependentUnresolvedDecoratingEntry(type, key)
-//         return null
-//     }
-// }
-
-// class ResolvedDecoratableLookupImp<Type> implements IUnsureDecoratableLookup<Type> {
-//     public readonly lookup: ILookup<Type>
-//     constructor(lookup: ILookup<Type>) {
-//         this.lookup = lookup
-//     }
-//     public getEntry(key: string, resolveReporter: IResolveReporter, type: string) {
-//         const entry = this.lookup.getEntry(key)
-//         if (entry === null) {
-//             resolveReporter.reportUnresolvedDecoratingEntry(type, key, this.lookup.getKeys())
-//         }
-//         return entry
-//     }
-// }
-
-
-export function createDecoratingDictionary<Type, ReferencedType>(
-    typeInfo: string,
-    resolveReporter: IResolveReporter,
-    referencedDictionary: IUnsureDecoratableLookup<ReferencedType>,
-    callback: (dictBuilder: IDictionaryBuilder<Type>, referencedDictionary: IUnsureDecoratableLookup<ReferencedType>) => void,
-): IIntermediateDecoratingDictionary<Type> {
-    const dict = new DictionaryBuilder<Type>(resolveReporter, null, typeInfo)
-    callback(dict, referencedDictionary)
-    dict.finalize()
-    return new DecoratingDictionaryImp<Type>(dict.dictionary)
-}
-
 class FulfillingDictionaryImp<Type, ReferencedType>
     extends DictionaryImp<FulfilledPair<Type, ReferencedType>>
     implements FulfillingDictionary<Type, ReferencedType> {
@@ -334,26 +290,13 @@ class FulfillingDictionaryImp<Type, ReferencedType>
 export function createFulfillingDictionary<Type, ReferencedType>(
     typeInfo: string,
     resolveReporter: IResolveReporter,
-    referencedDictionary: IResolvePromise<RequiringDictionary<ReferencedType>> | false, //FIXME remove 'false' as a option. (TEMPORARY HACK)
+    referencedDictionary: IResolvePromise<RequiringDictionary<ReferencedType>>,
     callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
 ): IIntermediateFulfillingDictionary<Type, ReferencedType> {
     const dict = new DictionaryBuilder<Type>(resolveReporter, null, typeInfo)
     callback(dict)
     dict.finalize()
     const pairedDictionary: RawDictionary<FulfilledPair<Type, ReferencedType>> = {}
-    if (referencedDictionary === false) {
-        console.error("FULFILLING DICTIONARY HACK")
-        resolveReporter.reportDependentUnresolvedDictionary(typeInfo)
-        const keys = Object.keys(dict.dictionary)
-        keys.forEach(key => {
-            //console.log(key, referencedDictionary.has(key), referencedKeys)
-            pairedDictionary[key] = {
-                entry: dict.dictionary[key],
-                fulfilledEntry: null,
-            }
-        })
-        return new FulfillingDictionaryImp<Type, ReferencedType>(pairedDictionary)
-    }
     referencedDictionary.handlePromise(
         _error => {
             resolveReporter.reportDependentUnresolvedDictionary(typeInfo)
@@ -386,5 +329,27 @@ export function createFulfillingDictionary<Type, ReferencedType>(
             })
         }
     )
+    return new FulfillingDictionaryImp<Type, ReferencedType>(pairedDictionary)
+}
+
+export function createHackFulfillingDictionary<Type, ReferencedType>(
+    typeInfo: string,
+    resolveReporter: IResolveReporter,
+    callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
+): IIntermediateFulfillingDictionary<Type, ReferencedType> {
+    const dict = new DictionaryBuilder<Type>(resolveReporter, null, typeInfo)
+    callback(dict)
+    dict.finalize()
+    const pairedDictionary: RawDictionary<FulfilledPair<Type, ReferencedType>> = {}
+    console.error("FULFILLING DICTIONARY HACK")
+    resolveReporter.reportDependentUnresolvedDictionary(typeInfo)
+    const keys = Object.keys(dict.dictionary)
+    keys.forEach(key => {
+        //console.log(key, referencedDictionary.has(key), referencedKeys)
+        pairedDictionary[key] = {
+            entry: dict.dictionary[key],
+            fulfilledEntry: null,
+        }
+    })
     return new FulfillingDictionaryImp<Type, ReferencedType>(pairedDictionary)
 }
