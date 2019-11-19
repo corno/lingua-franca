@@ -1,11 +1,10 @@
 // tslint:disable: max-classes-per-file
-import { FulfilledPair, FulfillingDictionary, OrderedDictionary, RequiringDictionary, Sanitizer } from "lingua-franca"
-import { CallerObject, createResolvePromise } from "./createResolvePromise"
-import { IDictionaryBuilder } from "./IDictionaryBuilder"
-import { IIntermediateDictionary, IIntermediateFulfillingDictionary, IIntermediateOrderedDictionary } from "./IIntermediateDictionary"
-import { EntryPromiseType, ILookup, IStackedLookup } from "./ILookup"
-import { IResolvePromise } from "./IResolvePromise"
-import { IResolveReporter } from "./IResolveReporter"
+import { OrderedDictionary, Sanitizer } from "lingua-franca"
+import { EntryPromiseResult, IResolvePromise } from "../interfaces/delayedResolve"
+import { IDictionary, IDictionaryBuilder } from "../interfaces/dictionary"
+import { ILookup, IRequiringLookup, IStackedLookup } from "../interfaces/instantResolve"
+import { IResolveReporter } from "../IResolveReporter"
+import { CallerObject, createResolvePromise } from "./createDelayedResolveReference"
 
 type RawDictionary<Type> = { [key: string]: Type }
 
@@ -43,28 +42,27 @@ function orderedIterate<Type>(
     }
 }
 
-class DictionaryImp<Type> implements ILookup<Type>, IIntermediateDictionary<Type> {
+class DictionaryImp<Type> implements ILookup<Type>, IDictionary<Type> {
     protected readonly dictionary: { [key: string]: Type } = {}
     constructor(dictionary: { [key: string]: Type }) {
         this.dictionary = dictionary
     }
-    public getEntryOrEntryPromise(key: string): EntryPromiseType<Type> {
-        const entry = this.getEntry(key)
-        if (entry !== null) {
-            return ["already registered", entry]
-        }
-        return ["not yet registered", createResolvePromise<Type>((onFailed, onResult) => {
-            const entry2 = this.dictionary[key]
-            if (entry2 === undefined) {
-                onFailed(null)
-            } else {
-                onResult(entry2)
-            }
-        })]
+    public getEntryPromise(): EntryPromiseResult<Type> {
+        console.error("dictionary is already final")
+        return [ "already final"]
     }
     public getEntry(key: string): null | Type {
         const entry = this.dictionary[key]
         if (entry === undefined) {
+            return null
+        } else {
+            return entry
+        }
+    }
+    public getEntryX(key: string, resolveReporter: IResolveReporter, typeInfo: string): null | Type {
+        const entry = this.dictionary[key]
+        if (entry === undefined) {
+            resolveReporter.reportDependentUnresolvedReference(typeInfo, key, false)
             return null
         } else {
             return entry
@@ -97,7 +95,8 @@ class DictionaryImp<Type> implements ILookup<Type>, IIntermediateDictionary<Type
 
 class DictionaryBuilder<Type> implements IDictionaryBuilder<Type> {
     public readonly dictionary: RawDictionary<Type> = {}
-    private readonly subscribers: Array<{ key: string; caller: CallerObject<Type> }> = []
+    private readonly stackSubscribers: Array<{ key: string; caller: CallerObject<Type> }> = []
+    private readonly failedGetEntries: RawDictionary<{}> = {}
     private finalized = false
     private readonly resolveReporter: IResolveReporter
     private readonly missingEntryContext: null | MissingEntryContext<Type>
@@ -114,19 +113,24 @@ class DictionaryBuilder<Type> implements IDictionaryBuilder<Type> {
         if (this.dictionary[key] !== undefined) {
             this.resolveReporter.reportConflictingEntry(this.typeInfo, key)
             return
+        } else {
+            const failedGetEntry = this.failedGetEntries[key]
+            if (failedGetEntry !== null) {
+                this.resolveReporter.reportShouldBeDeclaredForward(this.typeInfo, key)
+            }
         }
         this.dictionary[key] = entry
     }
-    public getEntryOrEntryPromise(key: string): EntryPromiseType<Type> {
+    public getEntryPromise(key: string): EntryPromiseResult<Type> {
         if (this.finalized) {
-            throw new Error("DictionaryBuilder is already finalized, use the resulting dictionary")
+            return [ "already final"]
         }
-        const entry = this.getEntry(key)
+        const entry = this.getEntryX(key)
         if (entry !== null) {
-            return ["already registered", entry]
+            return ["entry already registered"]
         }
-        return ["not yet registered", createResolvePromise<Type>((onFailed, onResult) => {
-            this.subscribers.push({
+        return ["awaiting", createResolvePromise<Type>((onFailed, onResult) => {
+            this.stackSubscribers.push({
                 key: key,
                 caller: {
                     onFailed: onFailed,
@@ -135,9 +139,10 @@ class DictionaryBuilder<Type> implements IDictionaryBuilder<Type> {
             })
         })]
     }
-    public getEntry(key: string): null | Type {
+    public getEntryX(key: string): null | Type {
         const entry = this.dictionary[key]
         if (entry === undefined) {
+            this.failedGetEntries[key] = {}
             return null
         } else {
             return entry
@@ -153,11 +158,11 @@ class DictionaryBuilder<Type> implements IDictionaryBuilder<Type> {
             throw new Error("Already finalized")
         }
         this.finalized = true
-        this.subscribers.forEach(subscriber => {
+        this.stackSubscribers.forEach(subscriber => {
             const entry = this.dictionary[subscriber.key]
             if (entry === undefined) {
                 if (this.missingEntryContext !== null) {
-                    const precedingEntry = this.missingEntryContext.referencedDictionary.getEntry(subscriber.key)
+                    const precedingEntry = this.missingEntryContext.referencedDictionary.getEntryX(subscriber.key, this.resolveReporter, this.typeInfo)
                     if (precedingEntry === null) {
                         subscriber.caller.onFailed(null)
                     } else {
@@ -177,7 +182,7 @@ export function createDictionary<Type>(
     typeInfo: string,
     resolveReporter: IResolveReporter,
     callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
-): IIntermediateDictionary<Type> {
+): IDictionary<Type> {
     const dict = new DictionaryBuilder<Type>(resolveReporter, null, typeInfo)
     callback(dict)
     dict.finalize()
@@ -193,7 +198,7 @@ export function createHackedStackedDictionary<Type>(
     typeInfo: string,
     resolveReporter: IResolveReporter,
     callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
-): IIntermediateDictionary<Type> {
+): IDictionary<Type> {
     console.error("HACKED STACKED")
     const dict = new DictionaryBuilder<Type>(resolveReporter, null, typeInfo)
     callback(dict)
@@ -207,7 +212,7 @@ export function createStackedDictionary<Type>(
     callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
     referencedDictionary: IStackedLookup<Type>,
     missingEntryCreator: (key: string, previousEntry: Type) => Type,
-): IIntermediateDictionary<Type> {
+): IDictionary<Type> {
     const missingEntryContext: null | MissingEntryContext<Type> =
         referencedDictionary === null
             ? null
@@ -244,9 +249,9 @@ class OrderedDictionaryImp<Type> implements OrderedDictionary<Type> {
 export function createOrderedDictionary<Type>(
     typeInfo: string,
     resolveReporter: IResolveReporter,
-    dictionary: IIntermediateDictionary<Type>,
+    dictionary: IDictionary<Type>,
     getDependencies: (entry: Type) => string[]
-): IIntermediateOrderedDictionary<Type> {
+): OrderedDictionary<Type> {
     const array: Array<KeyValuePair<Type>> = []
     const alreadyInserted: { [key: string]: FinishedInsertion } = {}
     const process = (key: string) => {
@@ -273,81 +278,68 @@ export function createOrderedDictionary<Type>(
     return new OrderedDictionaryImp(array)
 }
 
-class FulfillingDictionaryImp<Type, ReferencedType>
-    extends DictionaryImp<FulfilledPair<Type, ReferencedType>>
-    implements FulfillingDictionary<Type, ReferencedType> {
-    public readonly fulfilling = true
-    // public getMatchedEntry(key: string, _targetEntry: ReferencedType) {
-    //     const entry = this.dictionary[key]
-    //     if (entry === undefined) {
-    //         throw new Error("missing entry in fulfiling dictionary")
-    //     }
-    // }
-}
-
-export function createFulfillingDictionary<Type, ReferencedType>(
+export function createDelayedResolveFulfillingDictionary<Type>(
     typeInfo: string,
     resolveReporter: IResolveReporter,
-    referencedDictionary: IResolvePromise<RequiringDictionary<ReferencedType>>,
+    delayedResolveLookup: IResolvePromise<IRequiringLookup>,
     callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
-): IIntermediateFulfillingDictionary<Type, ReferencedType> {
+): IDictionary<Type> {
     const dict = new DictionaryBuilder<Type>(resolveReporter, null, typeInfo)
     callback(dict)
     dict.finalize()
-    const pairedDictionary: RawDictionary<FulfilledPair<Type, ReferencedType>> = {}
-    referencedDictionary.handlePromise(
+    delayedResolveLookup.handlePromise(
         _error => {
-            resolveReporter.reportDependentUnresolvedDictionary(typeInfo)
+            resolveReporter.reportUnresolvedRequiringDictionary(typeInfo, true)
         },
-        rd => {
+        lookup => {
             const keys = Object.keys(dict.dictionary)
-            const referencedKeys = rd.getKeys()
-            // if (keys.length < referencedKeys.length) {
-            //     resolveReporter.reportMissingEntries(type, referencedDictionary.getKeys().filter(key => dict.dictionary[key] === undefined))
-            // }
-            // if (Object.keys(dict.dictionary).length > keys.length) {
-            //     resolveReporter.reportSuperfluousEntries(type, keys.filter(key => referencedDictionary.has(key) === undefined))
-            // }
+            const requiredKeys = lookup.getKeys()
+            const missingEntries = requiredKeys.filter(key => dict.dictionary[key] === undefined)
+            if (missingEntries.length > 0) {
+                resolveReporter.reportMissingRequiredEntries(typeInfo, missingEntries, keys, true)
+            }
             keys.forEach(key => {
-                //console.log(key, referencedDictionary.has(key), referencedKeys)
-                const referencedEntry = rd.getEntry(key)
-                if (referencedEntry === null) {
-                    resolveReporter.reportSuperfluousFulfillingEntry(typeInfo, key, referencedKeys)
-                }
-                pairedDictionary[key] = {
-                    entry: dict.dictionary[key],
-                    fulfilledEntry: referencedEntry,
-                }
-            })
-            referencedKeys.forEach(key => {
-                const entry = dict.dictionary[key]
-                if (entry === undefined) {
-                    resolveReporter.reportMissingRequiredEntry(typeInfo, key, keys)
+                if (requiredKeys.indexOf(key) === -1) {
+                    resolveReporter.reportUnresolvedReference(typeInfo, key, lookup.getKeys(), true)
                 }
             })
         }
     )
-    return new FulfillingDictionaryImp<Type, ReferencedType>(pairedDictionary)
+    return new DictionaryImp<Type>(dict.dictionary)
 }
 
-export function createHackFulfillingDictionary<Type, ReferencedType>(
+export function createFulfillingDictionary<Type>(
     typeInfo: string,
     resolveReporter: IResolveReporter,
+    lookup: IRequiringLookup,
     callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
-): IIntermediateFulfillingDictionary<Type, ReferencedType> {
+): IDictionary<Type> {
     const dict = new DictionaryBuilder<Type>(resolveReporter, null, typeInfo)
     callback(dict)
     dict.finalize()
-    const pairedDictionary: RawDictionary<FulfilledPair<Type, ReferencedType>> = {}
-    console.error("FULFILLING DICTIONARY HACK")
-    resolveReporter.reportDependentUnresolvedDictionary(typeInfo)
     const keys = Object.keys(dict.dictionary)
+    const requiredKeys = lookup.getKeys()
+    const missingEntries = requiredKeys.filter(key => dict.dictionary[key] === undefined)
+    if (missingEntries.length > 0) {
+        resolveReporter.reportMissingRequiredEntries(typeInfo, missingEntries, keys, false)
+    }
     keys.forEach(key => {
-        //console.log(key, referencedDictionary.has(key), referencedKeys)
-        pairedDictionary[key] = {
-            entry: dict.dictionary[key],
-            fulfilledEntry: null,
+        if (requiredKeys.indexOf(key) === -1) {
+            resolveReporter.reportUnresolvedReference(typeInfo, key, lookup.getKeys(), false)
         }
     })
-    return new FulfillingDictionaryImp<Type, ReferencedType>(pairedDictionary)
+    return new DictionaryImp<Type>(dict.dictionary)
+}
+
+export function createHackFulfillingDictionary<Type>(
+    typeInfo: string,
+    resolveReporter: IResolveReporter,
+    callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
+): IDictionary<Type> {
+    const dict = new DictionaryBuilder<Type>(resolveReporter, null, typeInfo)
+    callback(dict)
+    dict.finalize()
+    console.error("FULFILLING DICTIONARY HACK")
+    resolveReporter.reportUnresolvedRequiringDictionary(typeInfo, true)
+    return new DictionaryImp<Type>(dict.dictionary)
 }

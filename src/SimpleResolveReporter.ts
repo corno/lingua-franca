@@ -11,42 +11,39 @@ export class SimpleResolveReporter implements IResolveReporter {
         this.reportWarning = reportWarning
     }
     //errors
-    public reportUnresolvedReference(typeInfo: string, key: string, options: string[]) {
-        this.reportError(false, "unresolved reference: " + key + " (" + typeInfo + "). found entries: " + options.join(", "))
+    public reportUnresolvedReference(typeInfo: string, key: string, options: string[], delayed: boolean) {
+        this.reportError(false, `unresolved ${delayed ? "delayed " : ""}reference: ${key} (${typeInfo}). found entries: ${options.join(`, `)}`)
     }
-    public reportUnresolvedIntraReference(typeInfo: string, key: string) {
-        this.reportError(false, "unresolved forward reference: " + key + " (" + typeInfo + ")")
+    public reportConstraintViolation(typeInfo: string, delayed: boolean) {
+        this.reportError(false, `${delayed ? "delayed " : ""}constraint violation: (${typeInfo})`)
     }
-    public reportIntraConstraintViolation(typeInfo: string) {
-        this.reportError(false, "constraint violation: (" + typeInfo + ")")
-    }
-    public reportSuperfluousFulfillingEntry(typeInfo: string, key: string, requiredEntries: string[]) {
-        this.reportError(false, "superfluous fulfilling entry: " + key + " (" + typeInfo + "). found entries: " + requiredEntries.join(", "))
-    }
-    public reportMissingRequiredEntry(typeInfo: string, key: string, foundEntries: string[]) {
-        this.reportError(false, "missing required entry: " + key + " (" + typeInfo + "). found entries: " + foundEntries.join(", "))
+    public reportMissingRequiredEntries(typeInfo: string, missingEntries: string[], foundEntries: string[], delayed: boolean) {
+        this.reportError(false, `missing required ${delayed ? "delayed " : ""}entry: ${missingEntries.join(`, `)} (${typeInfo}). found entries: ${foundEntries.join(`, `)}`)
     }
     public reportConflictingEntry(typeInfo: string, key: string) {
-        this.reportError(false, "conflicting entry: " + key + " (" + typeInfo + ")")
+        this.reportError(false, `conflicting entry: ${key} (${typeInfo})`)
     }
     public reportCircularDependency(typeInfo: string) {
-        this.reportError(false, "circular dependency: (" + typeInfo + ")")
+        this.reportError(false, `circular dependency: (${typeInfo})`)
+    }
+    public reportReferenceToNonExistentLookup(typeInfo: string) {
+        this.reportError(false, `referencing non existent lookup: (${typeInfo})`)
     }
     //dependent errors
-    public reportDependentUnresolvedReference(typeInfo: string, key: string) {
-        this.reportError(true, "unresolved reference: " + key + " (" + typeInfo + ")")
+    public reportDependentUnresolvedReference(typeInfo: string, key: string, delayed: boolean) {
+        this.reportError(true, `unresolved dependent ${delayed ? "delayed " : ""}reference: ${key} (${typeInfo})`)
     }
-    public reportDependentUnresolvedIntraReference(typeInfo: string, key: string) {
-        this.reportError(true, "unresolved forward reference: " + key + " (" + typeInfo + ")")
+    public reportDependentConstraintViolation(typeInfo: string, delayed: boolean) {
+        this.reportError(true, `unresolved dependent ${delayed ? "delayed " : ""}constraint violation (${typeInfo})`)
     }
-    public reportDependentUnresolvedDictionary(typeInfo: string) {
-        this.reportError(true, "unmatched dictionary: " + typeInfo)
+    public reportUnresolvedRequiringDictionary(typeInfo: string, delayed: boolean) {
+        this.reportError(true, `unresolved ${delayed ? "delayed " : ""}requiring dictionary: (${typeInfo})`)
     }
     //warnings
     public reportShouldNotBeDeclaredForward(typeInfo: string, key: string) {
-        this.reportWarning("entry should *not* be marked 'forward': " + key + " (" + typeInfo + ")")
+        this.reportWarning(`entry should *not* be marked 'delayed': ${key} (${typeInfo})`)
     }
     public reportShouldBeDeclaredForward(typeInfo: string, key: string) {
-        this.reportWarning("entry should be marked 'forward': " + key + " (" + typeInfo + ")")
+        this.reportWarning(`entry should be marked 'delayed': ${key} (${typeInfo})`)
     }
 }

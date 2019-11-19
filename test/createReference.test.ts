@@ -1,8 +1,8 @@
 // tslint:disable: no-console no-unused-expression
 
 import { assert } from "chai"
-import { createDictionary } from "../src/createDirectory"
-import { createReference } from "../src/createReference"
+import { createDictionary } from "../src/create/createDirectory"
+import { createResolvedReference } from "../src/create/createInstantResolveReference"
 import { SimpleResolveReporter } from "../src/SimpleResolveReporter"
 
 describe("createReference", () => {
@@ -18,9 +18,9 @@ describe("createReference", () => {
         const dict = createDictionary<number>("FUBAR", rr, x => {
             x.add("A", 5)
         })
-        const ref = createReference("X", "A_KEY", dict, rr)
+        const ref = createResolvedReference("X", "A_KEY", dict, rr)
         assert.isNull(ref.value)
-        const ref2 = createReference("X", "A", dict, rr)
+        const ref2 = createResolvedReference("X", "A", dict, rr)
         assert.strictEqual(ref2.value, 5)
     })
 })

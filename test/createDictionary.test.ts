@@ -1,7 +1,7 @@
 // tslint:disable: no-console no-unused-expression
 
 import { assert } from "chai"
-import { createDictionary } from "../src/createDirectory"
+import { createDictionary } from "../src/create/createDirectory"
 import { SimpleResolveReporter } from "../src/SimpleResolveReporter"
 
 describe("createDictionary", () => {
