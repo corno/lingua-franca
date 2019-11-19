@@ -9,9 +9,39 @@ import { IResolveReporter } from "./IResolveReporter"
 
 type RawDictionary<Type> = { [key: string]: Type }
 
-//type KeyValuePair<Type> = { key: string; value: Type }
+type KeyValuePair<Type> = { key: string; value: Type }
 
 type FinishedInsertion = boolean
+
+
+function orderedIterate<Type>(
+    orderedElements: Array<KeyValuePair<Type>>,
+    onElement: (element: Type, getKey: (sanitizer: Sanitizer) => string) => void,
+    onSepartor?: () => void,
+    onBeforeFirst?: () => void,
+    onAfterLast?: () => void,
+    onEmpty?: () => void,
+) {
+    const isEmpty = orderedIterate.length === 0
+    if (isEmpty) {
+        if (onEmpty !== undefined) {
+            onEmpty()
+        }
+        return
+    }
+    if (isEmpty && onBeforeFirst !== undefined) {
+        onBeforeFirst()
+    }
+    orderedElements.forEach((kvPair, index) => {
+        if (index !== 0 && onSepartor !== undefined) {
+            onSepartor()
+        }
+        onElement(kvPair.value, sanitizer => sanitizer(kvPair.key))
+    })
+    if (!isEmpty && onAfterLast !== undefined) {
+        onAfterLast()
+    }
+}
 
 class DictionaryImp<Type> implements ILookup<Type>, IIntermediateDictionary<Type> {
     protected readonly dictionary: { [key: string]: Type } = {}
@@ -47,7 +77,7 @@ class DictionaryImp<Type> implements ILookup<Type>, IIntermediateDictionary<Type
         onAfterLast?: () => void,
         onEmpty?: () => void,
     ) {
-        this.forEachImp(this.getKeys(), onElement, onSepartor, onBeforeFirst, onAfterLast, onEmpty)
+        orderedIterate(this.getKeys().map(key => ({ key: key, value: this.dictionary[key] })), onElement, onSepartor, onBeforeFirst, onAfterLast, onEmpty)
     }
     public has(key: string) {
         return this.dictionary[key] !== undefined
@@ -57,33 +87,8 @@ class DictionaryImp<Type> implements ILookup<Type>, IIntermediateDictionary<Type
             return a.toLowerCase().localeCompare(b.toLowerCase())
         })
     }
-    protected forEachImp(
-        keys: string[],
-        onElement: (element: Type, getKey: (sanitizer: Sanitizer) => string) => void,
-        onSepartor?: () => void,
-        onBeforeFirst?: () => void,
-        onAfterLast?: () => void,
-        onEmpty?: () => void,
-    ) {
-        const isEmpty = keys.length === 0
-        if (isEmpty) {
-            if (onEmpty !== undefined) {
-                onEmpty()
-            }
-            return
-        }
-        if (isEmpty && onBeforeFirst !== undefined) {
-            onBeforeFirst()
-        }
-        keys.forEach((key, index) => {
-            if (index !== 0 && onSepartor !== undefined) {
-                onSepartor()
-            }
-            onElement(this.dictionary[key], sanitizer => sanitizer(key))
-        })
-        if (!isEmpty && onAfterLast !== undefined) {
-            onAfterLast()
-        }
+    public temp_getKeysInInsertionOrder() {
+        return Object.keys(this.dictionary)
     }
     get isEmpty() {
         return this.getKeys().length === 0
@@ -216,11 +221,10 @@ export function createStackedDictionary<Type>(
     return new DictionaryImp(dict.dictionary)
 }
 
-class OrderedDictionaryImp<Type> extends DictionaryImp<Type> implements OrderedDictionary<Type> {
+class OrderedDictionaryImp<Type> implements OrderedDictionary<Type> {
     //public readonly ordered = true
-    private readonly orderedArray: Array<string>
-    constructor(dictionary: RawDictionary<Type>, orderedArray: Array<string>) {
-        super(dictionary)
+    private readonly orderedArray: Array<KeyValuePair<Type>>
+    constructor(orderedArray: Array<KeyValuePair<Type>>) {
         this.orderedArray = orderedArray
     }
     public forEach(
@@ -230,49 +234,43 @@ class OrderedDictionaryImp<Type> extends DictionaryImp<Type> implements OrderedD
         onAfterLast?: () => void,
         onEmpty?: () => void,
     ) {
-        this.forEachImp(this.orderedArray, onElement, onSepartor, onBeforeFirst, onAfterLast, onEmpty)
+        orderedIterate(this.orderedArray, onElement, onSepartor, onBeforeFirst, onAfterLast, onEmpty)
     }
     public mapToArray<NewType>(callback: (entry: Type, key: string) => NewType) {
-        return this.getKeys().map(key => ({
-            key: key,
-            value: callback(this.dictionary[key], key),
-        }))
+        return this.orderedArray.map(kvPair => callback(kvPair.value, kvPair.key))
     }
 }
 
 export function createOrderedDictionary<Type>(
     typeInfo: string,
     resolveReporter: IResolveReporter,
-    callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
+    dictionary: IIntermediateDictionary<Type>,
     getDependencies: (entry: Type) => string[]
 ): IIntermediateOrderedDictionary<Type> {
-    const dict = new DictionaryBuilder<Type>(resolveReporter, null, typeInfo)
-    callback(dict)
-    dict.finalize()
-    const array: Array<string> = []
+    const array: Array<KeyValuePair<Type>> = []
     const alreadyInserted: { [key: string]: FinishedInsertion } = {}
     const process = (key: string) => {
         const isInserted = alreadyInserted[key]
         if (isInserted === undefined) {
-            const entry = dict.dictionary[key]
-            if (entry === undefined) {
+            const entry = dictionary.getEntry(key)
+            if (entry === null) {
                 //this can happen when the caller returns an invalid key upon getDependencies
                 //console.error("Entry does not exist: " + key)
                 return
             }
             alreadyInserted[key] = false
             getDependencies(entry).forEach(process)
-            array.push(key)
+            array.push({key: key, value: entry})
         } else {
             if (!isInserted) {
-                throw new Error("Circular dependency detected")
+                resolveReporter.reportCircularDependency(typeInfo)
             }
         }
     }
-    Object.keys(dict.dictionary).forEach(key => {
+    dictionary.temp_getKeysInInsertionOrder().forEach(key => {
         process(key)
     })
-    return new OrderedDictionaryImp(dict.dictionary, array)
+    return new OrderedDictionaryImp(array)
 }
 
 class FulfillingDictionaryImp<Type, ReferencedType>

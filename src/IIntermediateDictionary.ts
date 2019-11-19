@@ -3,10 +3,11 @@ import { IIntraLookup, ILookup } from "./ILookup"
 
 export interface IIntermediateDictionary<Type> extends Dictionary<Type>, ILookup<Type>, IIntraLookup<Type> {
     getKeys(): string[]
+    temp_getKeysInInsertionOrder(): string[]
     has(key: string): boolean
 }
 
-export interface IIntermediateOrderedDictionary<Type> extends OrderedDictionary<Type>, IIntermediateDictionary<Type> {
+export interface IIntermediateOrderedDictionary<Type> extends OrderedDictionary<Type> {
 }
 
 export interface IIntermediateFulfillingDictionary<Type, ReferencedType>

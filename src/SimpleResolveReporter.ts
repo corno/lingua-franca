@@ -11,39 +11,42 @@ export class SimpleResolveReporter implements IResolveReporter {
         this.reportWarning = reportWarning
     }
     //errors
-    public reportUnresolvedReference(type: string, key: string, options: string[]) {
-        this.reportError(false, "unresolved reference: " + key + " (" + type + "). found entries: " + options.join(", "))
+    public reportUnresolvedReference(typeInfo: string, key: string, options: string[]) {
+        this.reportError(false, "unresolved reference: " + key + " (" + typeInfo + "). found entries: " + options.join(", "))
     }
-    public reportUnresolvedIntraReference(type: string, key: string) {
-        this.reportError(false, "unresolved forward reference: " + key + " (" + type + ")")
+    public reportUnresolvedIntraReference(typeInfo: string, key: string) {
+        this.reportError(false, "unresolved forward reference: " + key + " (" + typeInfo + ")")
     }
-    public reportIntraConstraintViolation(type: string) {
-        this.reportError(false, "constraint violation: (" + type + ")")
+    public reportIntraConstraintViolation(typeInfo: string) {
+        this.reportError(false, "constraint violation: (" + typeInfo + ")")
     }
-    public reportSuperfluousFulfillingEntry(type: string, key: string, requiredEntries: string[]) {
-        this.reportError(false, "superfluous fulfilling entry: " + key + " (" + type + "). found entries: " + requiredEntries.join(", "))
+    public reportSuperfluousFulfillingEntry(typeInfo: string, key: string, requiredEntries: string[]) {
+        this.reportError(false, "superfluous fulfilling entry: " + key + " (" + typeInfo + "). found entries: " + requiredEntries.join(", "))
     }
-    public reportMissingRequiredEntry(type: string, key: string, foundEntries: string[]) {
-        this.reportError(false, "missing required entry: " + key + " (" + type + "). found entries: " + foundEntries.join(", "))
+    public reportMissingRequiredEntry(typeInfo: string, key: string, foundEntries: string[]) {
+        this.reportError(false, "missing required entry: " + key + " (" + typeInfo + "). found entries: " + foundEntries.join(", "))
     }
-    public reportConflictingEntry(type: string, key: string) {
-        this.reportError(false, "conflicting entry: " + key + " (" + type + ")")
+    public reportConflictingEntry(typeInfo: string, key: string) {
+        this.reportError(false, "conflicting entry: " + key + " (" + typeInfo + ")")
+    }
+    public reportCircularDependency(typeInfo: string) {
+        this.reportError(false, "circular dependency: (" + typeInfo + ")")
     }
     //dependent errors
-    public reportDependentUnresolvedReference(type: string, key: string) {
-        this.reportError(true, "unresolved reference: " + key + " (" + type + ")")
+    public reportDependentUnresolvedReference(typeInfo: string, key: string) {
+        this.reportError(true, "unresolved reference: " + key + " (" + typeInfo + ")")
     }
-    public reportDependentUnresolvedIntraReference(type: string, key: string) {
-        this.reportError(true, "unresolved forward reference: " + key + " (" + type + ")")
+    public reportDependentUnresolvedIntraReference(typeInfo: string, key: string) {
+        this.reportError(true, "unresolved forward reference: " + key + " (" + typeInfo + ")")
     }
-    public reportDependentUnresolvedDictionary(type: string) {
-        this.reportError(true, "unmatched dictionary: " + type)
+    public reportDependentUnresolvedDictionary(typeInfo: string) {
+        this.reportError(true, "unmatched dictionary: " + typeInfo)
     }
     //warnings
-    public reportShouldNotBeDeclaredForward(type: string, key: string) {
-        this.reportWarning("entry should *not* be marked 'forward': " + key + " (" + type + ")")
+    public reportShouldNotBeDeclaredForward(typeInfo: string, key: string) {
+        this.reportWarning("entry should *not* be marked 'forward': " + key + " (" + typeInfo + ")")
     }
-    public reportShouldBeDeclaredForward(type: string, key: string) {
-        this.reportWarning("entry should be marked 'forward': " + key + " (" + type + ")")
+    public reportShouldBeDeclaredForward(typeInfo: string, key: string) {
+        this.reportWarning("entry should be marked 'forward': " + key + " (" + typeInfo + ")")
     }
 }

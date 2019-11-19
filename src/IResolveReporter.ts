@@ -1,17 +1,18 @@
 export interface IResolveReporter {
     //errors
-    reportUnresolvedReference(type: string, key: string, options: string[]): void
-    reportUnresolvedIntraReference(type: string, key: string): void
-    reportIntraConstraintViolation(type: string): void
-    reportSuperfluousFulfillingEntry(type: string, key: string, requiredEntries: string[]): void
-    reportMissingRequiredEntry(type: string, key: string, foundEntries: string[]): void
-    reportConflictingEntry(type: string, key: string): void
+    reportUnresolvedReference(typeInfo: string, key: string, options: string[]): void
+    reportUnresolvedIntraReference(typeInfo: string, key: string): void
+    reportIntraConstraintViolation(typeInfo: string): void
+    reportSuperfluousFulfillingEntry(typeInfo: string, key: string, requiredEntries: string[]): void
+    reportMissingRequiredEntry(typeInfo: string, key: string, foundEntries: string[]): void
+    reportConflictingEntry(typeInfo: string, key: string): void
+    reportCircularDependency(typeInfo: string): void
     //dependent Errors
-    reportDependentUnresolvedReference(type: string, key: string): void
-    reportDependentUnresolvedIntraReference(type: string, key: string): void
-    reportDependentUnresolvedDictionary(type: string): void
+    reportDependentUnresolvedReference(typeInfo: string, key: string): void
+    reportDependentUnresolvedIntraReference(typeInfo: string, key: string): void
+    reportDependentUnresolvedDictionary(typeInfo: string): void
     //warnings
-    reportShouldNotBeDeclaredForward(type: string, key: string): void
-    reportShouldBeDeclaredForward(type: string, key: string): void
+    reportShouldNotBeDeclaredForward(typeInfo: string, key: string): void
+    reportShouldBeDeclaredForward(typeInfo: string, key: string): void
 
 }
