@@ -10,7 +10,7 @@ export interface IResolveReporter {
 
 
     reportUnresolvedReference(typeInfo: string, key: string, options: string[], delayed: boolean): void
-    reportConstraintViolation(typeInfo: string, delayed: boolean): void
+    reportConstraintViolation(typeInfo: string, expectedState: string, foundState: string, delayed: boolean): void
 
     /**
      * missing entry in a fulfilling dictionary.
@@ -29,7 +29,7 @@ export interface IResolveReporter {
      * cannot be ordered
      * @param typeInfo
      */
-    reportCircularDependency(typeInfo: string): void
+    reportCircularDependency(typeInfo: string, key: string): void
 
     /**
      *

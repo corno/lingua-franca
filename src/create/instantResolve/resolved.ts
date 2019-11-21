@@ -1,5 +1,6 @@
 // tslint:disable: max-classes-per-file
 import { Dictionary } from "lingua-franca"
+import { ConstraintCastResult  } from "../../interfaces/ConstraintCastResult"
 import { IDependentLookup, IResolved, IResolvedStateConstraint, IStackedLookup } from "../../interfaces/instantResolve"
 import { IResolveReporter } from "../../IResolveReporter"
 import { createDependentLookup, createNullLookup } from "./dependentLookup"
@@ -45,10 +46,10 @@ class ResolvedImp<Type> implements IResolved<Type> {
             }
         )
     }
-    public castToConstraint<NewType>(callback: (type: Type) => [false] | [true, NewType], typeInfo: string): IResolvedStateConstraint<NewType> {
+    public castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string): IResolvedStateConstraint<NewType> {
         const castResult = callback(this.value)
         if (castResult[0] === false) {
-            this.resolveReporter.reportConstraintViolation(typeInfo, false)
+            this.resolveReporter.reportConstraintViolation(typeInfo, castResult[1].expected, castResult[1].found, false)
             return createStateConstraint<NewType>(createNullResolved(this.resolveReporter))
         } else {
             return createStateConstraint<NewType>(wrapResolved(castResult[1], this.resolveReporter))
@@ -88,7 +89,7 @@ class NullResolved<Type> implements IResolved<Type> {
     public getResolved(): Type {
         throw new Error("Reference failed to resolve")
     }
-    public castToConstraint<NewType>(_callback: (type: Type) => [false] | [true, NewType], typeInfo: string): IResolvedStateConstraint<NewType> {
+    public castToConstraint<NewType>(_callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string): IResolvedStateConstraint<NewType> {
         this.resolveReporter.reportDependentConstraintViolation(typeInfo, false)
         return createStateConstraint<NewType>(createNullResolved<NewType>(this.resolveReporter))
     }

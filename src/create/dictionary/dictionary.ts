@@ -138,9 +138,10 @@ export function createOrderedDictionary<Type>(
             alreadyInserted[key] = false
             getDependencies(entry).forEach(process)
             array.push({ key: key, value: entry })
+            alreadyInserted[key] = true
         } else {
             if (!isInserted) {
-                resolveReporter.reportCircularDependency(typeInfo)
+                resolveReporter.reportCircularDependency(typeInfo, key)
             }
         }
     }

@@ -1,4 +1,6 @@
 import { Constraint, Dictionary, Reference } from "lingua-franca"
+import { ConstraintCastResult  } from "./ConstraintCastResult"
+
 
 export interface IDelayedResolveLookup<Type> {
     createReferenceToDelayedResolveLookup(
@@ -16,7 +18,7 @@ export interface IDelayedResolveRequiringLookup<Type> {
 
 export interface IDelayedResolvable<ReferencedType> {
     getRequiringLookup<Type>(callback: (type: ReferencedType) => Dictionary<Type>, requiresExhaustive: boolean): IResolvePromise<IDelayedResolveRequiringLookup<Type>>
-    castToConstraint<NewType>(callback: (type: ReferencedType) => [false] | [true, NewType], typeInfo: string): IDelayedResolveConstraint<NewType>
+    castToConstraint<NewType>(callback: (type: ReferencedType) => ConstraintCastResult<NewType>, typeInfo: string): IDelayedResolveConstraint<NewType>
     convert<NewType>(callback: (type: ReferencedType) => NewType): IDelayedResolvable<NewType>
 }
 export interface IDelayedResolveReference<ReferencedType> extends IDelayedResolvable<ReferencedType>, Reference<ReferencedType> { }

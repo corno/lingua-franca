@@ -1,10 +1,9 @@
 // tslint:disable-next-line: max-classes-per-file
 import { Dictionary } from "lingua-franca"
+import { ConstraintCastResult  } from "../../interfaces/ConstraintCastResult"
 import { IDelayedResolvable, IDelayedResolveConstraint, IDelayedResolveReference, IDelayedResolveRequiringLookup, IResolvePromise } from "../../interfaces/delayedResolve"
 import { IResolveReporter } from "../../IResolveReporter"
 import { createDelayedResolveRequiringLookupWrapper } from "./requiringLookup"
-
-export type FilterResult<Type> = [false] | [true, Type]
 
 // tslint:disable-next-line: max-classes-per-file
 class DelayedResolvableImp<ReferencedType> implements IDelayedResolvable<ReferencedType> {
@@ -44,7 +43,7 @@ class DelayedResolvableImp<ReferencedType> implements IDelayedResolvable<Referen
     public getRequiringLookup<NewType>(callback: (type: ReferencedType) => Dictionary<NewType>, requiresExhaustive: boolean): IResolvePromise<IDelayedResolveRequiringLookup<NewType>> {
         return this.getResolvedPromise(callback).map(dict => createDelayedResolveRequiringLookupWrapper(dict, this.resolveReporter, requiresExhaustive))
     }
-    public castToConstraint<NewType>(callback: (type: ReferencedType) => FilterResult<NewType>, typeInfo: string): IDelayedResolveConstraint<NewType> {
+    public castToConstraint<NewType>(callback: (type: ReferencedType) => ConstraintCastResult<NewType>, typeInfo: string): IDelayedResolveConstraint<NewType> {
         return new DelayedResolveConstraintImp<NewType>(this.getResolvedPromise(callback), this.resolveReporter, typeInfo)
     }
     public convert<NewType>(callback: (type: ReferencedType) => NewType): IDelayedResolvable<NewType> {
@@ -140,7 +139,7 @@ class DelayedResolveConstraintImp<ReferencedType> extends DelayedResolvableImp<R
     implements IDelayedResolveConstraint<ReferencedType> {
     public constraint: true = true
     constructor(
-        resolvePromise: IResolvePromise<FilterResult<ReferencedType>>,
+        resolvePromise: IResolvePromise<ConstraintCastResult<ReferencedType>>,
         resolveReporter: IResolveReporter,
         typeInfo: string,
     ) {
@@ -152,7 +151,7 @@ class DelayedResolveConstraintImp<ReferencedType> extends DelayedResolvableImp<R
             },
             result => {
                 if (result[0] === false) {
-                    resolveReporter.reportConstraintViolation(typeInfo, true)
+                    resolveReporter.reportConstraintViolation(typeInfo, result[1].expected, result[1].found, true)
                     this.setResolvedEntryToNull()
                 } else {
                     this.setResolvedEntry(result[1])

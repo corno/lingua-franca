@@ -1,5 +1,6 @@
 
 import { Constraint, Dictionary, Reference } from "lingua-franca"
+import { ConstraintCastResult  } from "./ConstraintCastResult"
 
 export interface IGuaranteedLookup<Type> {
     createReference(key: string, typeInfo: string): IResolvedReference<Type>
@@ -24,7 +25,7 @@ export interface IRequiringLookup<Type> {
 }
 
 export interface IResolved<Type> {
-    castToConstraint<NewType>(callback: (type: Type) => [false] | [true, NewType], typeInfo: string): IResolvedStateConstraint<NewType>
+    castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string): IResolvedStateConstraint<NewType>
     convert<NewType>(callback: (type: Type) => NewType): IResolved<NewType>
     getLookup<NewType>(callback: (value: Type) => Dictionary<NewType>): IDependentLookup<NewType>
     getRequiringLookup<NewType>(callback: (value: Type) => Dictionary<NewType>, requiresExhaustive: boolean): IRequiringLookup<NewType>
