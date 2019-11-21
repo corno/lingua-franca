@@ -109,7 +109,11 @@ class AutoCreateLookup<Type> extends LookupImp<Type> implements IAutoCreateLooku
 }
 
 export function createAutoCreateLookup<Type>(
-    dictionary: Dictionary<Type>, dict: { [key: string]: Type }, resolveReporter: IResolveReporter, missingEntryCreator: MissingEntryCreator<Type>): IAutoCreateLookup<Type> {
+    dictionary: Dictionary<Type>,
+    dict: { [key: string]: Type },
+    resolveReporter: IResolveReporter,
+    missingEntryCreator: MissingEntryCreator<Type>
+): IAutoCreateLookup<Type> {
     return new AutoCreateLookup(dictionary, dict, resolveReporter, missingEntryCreator)
 }
 
