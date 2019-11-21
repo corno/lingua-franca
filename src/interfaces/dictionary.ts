@@ -1,13 +1,14 @@
-import { Dictionary } from "lingua-franca"
 import { IDelayedResolveLookup } from "./delayedResolve"
-import { ILookup } from "./instantResolve"
+import { IGuaranteedLookup } from "./instantResolve"
 
-export interface IDictionary<Type> extends Dictionary<Type>, ILookup<Type>, IDelayedResolveLookup<Type> {
-    getKeys(): string[]
-    temp_getKeysInInsertionOrder(): string[]
-    has(key: string): boolean
+export interface IDictionaryBuilder<Type> {
+    add(key: string, entry: Type): void
+    toLookup(): IGuaranteedLookup<Type>
+    //toRequiringLookup(): IRequiringLookup<Type>
+    toDelayedResolveLookup(): IDelayedResolveLookup<Type>
 }
 
-export interface IDictionaryBuilder<Type> extends ILookup<Type>, IDelayedResolveLookup<Type> {
-    add(key: string, entry: Type): void
+export interface IDictionaryBuilderBase<Type> extends IDictionaryBuilder<Type> {
+    finalize(): void
+    getKeys(): string[]
 }

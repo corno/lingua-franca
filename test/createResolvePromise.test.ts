@@ -1,7 +1,7 @@
 // tslint:disable: no-console no-unused-expression
 
 //import { assert } from "chai"
-import { createResolvePromise } from "../src/create/createDelayedResolveReference"
+import { createResolvePromise } from "../src/create/delayedResolve/delayedResolvable"
 //import { SimpleResolveReporter } from "../src/SimpleResolveReporter"
 
 describe("createResolvePromise", () => {

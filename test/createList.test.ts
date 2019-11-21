@@ -1,7 +1,7 @@
 // tslint:disable: no-console no-unused-expression
 
 import { assert } from "chai"
-import { createList } from "../src/create/createList"
+import { createList } from "../src/create/list"
 
 describe("createList", () => {
     it("basic operations", () => {

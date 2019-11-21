@@ -6,6 +6,9 @@ export interface IResolveReporter {
      */
     reportConflictingEntry(typeInfo: string, key: string): void
 
+    reportLookupDoesNotExist(typeInfo: string, key: string): void
+
+
     reportUnresolvedReference(typeInfo: string, key: string, options: string[], delayed: boolean): void
     reportConstraintViolation(typeInfo: string, delayed: boolean): void
 
@@ -18,6 +21,9 @@ export interface IResolveReporter {
      * @param foundEntries
      */
     reportMissingRequiredEntries(typeInfo: string, missingEntries: string[], foundEntries: string[], delayed: boolean): void
+
+    reportUnresolvedFulfillingDictionaryEntry(typeInfo: string, key: string, options: string[], delayed: boolean): void
+
     /**
      * the entries in an ordered dictionary form a loop and therefor the ordered dictionary
      * cannot be ordered
@@ -36,6 +42,9 @@ export interface IResolveReporter {
     reportDependentUnresolvedReference(typeInfo: string, key: string, delayed: boolean): void
     reportDependentConstraintViolation(typeInfo: string, delayed: boolean): void
     reportUnresolvedRequiringDictionary(typeInfo: string, delayed: boolean): void
+
+    reportDependentUnresolvedFulfillingDictionaryEntry(typeInfo: string, key: string, delayed: boolean): void
+
 
     //warnings
     reportShouldNotBeDeclaredForward(typeInfo: string, key: string): void

@@ -1,33 +1,26 @@
 // tslint:disable-next-line: max-classes-per-file
 import { Dictionary } from "lingua-franca"
-import { assertUnreachable } from "../assertUnreachable"
-import { EntryPromiseResult, IDelayedResolvable, IDelayedResolveConstraint, IDelayedResolveLookup, IDelayedResolveReference, IResolvePromise } from "../interfaces/delayedResolve"
-import { IRequiringLookup } from "../interfaces/instantResolve"
-import { IResolveReporter } from "../IResolveReporter"
-//import { IResolveReporter } from "./IResolveReporter"
+import { IDelayedResolvable, IDelayedResolveConstraint, IDelayedResolveReference, IDelayedResolveRequiringLookup, IResolvePromise } from "../../interfaces/delayedResolve"
+import { IResolveReporter } from "../../IResolveReporter"
+import { createDelayedResolveRequiringLookupWrapper } from "./requiringLookup"
 
 export type FilterResult<Type> = [false] | [true, Type]
 
-class RequiringLookupImp<Type> implements IRequiringLookup {
-    private readonly dictionary: Dictionary<Type>
-    constructor(
-        dictionary: Dictionary<Type>
-    ) {
-        this.dictionary = dictionary
-    }
-    public getKeys() {
-        return this.dictionary.getKeys()
-    }
-}
-
 // tslint:disable-next-line: max-classes-per-file
 class DelayedResolvableImp<ReferencedType> implements IDelayedResolvable<ReferencedType> {
-    protected resolvedEntry: undefined | null | ReferencedType
+    private resolvedEntry: undefined | null | ReferencedType
     private readonly subscribers: Array<CallerObject<ReferencedType>> = []
+    private readonly resolveReporter: IResolveReporter
+    constructor(resolveReporter: IResolveReporter) {
+        this.resolveReporter = resolveReporter
+    }
     public mapResolved<NewType>(
         callback: (type: ReferencedType) => NewType,
         onNotRolved: () => NewType
     ) {
+        if (this.resolvedEntry === undefined) {
+            console.error("IMPLEMENTATION ERROR: Entry was not resolved!!!!!!!")
+        }
         if (this.resolvedEntry === null || this.resolvedEntry === undefined) {
             if (onNotRolved === undefined) {
                 throw new Error("Reference was not resolved properly")
@@ -48,11 +41,22 @@ class DelayedResolvableImp<ReferencedType> implements IDelayedResolvable<Referen
             }
         )
     }
-    public getRequiringLookup<Type>(callback: (type: ReferencedType) => Dictionary<Type>): IResolvePromise<IRequiringLookup> {
-        return this.getResolvedPromise(callback).map(dict => new RequiringLookupImp(dict))
+    public getRequiringLookup<NewType>(callback: (type: ReferencedType) => Dictionary<NewType>, requiresExhaustive: boolean): IResolvePromise<IDelayedResolveRequiringLookup<NewType>> {
+        return this.getResolvedPromise(callback).map(dict => createDelayedResolveRequiringLookupWrapper(dict, this.resolveReporter, requiresExhaustive))
     }
-    public cast<NewType>(callback: (type: ReferencedType) => FilterResult<NewType>, resolveReporter: IResolveReporter, typeInfo: string): IDelayedResolveConstraint<NewType> {
-        return new DelayedResolveConstraintImp<NewType>(this.getResolvedPromise(callback), resolveReporter, typeInfo)
+    public castToConstraint<NewType>(callback: (type: ReferencedType) => FilterResult<NewType>, typeInfo: string): IDelayedResolveConstraint<NewType> {
+        return new DelayedResolveConstraintImp<NewType>(this.getResolvedPromise(callback), this.resolveReporter, typeInfo)
+    }
+    public convert<NewType>(callback: (type: ReferencedType) => NewType): IDelayedResolvable<NewType> {
+        return new ConvertedDelayedResolvableImp<NewType>(this.getResolvedPromise(callback), this.resolveReporter)
+    }
+    protected setResolvedEntryToNull() {
+        this.resolvedEntry = null
+        this.subscribers.forEach(s => s.onFailed(null))
+    }
+    protected setResolvedEntry(entry: ReferencedType) {
+        this.resolvedEntry = entry
+        this.subscribers.forEach(s => s.onResult(entry))
     }
     private getResolvedPromise<NewType>(callback: (value: ReferencedType) => NewType): IResolvePromise<NewType> {
         return createResolvePromise<NewType>((onFailed, onResult) => {
@@ -79,65 +83,49 @@ class DelayedResolveReferenceImp<ReferencedType> extends DelayedResolvableImp<Re
     private readonly key: string
     constructor(
         key: string,
-        entryPromiseResult: EntryPromiseResult<ReferencedType>,
-        resolver: IResolveReporter,
+        entryPromise: IResolvePromise<GetEntryResult<ReferencedType>>,
+        resolveReporter: IResolveReporter,
         typeInfo: string,
         isForwardDeclaration: boolean
     ) {
-        super()
+        super(resolveReporter)
         this.key = key
-        switch (entryPromiseResult[0]) {
-            case "entry already registered": {
-                if (isForwardDeclaration) {
-                    resolver.reportShouldNotBeDeclaredForward(typeInfo, key)
+        entryPromise.handlePromise(
+            () => {
+                //not found
+                resolveReporter.reportDependentUnresolvedReference(typeInfo, key, true)
+                this.setResolvedEntryToNull()
+            },
+            entryResult => {
+                if (isForwardDeclaration && entryResult.wasRegisteredBeforeRequest) {
+                    resolveReporter.reportShouldNotBeDeclaredForward(typeInfo, key)
                 }
-                this.resolvedEntry = null
-                break
-            }
-            case "already final": {
-                if (isForwardDeclaration) {
-                    resolver.reportShouldNotBeDeclaredForward(typeInfo, key)
+                if (!isForwardDeclaration && !entryResult.wasRegisteredBeforeRequest) {
+                    resolveReporter.reportShouldBeDeclaredForward(typeInfo, key)
                 }
-                this.resolvedEntry = null
-                break
+                this.setResolvedEntry(entryResult.entry)
             }
-            case "awaiting": {
-                const promise = entryPromiseResult[1]
-                promise.handlePromise(
-                    () => {
-                        //not found
-                        resolver.reportDependentUnresolvedReference(typeInfo, key, true)
-                        this.resolvedEntry = null
-                    },
-                    entry => {
-                        if (!isForwardDeclaration) {
-                            resolver.reportShouldBeDeclaredForward(typeInfo, key)
-                        }
-                        this.resolvedEntry = entry
-                    }
-                )
-                break
-            }
-            default:
-                assertUnreachable(entryPromiseResult[0])
-                throw new Error("UNREACHABLE")
-        }
+        )
     }
     public getKey(sanitize: (rawKey: string) => string) {
         return sanitize(this.key)
     }
 }
 
+
+export type GetEntryResult<Type> = {
+    entry: Type
+    wasRegisteredBeforeRequest: boolean
+}
+
 export function createReferenceToDelayedResolveLookup<ReferencedType>(
-    typeInfo: string,
     key: string,
-    resolvedLookup: IDelayedResolveLookup<ReferencedType>,
-    resolver: IResolveReporter,
+    entryPromiseResult: IResolvePromise<GetEntryResult<ReferencedType>>,
+    resolveReporter: IResolveReporter,
+    typeInfo: string,
     isForwardDeclaration: boolean,
 ): IDelayedResolveReference<ReferencedType> {
-    const entryPromiseResult = resolvedLookup.getEntryPromise(key)
-
-    return new DelayedResolveReferenceImp(key, entryPromiseResult, resolver, typeInfo, isForwardDeclaration)
+    return new DelayedResolveReferenceImp(key, entryPromiseResult, resolveReporter, typeInfo, isForwardDeclaration)
 }
 
 type CallerFunction<ResultType> = (onFailed: (failed: null) => void, onResult: (result: ResultType) => void) => void
@@ -153,22 +141,40 @@ class DelayedResolveConstraintImp<ReferencedType> extends DelayedResolvableImp<R
     public constraint: true = true
     constructor(
         resolvePromise: IResolvePromise<FilterResult<ReferencedType>>,
-        resolver: IResolveReporter,
+        resolveReporter: IResolveReporter,
         typeInfo: string,
     ) {
-        super()
+        super(resolveReporter)
         resolvePromise.handlePromise(
             _failed => {
-                resolver.reportDependentConstraintViolation(typeInfo, true)
-                this.resolvedEntry = null
+                resolveReporter.reportDependentConstraintViolation(typeInfo, true)
+                this.setResolvedEntryToNull()
             },
             result => {
                 if (result[0] === false) {
-                    resolver.reportConstraintViolation(typeInfo, true)
-                    this.resolvedEntry = null
+                    resolveReporter.reportConstraintViolation(typeInfo, true)
+                    this.setResolvedEntryToNull()
                 } else {
-                    this.resolvedEntry = result[1]
+                    this.setResolvedEntry(result[1])
                 }
+            }
+        )
+    }
+}
+
+// tslint:disable-next-line: max-classes-per-file
+class ConvertedDelayedResolvableImp<ReferencedType> extends DelayedResolvableImp<ReferencedType> {
+    constructor(
+        resolvePromise: IResolvePromise<ReferencedType>,
+        resolveReporter: IResolveReporter,
+    ) {
+        super(resolveReporter)
+        resolvePromise.handlePromise(
+            _failed => {
+                this.setResolvedEntryToNull()
+            },
+            result => {
+                this.setResolvedEntry(result)
             }
         )
     }
