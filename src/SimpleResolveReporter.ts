@@ -20,8 +20,11 @@ export class SimpleResolveReporter implements IResolveReporter {
     public reportMissingRequiredEntries(typeInfo: string, missingEntries: string[], foundEntries: string[], delayed: boolean) {
         this.reportError(false, `missing required ${delayed ? "delayed " : ""}entry: ${missingEntries.join(`, `)} (${typeInfo}). found entries: ${foundEntries.join(`, `)}`)
     }
-    public reportLookupDoesNotExist(typeInfo: string, key: string) {
+    public reportLookupDoesNotExistForReference(typeInfo: string, key: string) {
         this.reportError(false, `lookup for ${key} does not exist (${typeInfo})`)
+    }
+    public reportLookupDoesNotExistForFulfillingDictionary(typeInfo: string, key: string[]) {
+        this.reportError(false, `lookup for ${Object.keys(key).concat(", ")} does not exist (${typeInfo})`)
     }
 
     public reportUnresolvedFulfillingDictionaryEntry(typeInfo: string, key: string, options: string[], delayed: boolean) {

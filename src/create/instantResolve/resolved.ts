@@ -1,17 +1,10 @@
 // tslint:disable: max-classes-per-file
 import { Dictionary } from "lingua-franca"
 import { ConstraintCastResult  } from "../../interfaces/ConstraintCastResult"
-import { IDependentLookup, IResolved, IResolvedStateConstraint, IStackedLookup } from "../../interfaces/instantResolve"
+import { ILookup, IResolved, IResolvedStateConstraint } from "../../interfaces/instantResolve"
 import { IResolveReporter } from "../../IResolveReporter"
-import { createDependentLookup, createNullLookup } from "./dependentLookup"
+import { createFailedLookup, createLookup } from "./lookup"
 import { createStateConstraint } from "./referenceBaseClasses"
-import { createNullRequiringLookup, createRequiringLookupWrapper } from "./requiringLookup"
-import { createStackedLookup } from "./stackedLookup"
-
-///
-
-////
-
 
 class ResolvedImp<Type> implements IResolved<Type> {
     private readonly value: Type
@@ -20,14 +13,8 @@ class ResolvedImp<Type> implements IResolved<Type> {
         this.value = value
         this.resolveReporter = resolveReporter
     }
-    public getLookup<NewType>(callback: (value: Type) => Dictionary<NewType>): IDependentLookup<NewType> {
-        return createDependentLookup(callback(this.value), this.resolveReporter)
-    }
-    public getStackedLookup<NewType>(callback: (value: Type) => Dictionary<NewType>): IStackedLookup<NewType> {
-        return createStackedLookup(callback(this.value), this.resolveReporter)
-    }
-    public getRequiringLookup<NewType>(callback: (value: Type) => Dictionary<NewType>, requiresExhaustive: boolean) {
-        return createRequiringLookupWrapper(callback(this.value), this.resolveReporter, requiresExhaustive)
+    public getLookup<NewType>(callback: (value: Type) => Dictionary<NewType>): ILookup<NewType> {
+        return createLookup(callback(this.value), this.resolveReporter)
     }
     public mapResolved<NewType>(
         callback: (type: Type) => NewType,
@@ -50,7 +37,7 @@ class ResolvedImp<Type> implements IResolved<Type> {
         const castResult = callback(this.value)
         if (castResult[0] === false) {
             this.resolveReporter.reportConstraintViolation(typeInfo, castResult[1].expected, castResult[1].found, false)
-            return createStateConstraint<NewType>(createNullResolved(this.resolveReporter))
+            return createStateConstraint<NewType>(createFailedResolved(this.resolveReporter))
         } else {
             return createStateConstraint<NewType>(wrapResolved(castResult[1], this.resolveReporter))
         }
@@ -65,17 +52,13 @@ export function wrapResolved<T>(t: T, resolveReporter: IResolveReporter): IResol
     return new ResolvedImp<T>(t, resolveReporter)
 }
 
-class NullResolved<Type> implements IResolved<Type> {
+class FailedResolved<Type> implements IResolved<Type> {
     private readonly resolveReporter: IResolveReporter
     constructor(resolveReporter: IResolveReporter) {
         this.resolveReporter = resolveReporter
     }
-    public getLookup<NewType>(): IDependentLookup<NewType> {
-        return createNullLookup(this.resolveReporter)
-
-    }
-    public getRequiringLookup<NewType>() {
-        return createNullRequiringLookup<NewType>(this.resolveReporter, false)
+    public getLookup<NewType>(): ILookup<NewType> {
+        return createFailedLookup(this.resolveReporter)
     }
     public mapResolved<NewType>(
         _callback: (type: Type) => NewType,
@@ -91,13 +74,13 @@ class NullResolved<Type> implements IResolved<Type> {
     }
     public castToConstraint<NewType>(_callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string): IResolvedStateConstraint<NewType> {
         this.resolveReporter.reportDependentConstraintViolation(typeInfo, false)
-        return createStateConstraint<NewType>(createNullResolved<NewType>(this.resolveReporter))
+        return createStateConstraint<NewType>(createFailedResolved<NewType>(this.resolveReporter))
     }
     public convert<NewType>(): IResolved<NewType> {
-        return createNullResolved(this.resolveReporter)
+        return createFailedResolved(this.resolveReporter)
     }
 }
 
-export function createNullResolved<Type>(resolveReporter: IResolveReporter) {
-    return new NullResolved<Type>(resolveReporter)
+export function createFailedResolved<Type>(resolveReporter: IResolveReporter) {
+    return new FailedResolved<Type>(resolveReporter)
 }

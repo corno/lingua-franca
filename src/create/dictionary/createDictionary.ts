@@ -1,9 +1,10 @@
 // tslint:disable: max-classes-per-file
 import { Dictionary, DictionaryOrdering, Sanitizer } from "lingua-franca"
 import { IDelayedResolveRequiringLookup, IResolvePromise } from "../../interfaces/delayedResolve"
-import { IDictionaryBuilder } from "../../interfaces/dictionary"
-import { IRequiringLookup, IStackParent } from "../../interfaces/instantResolve"
+import { IAutoCreateDictionary, IDictionaryBuilder } from "../../interfaces/dictionary"
+import { ILookup, MissingEntryCreator } from "../../interfaces/instantResolve"
 import { IResolveReporter } from "../../IResolveReporter"
+import { createAutoCreateLookup } from "../instantResolve/lookup"
 import { createDictionaryBuilder, RawDictionary } from "./dictionaryBuilder"
 
 type KeyValuePair<Type> = { key: string; value: Type }
@@ -40,7 +41,7 @@ function orderedIterate<Type>(
 }
 
 class DictionaryImp<Type> implements Dictionary<Type> {
-    protected readonly dictionary: { [key: string]: Type } = {}
+    private readonly dictionary: { [key: string]: Type } = {}
     constructor(dictionary: { [key: string]: Type }) {
         this.dictionary = dictionary
     }
@@ -76,26 +77,38 @@ export function wrapDictionary<Type>(dictionary: { [key: string]: Type }) {
     return new DictionaryImp(dictionary)
 }
 
-export function createStackedDictionary<Type>(
+class AutoCreateDictionaryImp<Type> extends DictionaryImp<Type> implements IAutoCreateDictionary<Type> {
+    private readonly rawDict: { [key: string]: Type }
+    private readonly missingEntryCreator: MissingEntryCreator<Type>
+    private readonly resolveReporter: IResolveReporter
+    constructor(dictionary: { [key: string]: Type }, missingEntryCreator: MissingEntryCreator<Type>, resolveReporter: IResolveReporter) {
+        super(dictionary)
+        this.rawDict = dictionary
+        this.missingEntryCreator = missingEntryCreator
+        this.resolveReporter = resolveReporter
+    }
+
+    public createAutoCreateLookup() {
+        return createAutoCreateLookup(this, this.rawDict, this.resolveReporter, this.missingEntryCreator)
+    }
+}
+
+
+export function createAutoCreateDictionary<Type>(
     typeInfo: string,
     resolveReporter: IResolveReporter,
     callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
-    parent: IStackParent<Type>,
-    missingEntryCreator: (key: string, previousEntry: Type) => Type,
-): Dictionary<Type> {
+    missingEntryCreator: MissingEntryCreator<Type>,
+): IAutoCreateDictionary<Type> {
     const dict: RawDictionary<Type> = {}
     const db = createDictionaryBuilder<Type>(
         dict,
         resolveReporter,
-        {
-            referencedDictionary: parent,
-            missingEntryCreator: missingEntryCreator,
-        },
         typeInfo
     )
     callback(db)
     db.finalize()
-    return new DictionaryImp(dict)
+    return new AutoCreateDictionaryImp(dict, missingEntryCreator, resolveReporter)
 }
 
 class DictionaryOrderingImp<Type> implements DictionaryOrdering<Type> {
@@ -156,7 +169,7 @@ export function createDelayedResolveFulfillingDictionary<Type, ReferencedType>(
     callback: (dictBuilder: IDictionaryBuilder<Type>, delayedResolveLookup: IResolvePromise<IDelayedResolveRequiringLookup<ReferencedType>>) => void,
 ): Dictionary<Type> {
     const dict: RawDictionary<Type> = {}
-    const db = createDictionaryBuilder<Type>(dict, resolveReporter, null, typeInfo)
+    const db = createDictionaryBuilder<Type>(dict, resolveReporter, typeInfo)
     callback(db, delayedResolveLookup)
     db.finalize()
     delayedResolveLookup.handlePromise(
@@ -173,14 +186,15 @@ export function createDelayedResolveFulfillingDictionary<Type, ReferencedType>(
 export function createFulfillingDictionary<Type, ReferencedType>(
     typeInfo: string,
     resolveReporter: IResolveReporter,
-    lookup: IRequiringLookup<ReferencedType>,
-    callback: (dictBuilder: IDictionaryBuilder<Type>, lookup: IRequiringLookup<ReferencedType>) => void,
+    lookup: ILookup<ReferencedType>,
+    callback: (dictBuilder: IDictionaryBuilder<Type>, lookup: ILookup<ReferencedType>) => void,
+    requiresExhaustive: boolean,
 ): Dictionary<Type> {
     const dict: RawDictionary<Type> = {}
-    const db = createDictionaryBuilder<Type>(dict, resolveReporter, null, typeInfo)
+    const db = createDictionaryBuilder<Type>(dict, resolveReporter, typeInfo)
     callback(db, lookup)
     db.finalize()
-    lookup.validate(db.getKeys(), typeInfo)
+    lookup.validateFulfillingEntries(db.getKeys(), typeInfo, requiresExhaustive)
     return new DictionaryImp<Type>(dict)
 }
 
@@ -191,7 +205,7 @@ export function createDictionary<Type>(
     callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
 ): Dictionary<Type> {
     const dict: RawDictionary<Type> = {}
-    const db = createDictionaryBuilder<Type>(dict, resolveReporter, null, typeInfo)
+    const db = createDictionaryBuilder<Type>(dict, resolveReporter, typeInfo)
     callback(db)
     db.finalize()
     return new DictionaryImp<Type>(dict)

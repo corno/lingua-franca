@@ -6,7 +6,8 @@ export interface IResolveReporter {
      */
     reportConflictingEntry(typeInfo: string, key: string): void
 
-    reportLookupDoesNotExist(typeInfo: string, key: string): void
+    reportLookupDoesNotExistForReference(typeInfo: string, key: string): void
+    reportLookupDoesNotExistForFulfillingDictionary(typeInfo: string, key: string[]): void
 
 
     reportUnresolvedReference(typeInfo: string, key: string, options: string[], delayed: boolean): void

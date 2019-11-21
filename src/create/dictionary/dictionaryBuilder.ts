@@ -1,29 +1,21 @@
 import { IDelayedResolveLookup, IDelayedResolveReference } from "../../interfaces/delayedResolve"
-import { IDictionaryBuilderBase } from "../../interfaces/dictionary"
-import { IStackParent } from "../../interfaces/instantResolve"
+import { IFinalizableDictionaryBuilder } from "../../interfaces/dictionary"
 import { IResolveReporter } from "../../IResolveReporter"
 import { CallerObject, createReferenceToDelayedResolveLookup, createResolvePromise, GetEntryResult } from "../delayedResolve/delayedResolvable"
-import { createGuaranteedLookup } from "../instantResolve/guaranteedLookup"
-import { wrapDictionary } from "./dictionary"
+import { createLookup } from "../instantResolve/lookup"
+import { wrapDictionary } from "./createDictionary"
 
 export type RawDictionary<Type> = { [key: string]: Type }
 
-export type MissingEntryContext<Type> = {
-    referencedDictionary: IStackParent<Type>
-    missingEntryCreator: (key: string, previousEntry: Type) => Type
-}
-
-class DictionaryBuilder<Type> implements IDictionaryBuilderBase<Type>, IDelayedResolveLookup<Type> {
+class DictionaryBuilder<Type> implements IFinalizableDictionaryBuilder<Type>, IDelayedResolveLookup<Type> {
     public readonly dictionary: RawDictionary<Type>
     private readonly subscribers: Array<{ key: string; caller: CallerObject<Type> }> = []
     private finalized = false
     private readonly resolveReporter: IResolveReporter
-    private readonly missingEntryContext: null | MissingEntryContext<Type>
     private readonly typeInfo: string
-    constructor(dictionary: RawDictionary<Type>, resolveReporter: IResolveReporter, missingEntryContext: null | MissingEntryContext<Type>, typeInfo: string) {
+    constructor(dictionary: RawDictionary<Type>, resolveReporter: IResolveReporter, typeInfo: string) {
         this.dictionary = dictionary
         this.resolveReporter = resolveReporter
-        this.missingEntryContext = missingEntryContext
         this.typeInfo = typeInfo
     }
     public add(key: string, entry: Type) {
@@ -52,7 +44,7 @@ class DictionaryBuilder<Type> implements IDictionaryBuilderBase<Type>, IDelayedR
         })
     }
     public toLookup() {
-        return createGuaranteedLookup(wrapDictionary(this.dictionary), this.resolveReporter)
+        return createLookup(wrapDictionary(this.dictionary), this.resolveReporter)
     }
     public toDelayedResolveLookup() {
         return this
@@ -90,40 +82,24 @@ class DictionaryBuilder<Type> implements IDictionaryBuilderBase<Type>, IDelayedR
             throw new Error("Already finalized")
         }
         this.finalized = true
-        if (this.missingEntryContext !== null) {
-            const mec = this.missingEntryContext
-            this.subscribers.forEach(subscriber => {
-                const entry = this.dictionary[subscriber.key]
-                if (entry === undefined) {
-                    const precedingEntry = mec.referencedDictionary.getEntry(subscriber.key, this.typeInfo)
-                    if (precedingEntry === null) {
-                        subscriber.caller.onFailed(null)
-                    } else {
-                        subscriber.caller.onResult(precedingEntry)
-                    }
-                } else {
-                    subscriber.caller.onResult(entry)
-                }
-            })
-        } else {
-            this.subscribers.forEach(subscriber => {
-                const entry = this.dictionary[subscriber.key]
-                if (entry === undefined) {
-                    subscriber.caller.onFailed(null)
-                } else {
-                    subscriber.caller.onResult(entry)
-                }
-            })
-        }
+        this.subscribers.forEach(subscriber => {
+            const entry = this.dictionary[subscriber.key]
+            if (entry === undefined) {
+                subscriber.caller.onFailed(null)
+            } else {
+                subscriber.caller.onResult(entry)
+            }
+        })
 
     }
 }
 
+
+
 export function createDictionaryBuilder<Type>(
     dictionary: RawDictionary<Type>,
     resolveReporter: IResolveReporter,
-    missingEntryContext: null | MissingEntryContext<Type>,
     typeInfo: string
-): IDictionaryBuilderBase<Type> {
-    return new DictionaryBuilder<Type>(dictionary, resolveReporter, missingEntryContext, typeInfo)
+): IFinalizableDictionaryBuilder<Type> {
+    return new DictionaryBuilder<Type>(dictionary, resolveReporter, typeInfo)
 }
