@@ -4,8 +4,9 @@ import { IDelayedResolveRequiringLookup, IResolvePromise } from "../../interface
 import { IAutoCreateDictionary, IDictionaryBuilder } from "../../interfaces/dictionary"
 import { ILookup, MissingEntryCreator } from "../../interfaces/instantResolve"
 import { IResolveReporter } from "../../IResolveReporter"
-import { createAutoCreateLookup } from "../instantResolve/lookup"
-import { createDictionaryBuilder, RawDictionary } from "./dictionaryBuilder"
+import { RawDictionary } from "../../RawDictionary"
+import { createAutoCreateContext } from "../instantResolve/autoCreateContext"
+import { createDictionaryBuilder } from "./dictionaryBuilder"
 
 type KeyValuePair<Type> = { key: string; value: Type }
 
@@ -41,17 +42,12 @@ function orderedIterate<Type>(
 }
 
 class DictionaryImp<Type> implements Dictionary<Type> {
-    private readonly dictionary: { [key: string]: Type } = {}
-    constructor(dictionary: { [key: string]: Type }) {
+    private readonly dictionary: RawDictionary<Type>
+    constructor(dictionary: RawDictionary<Type>) {
         this.dictionary = dictionary
     }
     public getEntry(key: string): null | Type {
-        const entry = this.dictionary[key]
-        if (entry === undefined) {
-            return null
-        } else {
-            return entry
-        }
+        return this.dictionary.get(key)
     }
     public forEachAlphabetically(
         onElement: (element: Type, getKey: (sanitizer: Sanitizer) => string) => void,
@@ -60,10 +56,12 @@ class DictionaryImp<Type> implements Dictionary<Type> {
         onAfterLast?: () => void,
         onEmpty?: () => void,
     ) {
-        orderedIterate(this.getKeys().map(key => ({ key: key, value: this.dictionary[key] })), onElement, onSepartor, onBeforeFirst, onAfterLast, onEmpty)
+        orderedIterate(this.dictionary.map((entry, key) => ({ key: key, value: entry })).sort((a, b) => {
+            return a.key.toLowerCase().localeCompare(b.key.toLowerCase())
+        }), onElement, onSepartor, onBeforeFirst, onAfterLast, onEmpty)
     }
     public getKeys() {
-        return Object.keys(this.dictionary).sort((a, b) => {
+        return this.dictionary.getKeys().sort((a, b) => {
             return a.toLowerCase().localeCompare(b.toLowerCase())
         })
     }
@@ -73,23 +71,25 @@ class DictionaryImp<Type> implements Dictionary<Type> {
 }
 
 
-export function wrapDictionary<Type>(dictionary: { [key: string]: Type }) {
+export function wrapDictionary<Type>(dictionary: RawDictionary<Type>) {
     return new DictionaryImp(dictionary)
 }
 
 class AutoCreateDictionaryImp<Type> extends DictionaryImp<Type> implements IAutoCreateDictionary<Type> {
-    private readonly rawDict: { [key: string]: Type }
+    private readonly rawDict: RawDictionary<Type>
     private readonly missingEntryCreator: MissingEntryCreator<Type>
     private readonly resolveReporter: IResolveReporter
-    constructor(dictionary: { [key: string]: Type }, missingEntryCreator: MissingEntryCreator<Type>, resolveReporter: IResolveReporter) {
+    private readonly getParentKeys: () => string[]
+    constructor(dictionary: RawDictionary<Type>, missingEntryCreator: MissingEntryCreator<Type>, resolveReporter: IResolveReporter, getParentKeys: () => string[]) {
         super(dictionary)
         this.rawDict = dictionary
         this.missingEntryCreator = missingEntryCreator
         this.resolveReporter = resolveReporter
+        this.getParentKeys = getParentKeys
     }
 
-    public createAutoCreateLookup() {
-        return createAutoCreateLookup(this, this.rawDict, this.resolveReporter, this.missingEntryCreator)
+    public createAutoCreateContext() {
+        return createAutoCreateContext(this.rawDict, this.resolveReporter, this.missingEntryCreator, this.getParentKeys)
     }
 }
 
@@ -99,8 +99,9 @@ export function createAutoCreateDictionary<Type>(
     resolveReporter: IResolveReporter,
     callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
     missingEntryCreator: MissingEntryCreator<Type>,
+    getParentKeys: () => string[],
 ): IAutoCreateDictionary<Type> {
-    const dict: RawDictionary<Type> = {}
+    const dict = new RawDictionary<Type>()
     const db = createDictionaryBuilder<Type>(
         dict,
         resolveReporter,
@@ -108,7 +109,7 @@ export function createAutoCreateDictionary<Type>(
     )
     callback(db)
     db.finalize()
-    return new AutoCreateDictionaryImp(dict, missingEntryCreator, resolveReporter)
+    return new AutoCreateDictionaryImp(dict, missingEntryCreator, resolveReporter, getParentKeys)
 }
 
 class DictionaryOrderingImp<Type> implements DictionaryOrdering<Type> {
@@ -138,20 +139,20 @@ export function createOrderedDictionary<Type>(
     getDependencies: (entry: Type) => string[],
 ): DictionaryOrdering<Type> {
     const array: Array<KeyValuePair<Type>> = []
-    const alreadyInserted: { [key: string]: FinishedInsertion } = {}
+    const alreadyInserted = new RawDictionary<FinishedInsertion>()
     const process = (key: string) => {
-        const isInserted = alreadyInserted[key]
-        if (isInserted === undefined) {
+        const isInserted = alreadyInserted.get(key)
+        if (isInserted === null) {
             const entry = dictionary.getEntry(key)
             if (entry === null) {
                 //this can happen when the caller returns an invalid key upon getDependencies
                 //console.error("Entry does not exist: " + key)
                 return
             }
-            alreadyInserted[key] = false
+            alreadyInserted.set(key, false)
             getDependencies(entry).forEach(process)
             array.push({ key: key, value: entry })
-            alreadyInserted[key] = true
+            alreadyInserted.update(key, true)
         } else {
             if (!isInserted) {
                 resolveReporter.reportCircularDependency(typeInfo, key)
@@ -168,7 +169,7 @@ export function createDelayedResolveFulfillingDictionary<Type, ReferencedType>(
     delayedResolveLookup: IResolvePromise<IDelayedResolveRequiringLookup<Type>>,
     callback: (dictBuilder: IDictionaryBuilder<Type>, delayedResolveLookup: IResolvePromise<IDelayedResolveRequiringLookup<ReferencedType>>) => void,
 ): Dictionary<Type> {
-    const dict: RawDictionary<Type> = {}
+    const dict = new RawDictionary<Type>()
     const db = createDictionaryBuilder<Type>(dict, resolveReporter, typeInfo)
     callback(db, delayedResolveLookup)
     db.finalize()
@@ -190,7 +191,7 @@ export function createFulfillingDictionary<Type, ReferencedType>(
     callback: (dictBuilder: IDictionaryBuilder<Type>, lookup: ILookup<ReferencedType>) => void,
     requiresExhaustive: boolean,
 ): Dictionary<Type> {
-    const dict: RawDictionary<Type> = {}
+    const dict = new RawDictionary<Type>()
     const db = createDictionaryBuilder<Type>(dict, resolveReporter, typeInfo)
     callback(db, lookup)
     db.finalize()
@@ -204,7 +205,7 @@ export function createDictionary<Type>(
     resolveReporter: IResolveReporter,
     callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
 ): Dictionary<Type> {
-    const dict: RawDictionary<Type> = {}
+    const dict = new RawDictionary<Type>()
     const db = createDictionaryBuilder<Type>(dict, resolveReporter, typeInfo)
     callback(db)
     db.finalize()

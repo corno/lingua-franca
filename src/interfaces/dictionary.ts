@@ -1,10 +1,14 @@
 import { Dictionary } from "lingua-franca"
 import { IDelayedResolveLookup } from "./delayedResolve"
-import { IAutoCreateLookup, ILookup } from "./instantResolve"
+import { IAutoCreateContext, ILookup } from "./instantResolve"
+
+//result class(es)
 
 export interface IAutoCreateDictionary<Type> extends Dictionary<Type> {
-    createAutoCreateLookup(): IAutoCreateLookup<Type>
+    createAutoCreateContext(): IAutoCreateContext<Type>
 }
+
+//Builder classes
 
 export interface ICurrentDictionary<Type> {
     toLookup(): ILookup<Type>

@@ -7,8 +7,10 @@ export interface ILookup<Type> {
     validateFulfillingEntries(keys: string[], typeInfo: string, requiresExhaustive: boolean): void
 }
 
-export interface IAutoCreateLookup<Type> extends ILookup<Type> {
+export interface IAutoCreateContext<Type> {
     tryToCreateReference(key: string): null | IResolvedReference<Type>
+    toLookup(): ILookup<Type>
+    getKeys(): string[]
 }
 
 export interface IResolved<Type> {

@@ -13,6 +13,7 @@ export * from "./create/delayedResolve/requiringLookup"
 export * from "./create/list"
 
 export * from "./create/instantResolve/lookup"
+export * from "./create/instantResolve/autoCreateContext"
 export * from "./create/instantResolve/resolved"
 
 export * from "./IResolveReporter"

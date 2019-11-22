@@ -23,8 +23,8 @@ export class SimpleResolveReporter implements IResolveReporter {
     public reportLookupDoesNotExistForReference(typeInfo: string, key: string) {
         this.reportError(false, `lookup for ${key} does not exist (${typeInfo})`)
     }
-    public reportLookupDoesNotExistForFulfillingDictionary(typeInfo: string, key: string[]) {
-        this.reportError(false, `lookup for ${Object.keys(key).concat(", ")} does not exist (${typeInfo})`)
+    public reportLookupDoesNotExistForFulfillingDictionary(typeInfo: string, keys: string[]) {
+        this.reportError(false, `lookup for ${keys.concat(", ")} does not exist (${typeInfo})`)
     }
 
     public reportUnresolvedFulfillingDictionaryEntry(typeInfo: string, key: string, options: string[], delayed: boolean) {

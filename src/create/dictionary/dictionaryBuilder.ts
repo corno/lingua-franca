@@ -1,11 +1,10 @@
 import { IDelayedResolveLookup, IDelayedResolveReference } from "../../interfaces/delayedResolve"
 import { IFinalizableDictionaryBuilder } from "../../interfaces/dictionary"
 import { IResolveReporter } from "../../IResolveReporter"
+import { RawDictionary } from "../../RawDictionary"
 import { CallerObject, createReferenceToDelayedResolveLookup, createResolvePromise, GetEntryResult } from "../delayedResolve/delayedResolvable"
 import { createLookup } from "../instantResolve/lookup"
 import { wrapDictionary } from "./createDictionary"
-
-export type RawDictionary<Type> = { [key: string]: Type }
 
 class DictionaryBuilder<Type> implements IFinalizableDictionaryBuilder<Type>, IDelayedResolveLookup<Type> {
     public readonly dictionary: RawDictionary<Type>
@@ -22,16 +21,15 @@ class DictionaryBuilder<Type> implements IFinalizableDictionaryBuilder<Type>, ID
         if (this.finalized) {
             throw new Error("Already finalized")
         }
-        if (this.dictionary[key] !== undefined) {
-            //it already exists
+        if (this.dictionary.has(key)) {
             this.resolveReporter.reportConflictingEntry(this.typeInfo, key)
-            return
+        } else {
+            this.dictionary.set(key, entry)
         }
-        this.dictionary[key] = entry
     }
     public getValidatedEntry(key: string, resolveReporter: IResolveReporter, typeInfo: string): null | Type {
-        const entry = this.dictionary[key]
-        if (entry === undefined) {
+        const entry = this.dictionary.get(key)
+        if (entry === null) {
             resolveReporter.reportUnresolvedReference(typeInfo, key, this.getKeys(), false)
             return null
         } else {
@@ -39,7 +37,7 @@ class DictionaryBuilder<Type> implements IFinalizableDictionaryBuilder<Type>, ID
         }
     }
     public getKeys() {
-        return Object.keys(this.dictionary).sort((a, b) => {
+        return this.dictionary.getKeys().sort((a, b) => {
             return a.toLowerCase().localeCompare(b.toLowerCase())
         })
     }
@@ -56,8 +54,8 @@ class DictionaryBuilder<Type> implements IFinalizableDictionaryBuilder<Type>, ID
         isForwardDeclaration: boolean,
     ): IDelayedResolveReference<Type> {
         const promise = createResolvePromise<GetEntryResult<Type>>((onFailed, onResult) => {
-            const entry = this.dictionary[key]
-            if (entry !== undefined) {
+            const entry = this.dictionary.get(key)
+            if (entry !== null) {
                 onResult({
                     entry: entry,
                     wasRegisteredBeforeRequest: true,
@@ -83,8 +81,8 @@ class DictionaryBuilder<Type> implements IFinalizableDictionaryBuilder<Type>, ID
         }
         this.finalized = true
         this.subscribers.forEach(subscriber => {
-            const entry = this.dictionary[subscriber.key]
-            if (entry === undefined) {
+            const entry = this.dictionary.get(subscriber.key)
+            if (entry === null) {
                 subscriber.caller.onFailed(null)
             } else {
                 subscriber.caller.onResult(entry)

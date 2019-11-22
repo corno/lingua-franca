@@ -22,8 +22,8 @@ class ResolvedImp<Type> implements IResolved<Type> {
     ) {
         return callback(this.value)
     }
-    public withResolved(callback: (type: Type) => void) {
-        this.mapResolved(callback, () => { })
+    public withResolved(callback: (type: Type) => void, onNotResolved?: () => void) {
+        this.mapResolved(callback, onNotResolved === undefined ? () => { } : onNotResolved)
     }
     public getResolved() {
         return this.mapResolved(
@@ -66,8 +66,10 @@ class FailedResolved<Type> implements IResolved<Type> {
     ) {
         return onNotRolved()
     }
-    public withResolved() {
-        //do nothing
+    public withResolved(_callback: (type: Type) => void, onNotResolved?: () => void) {
+        if (onNotResolved !== undefined) {
+            onNotResolved()
+        }
     }
     public getResolved(): Type {
         throw new Error("Reference failed to resolve")

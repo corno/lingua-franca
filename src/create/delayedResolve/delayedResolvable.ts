@@ -29,8 +29,8 @@ class DelayedResolvableImp<ReferencedType> implements IDelayedResolvable<Referen
         }
         return callback(this.resolvedEntry)
     }
-    public withResolved(callback: (type: ReferencedType) => void) {
-        this.mapResolved(callback, () => { })
+    public withResolved(callback: (type: ReferencedType) => void, onNotResolved?: () => void) {
+        this.mapResolved(callback, onNotResolved === undefined ? () => { } : onNotResolved)
     }
     public getResolved() {
         return this.mapResolved(

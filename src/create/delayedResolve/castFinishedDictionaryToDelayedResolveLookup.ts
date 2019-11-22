@@ -11,7 +11,7 @@ class DictionaryImp2<Type> implements IDelayedResolveLookup<Type> {
         this.resolveReporter = resolveReporter
     }
     public getKeys() {
-        return Object.keys(this.dictionary).sort((a, b) => {
+        return this.dictionary.getKeys().sort((a, b) => {
             return a.toLowerCase().localeCompare(b.toLowerCase())
         })
     }
