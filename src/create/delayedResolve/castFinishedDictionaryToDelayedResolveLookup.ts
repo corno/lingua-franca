@@ -1,9 +1,9 @@
 import { Dictionary } from "lingua-franca"
-import { IDelayedResolveLookup, IDelayedResolveReference } from "../../interfaces/delayedResolve"
+import { IDelayedResolveBaseLookup, IDelayedResolveReference } from "../../interfaces/delayedResolve"
 import { IResolveReporter } from "../../IResolveReporter"
 import { createReferenceToDelayedResolveLookup, createResolvePromise, GetEntryResult } from "./delayedResolvable"
 
-class DictionaryImp2<Type> implements IDelayedResolveLookup<Type> {
+class DictionaryImp2<Type> implements IDelayedResolveBaseLookup<Type> {
     protected readonly dictionary: Dictionary<Type>
     private readonly resolveReporter: IResolveReporter
     constructor(dictionary: Dictionary<Type>, resolveReporter: IResolveReporter) {
@@ -16,7 +16,7 @@ class DictionaryImp2<Type> implements IDelayedResolveLookup<Type> {
         })
     }
 
-    public createReferenceToDelayedResolveLookup(
+    public createReference(
         key: string,
         typeInfo: string,
         isForwardDeclaration: boolean,
@@ -39,6 +39,6 @@ class DictionaryImp2<Type> implements IDelayedResolveLookup<Type> {
     }
 }
 
-export function castFinishedDictionaryToDelayedResolveLookup<Type>(dictionary: Dictionary<Type>, resolveReporter: IResolveReporter) {
+export function castFinishedDictionaryToDelayedResolveLookup<Type>(dictionary: Dictionary<Type>, resolveReporter: IResolveReporter): IDelayedResolveBaseLookup<Type> {
     return new DictionaryImp2(dictionary, resolveReporter)
 }

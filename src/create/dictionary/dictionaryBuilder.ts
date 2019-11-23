@@ -1,4 +1,4 @@
-import { IDelayedResolveLookup, IDelayedResolveReference } from "../../interfaces/delayedResolve"
+import { IDelayedResolveBaseLookup, IDelayedResolveReference } from "../../interfaces/delayedResolve"
 import { IFinalizableDictionaryBuilder } from "../../interfaces/dictionary"
 import { IResolveReporter } from "../../IResolveReporter"
 import { RawDictionary } from "../../RawDictionary"
@@ -6,7 +6,7 @@ import { CallerObject, createReferenceToDelayedResolveLookup, createResolvePromi
 import { createLookup } from "../instantResolve/lookup"
 import { wrapDictionary } from "./createDictionary"
 
-class DictionaryBuilder<Type> implements IFinalizableDictionaryBuilder<Type>, IDelayedResolveLookup<Type> {
+class DictionaryBuilder<Type> implements IFinalizableDictionaryBuilder<Type>, IDelayedResolveBaseLookup<Type> {
     public readonly dictionary: RawDictionary<Type>
     private readonly subscribers: Array<{ key: string; caller: CallerObject<Type> }> = []
     private finalized = false
@@ -48,7 +48,7 @@ class DictionaryBuilder<Type> implements IFinalizableDictionaryBuilder<Type>, ID
         return this
     }
 
-    public createReferenceToDelayedResolveLookup(
+    public createReference(
         key: string,
         typeInfo: string,
         isForwardDeclaration: boolean,

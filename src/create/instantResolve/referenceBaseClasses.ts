@@ -1,17 +1,18 @@
+import { Constraint } from "lingua-franca"
 import { IResolved, IResolvedReference, IResolvedStateConstraint } from "../../interfaces/instantResolve"
 
-class ConstraintImp<ReferencedType> implements IResolvedStateConstraint<ReferencedType> {
-    public readonly imp: IResolved<ReferencedType>
-    constructor(value: IResolved<ReferencedType>) {
+class ConstraintImp<Type> implements IResolvedStateConstraint<Type> {
+    public readonly imp: IResolved<Type>
+    constructor(value: IResolved<Type>) {
         this.imp = value
     }
     public mapResolved<NewType>(
-        callback: (type: ReferencedType) => NewType,
+        callback: (type: Type) => NewType,
         onNotRolved: () => NewType
     ) {
         return this.imp.mapResolved(callback, onNotRolved)
     }
-    public withResolved(callback: (type: ReferencedType) => void, onNotResolved?: () => void) {
+    public withResolved(callback: (type: Type) => void, onNotResolved?: () => void) {
         this.mapResolved(callback, onNotResolved === undefined ? () => { } : onNotResolved)
     }
     public getResolved() {
@@ -22,10 +23,16 @@ class ConstraintImp<ReferencedType> implements IResolvedStateConstraint<Referenc
             }
         )
     }
+    public map<NewType>(callback: (type: Type) => Constraint<NewType>): Constraint<NewType> {
+        return this.imp.map(callback)
+    }
+    public mapX<NewType>(callback: (type: Type) => NewType): Constraint<NewType> {
+        return this.imp.mapX(callback)
+    }
 }
 
 
-export function createStateConstraint<ReferencedType>(value: IResolved<ReferencedType>) {
+export function createStateConstraint<ReferencedType>(value: IResolved<ReferencedType>): IResolvedStateConstraint<ReferencedType> {
     return new ConstraintImp(value)
 }
 
@@ -42,6 +49,6 @@ class ReferenceImp<ReferencedType> extends ConstraintImp<ReferencedType> impleme
     }
 }
 
-export function createReference<ReferencedType>(key: string, value: IResolved<ReferencedType>) {
+export function createReference<ReferencedType>(key: string, value: IResolved<ReferencedType>): IResolvedReference<ReferencedType> {
     return new ReferenceImp(key, value)
 }

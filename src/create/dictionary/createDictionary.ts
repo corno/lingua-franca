@@ -1,6 +1,6 @@
 // tslint:disable: max-classes-per-file
 import { Dictionary, DictionaryOrdering, Sanitizer } from "lingua-franca"
-import { IDelayedResolveRequiringLookup, IResolvePromise } from "../../interfaces/delayedResolve"
+import { IDelayedResolveSubLookup, IResolvePromise } from "../../interfaces/delayedResolve"
 import { IAutoCreateDictionary, IDictionaryBuilder } from "../../interfaces/dictionary"
 import { ILookup, MissingEntryCreator } from "../../interfaces/instantResolve"
 import { IResolveReporter } from "../../IResolveReporter"
@@ -166,8 +166,9 @@ export function createOrderedDictionary<Type>(
 export function createDelayedResolveFulfillingDictionary<Type, ReferencedType>(
     typeInfo: string,
     resolveReporter: IResolveReporter,
-    delayedResolveLookup: IResolvePromise<IDelayedResolveRequiringLookup<Type>>,
-    callback: (dictBuilder: IDictionaryBuilder<Type>, delayedResolveLookup: IResolvePromise<IDelayedResolveRequiringLookup<ReferencedType>>) => void,
+    delayedResolveLookup: IResolvePromise<IDelayedResolveSubLookup<ReferencedType>>,
+    callback: (dictBuilder: IDictionaryBuilder<Type>, delayedResolveLookup: IResolvePromise<IDelayedResolveSubLookup<ReferencedType>>) => void,
+    requiresExhaustive: boolean,
 ): Dictionary<Type> {
     const dict = new RawDictionary<Type>()
     const db = createDictionaryBuilder<Type>(dict, resolveReporter, typeInfo)
@@ -178,7 +179,7 @@ export function createDelayedResolveFulfillingDictionary<Type, ReferencedType>(
             resolveReporter.reportUnresolvedRequiringDictionary(typeInfo, true)
         },
         lookup => {
-            lookup.validate(db.getKeys(), typeInfo)
+            lookup.validateFulfillingEntries(db.getKeys(), typeInfo, requiresExhaustive)
         }
     )
     return new DictionaryImp<Type>(dict)

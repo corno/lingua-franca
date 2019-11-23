@@ -1,19 +1,20 @@
 import { Dictionary } from "lingua-franca"
-import { IDelayedResolveRequiringLookup } from "../../interfaces/delayedResolve"
+import { IDelayedResolveReference, IDelayedResolveSubLookup } from "../../interfaces/delayedResolve"
 import { IResolveReporter } from "../../IResolveReporter"
+import { createReferenceToDelayedResolveLookup, createResolvePromise } from "./delayedResolvable"
 
-class DelayedResolveRequiringLookupImp<Type> implements IDelayedResolveRequiringLookup<Type> {
-    private readonly requiresExhaustive: boolean
+class FinishedDictionaryActingAsDelayedSubLookup<Type> implements IDelayedResolveSubLookup<Type> {
     private readonly dictionary: Dictionary<Type>
     private readonly resolveReporter: IResolveReporter
+    private readonly isForwardDeclaration: boolean
     constructor(
         dictionary: Dictionary<Type>,
         resolveReporter: IResolveReporter,
-        requiresExhaustive: boolean
+        isForwardDeclaration: boolean,
     ) {
         this.dictionary = dictionary
-        this.requiresExhaustive = requiresExhaustive
         this.resolveReporter = resolveReporter
+        this.isForwardDeclaration = isForwardDeclaration
     }
     // public getEntry(key: string, typeInfo: string): IResolved<Type> {
     //     const entry = this.dictionary.getEntry(key)
@@ -24,9 +25,9 @@ class DelayedResolveRequiringLookupImp<Type> implements IDelayedResolveRequiring
     //         return wrapResolved(entry, this.resolveReporter)
     //     }
     // }
-    public validate(keys: string[], typeInfo: string) {
+    public validateFulfillingEntries(keys: string[], typeInfo: string, requiresExhaustive: boolean) {
         const requiredKeys = this.dictionary.getKeys()
-        if (this.requiresExhaustive) {
+        if (requiresExhaustive) {
             const missingEntries = requiredKeys.filter(key => keys.indexOf(key) === -1)
             if (missingEntries.length > 0) {
                 this.resolveReporter.reportMissingRequiredEntries(typeInfo, missingEntries, keys, true)
@@ -41,12 +42,39 @@ class DelayedResolveRequiringLookupImp<Type> implements IDelayedResolveRequiring
     public _hack() {
         return this
     }
+    public createReference(
+        key: string,
+        typeInfo: string
+    ): IDelayedResolveReference<Type> {
+        const entry = this.dictionary.getEntry(key)
+        if (entry === null) {
+            this.resolveReporter.reportUnresolvedReference(typeInfo, key, this.dictionary.getKeys(), true)
+            throw new Error("IMPLEMENT ME")
+            //return createFai(key, createFailedResolved<Type>(this.resolveReporter))
+        }
+        return createReferenceToDelayedResolveLookup(
+            key,
+            createResolvePromise((_onFailed, _onResult) => {
+                throw new Error("IMPLEMENT ME")
+
+                // const entry = this.dictionary.getEntry(key)
+                // if (entry === null) {
+                //     onFailed(null)
+                // } else {
+                //     onResult(entry)
+                // }
+            }),
+            this.resolveReporter,
+            typeInfo,
+            this.isForwardDeclaration,
+        )
+    }
 }
 
-export function createDelayedResolveRequiringLookupWrapper<Type>(
+export function createDelayedResolveLookupWrapper<Type>(
     dict: Dictionary<Type>,
     resolveReporter: IResolveReporter,
-    requiresExhaustive: boolean,
-): IDelayedResolveRequiringLookup<Type> {
-    return new DelayedResolveRequiringLookupImp(dict, resolveReporter, requiresExhaustive)
+    isForwardDeclaration: boolean,
+): IDelayedResolveSubLookup<Type> {
+    return new FinishedDictionaryActingAsDelayedSubLookup(dict, resolveReporter, isForwardDeclaration)
 }

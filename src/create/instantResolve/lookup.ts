@@ -16,7 +16,7 @@ class LookupImp<Type> implements ILookup<Type> {
         const entry = this.dictionary.getEntry(key)
         if (entry === null) {
             this.resolveReporter.reportUnresolvedReference(typeInfo, key, this.dictionary.getKeys(), false)
-            return createReference(key, createFailedResolved(this.resolveReporter))
+            return createReference(key, createFailedResolved<Type>(this.resolveReporter))
         }
         return createReference(key, wrapResolved(entry, this.resolveReporter))
     }

@@ -1,7 +1,7 @@
 // tslint:disable: max-classes-per-file
-import { Dictionary } from "lingua-franca"
-import { ConstraintCastResult  } from "../../interfaces/ConstraintCastResult"
-import { ILookup, IResolved, IResolvedStateConstraint } from "../../interfaces/instantResolve"
+import { Constraint, Dictionary } from "lingua-franca"
+import { ConstraintCastResult } from "../../interfaces/ConstraintCastResult"
+import { ILookup, IResolved, IResolvedStateConstraint, Repeat } from "../../interfaces/instantResolve"
 import { IResolveReporter } from "../../IResolveReporter"
 import { createFailedLookup, createLookup } from "./lookup"
 import { createStateConstraint } from "./referenceBaseClasses"
@@ -41,9 +41,45 @@ class ResolvedImp<Type> implements IResolved<Type> {
         } else {
             return createStateConstraint<NewType>(wrapResolved(castResult[1], this.resolveReporter))
         }
-
+    }
+    public navigateConstraint<NewType>(callback: (type: Type) => Constraint<NewType>, typeInfo: string) {
+        const result = callback(this.value)
+        return result.mapResolved(
+            value => {
+                return wrapResolved(value, this.resolveReporter)
+            },
+            () => {
+                this.resolveReporter.reportDependentConstraintViolation(typeInfo, false)
+                return createFailedResolved<NewType>(this.resolveReporter)
+            }
+        )
+    }
+    public repeatNavigate(callback: (type: Type) => Repeat<Type>, typeInfo: string) {
+        let currentValue = this.value
+        while (true) {
+            const result = callback(currentValue)
+            if (result[0] === false) {
+                return wrapResolved(currentValue, this.resolveReporter)
+            } else {
+                const mapResult = result[1].mapResolved<[false] | [true, Type]>(
+                    newValue => [true, newValue],
+                    () => [false]
+                )
+                if (mapResult[0] === false) {
+                    this.resolveReporter.reportDependentConstraintViolation(typeInfo, false)
+                    return createFailedResolved<Type>(this.resolveReporter)
+                }
+                currentValue = mapResult[1]
+            }
+        }
     }
     public convert<NewType>(callback: (type: Type) => NewType): IResolved<NewType> {
+        return wrapResolved(callback(this.value), this.resolveReporter)
+    }
+    public map<NewType>(callback: (type: Type) => Constraint<NewType>) {
+        return callback(this.value)
+    }
+    public mapX<NewType>(callback: (type: Type) => NewType) {
         return wrapResolved(callback(this.value), this.resolveReporter)
     }
 }
@@ -74,15 +110,29 @@ class FailedResolved<Type> implements IResolved<Type> {
     public getResolved(): Type {
         throw new Error("Reference failed to resolve")
     }
+    public map<NewType>(): Constraint<NewType> {
+        return createFailedResolved(this.resolveReporter)
+    }
+    public mapX<NewType>(): Constraint<NewType> {
+        return createFailedResolved(this.resolveReporter)
+    }
     public castToConstraint<NewType>(_callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string): IResolvedStateConstraint<NewType> {
         this.resolveReporter.reportDependentConstraintViolation(typeInfo, false)
         return createStateConstraint<NewType>(createFailedResolved<NewType>(this.resolveReporter))
+    }
+    public navigateConstraint<NewType>(_callback: (type: Type) => Constraint<NewType>, typeInfo: string) {
+        this.resolveReporter.reportDependentConstraintViolation(typeInfo, false)
+        return createFailedResolved<NewType>(this.resolveReporter)
+    }
+    public repeatNavigate(_callback: (type: Type) => Repeat<Type>, typeInfo: string) {
+        this.resolveReporter.reportDependentConstraintViolation(typeInfo, false)
+        return createFailedResolved<Type>(this.resolveReporter)
     }
     public convert<NewType>(): IResolved<NewType> {
         return createFailedResolved(this.resolveReporter)
     }
 }
 
-export function createFailedResolved<Type>(resolveReporter: IResolveReporter) {
+export function createFailedResolved<Type>(resolveReporter: IResolveReporter): IResolved<Type> {
     return new FailedResolved<Type>(resolveReporter)
 }
