@@ -17,6 +17,10 @@ export class SimpleResolveReporter implements IResolveReporter {
     public reportConstraintViolation(typeInfo: string, expectedState: string, foundState: string, delayed: boolean) {
         this.reportError(false, `${delayed ? "delayed " : ""}constraint violation: (${typeInfo}) expected '${expectedState}' but found '${foundState}'`)
     }
+    public reportConstraintViolationOnNonExistentNode(typeInfo: string) {
+        this.reportError(false, `context does not exist for constraint violation: (${typeInfo})`)
+    }
+
     public reportMissingRequiredEntries(typeInfo: string, missingEntries: string[], foundEntries: string[], delayed: boolean) {
         this.reportError(false, `missing required ${delayed ? "delayed " : ""}entry: ${missingEntries.join(`, `)} (${typeInfo}). found entries: ${foundEntries.join(`, `)}`)
     }

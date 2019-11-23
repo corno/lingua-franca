@@ -12,6 +12,7 @@ export interface IResolveReporter {
 
     reportUnresolvedReference(typeInfo: string, key: string, options: string[], delayed: boolean): void
     reportConstraintViolation(typeInfo: string, expectedState: string, foundState: string, delayed: boolean): void
+    reportConstraintViolationOnNonExistentNode(typeInfo: string, delayed: boolean): void
 
     /**
      * missing entry in a fulfilling dictionary.
