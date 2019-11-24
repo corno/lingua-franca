@@ -1,5 +1,5 @@
 import { List} from "lingua-franca"
-import { IListBuilder } from "../interfaces/list"
+import { IListBuilder } from "../interfaces/IListBuilder"
 
 class ListImp<Type> implements List<Type> {
     private readonly imp: Type[]

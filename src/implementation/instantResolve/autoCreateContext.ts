@@ -1,7 +1,7 @@
 // tslint:disable: max-classes-per-file
 import { IAutoCreateContext, ILookup, IResolvedReference, MissingEntryCreator } from "../../interfaces/instantResolve"
 import { IResolveReporter } from "../../IResolveReporter"
-import { RawDictionary } from "../../RawDictionary"
+import { RawDictionary } from "../RawDictionary"
 import { createReference } from "./referenceBaseClasses"
 import { createFailedResolved, wrapResolved } from "./resolved"
 

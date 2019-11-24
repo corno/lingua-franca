@@ -11,7 +11,7 @@ export interface IAutoCreateDictionary<Type> extends Dictionary<Type> {
 //Builder classes
 
 export interface ICurrentDictionary<Type> {
-    toLookupForPrecedingEntries(): ILookup<Type>
+    toPrecedingEntriesLookup(): ILookup<Type>
     //toRequiringLookup(): IRequiringLookup<Type>
     //toDelayedResolveLookup(): IDelayedResolveBaseLookup<Type>
 }

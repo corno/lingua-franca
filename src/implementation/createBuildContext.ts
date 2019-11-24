@@ -7,7 +7,7 @@ import { IDelayedResolvableBuilder, IDelayedResolveLookup, IPossibleContext } fr
 import { IAutoCreateDictionary, IDictionaryBuilder } from "../interfaces/dictionary"
 import { IBuildContext } from "../interfaces/IBuildContext"
 import { IAutoCreateContext, ILookup, IResolvedConstraint, MissingEntryCreator } from "../interfaces/instantResolve"
-import { IListBuilder } from "../interfaces/list"
+import { IListBuilder } from "../interfaces/IListBuilder"
 import { IResolveReporter } from "../IResolveReporter"
 import { createDelayedResolvable } from "./delayedResolve/delayedResolve"
 import { createExistingContext, createNonExistingContext } from "./delayedResolve/possibleContext"

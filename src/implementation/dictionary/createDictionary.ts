@@ -4,7 +4,7 @@ import { IDelayedResolveLookup } from "../../interfaces/delayedResolve"
 import { IAutoCreateDictionary, IDictionaryBuilder } from "../../interfaces/dictionary"
 import { ILookup, MissingEntryCreator } from "../../interfaces/instantResolve"
 import { IResolveReporter } from "../../IResolveReporter"
-import { RawDictionary } from "../../RawDictionary"
+import { RawDictionary } from "../RawDictionary"
 import { createAutoCreateContext } from "../instantResolve/autoCreateContext"
 import { createDictionaryBuilder } from "./dictionaryBuilder"
 

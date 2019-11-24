@@ -6,7 +6,7 @@ import {
 import { IDelayedResolvableBuilder, IDelayedResolveLookup, IPossibleContext } from "./delayedResolve";
 import { IAutoCreateDictionary, IDictionaryBuilder } from "./dictionary";
 import { IAutoCreateContext, ILookup, IResolvedConstraint, MissingEntryCreator } from "./instantResolve";
-import { IListBuilder } from "./list";
+import { IListBuilder } from "./IListBuilder";
 
 
 export interface IBuildContext {
