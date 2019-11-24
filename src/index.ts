@@ -6,9 +6,8 @@ export * from "./interfaces/instantResolve"
 export * from "./create/dictionary/createDictionary"
 export * from "./create/dictionary/dictionaryBuilder"
 
-export * from "./create/delayedResolve/delayedResolvable"
-export * from "./create/delayedResolve/castFinishedDictionaryToDelayedResolveLookup"
-export * from "./create/delayedResolve/requiringLookup"
+export * from "./create/delayedResolve/delayedResolve"
+export * from "./create/delayedResolve/possibleContext"
 
 export * from "./create/list"
 

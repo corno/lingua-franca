@@ -1,9 +1,9 @@
 import { Constraint } from "lingua-franca"
-import { IResolved, IResolvedReference, IResolvedStateConstraint } from "../../interfaces/instantResolve"
+import { IResolvedConstraint, IResolvedReference, IResolvedStateConstraint } from "../../interfaces/instantResolve"
 
 class ConstraintImp<Type> implements IResolvedStateConstraint<Type> {
-    public readonly imp: IResolved<Type>
-    constructor(value: IResolved<Type>) {
+    public readonly imp: IResolvedConstraint<Type>
+    constructor(value: IResolvedConstraint<Type>) {
         this.imp = value
     }
     public mapResolved<NewType>(
@@ -32,7 +32,7 @@ class ConstraintImp<Type> implements IResolvedStateConstraint<Type> {
 }
 
 
-export function createStateConstraint<ReferencedType>(value: IResolved<ReferencedType>): IResolvedStateConstraint<ReferencedType> {
+export function createStateConstraint<ReferencedType>(value: IResolvedConstraint<ReferencedType>): IResolvedStateConstraint<ReferencedType> {
     return new ConstraintImp(value)
 }
 
@@ -40,7 +40,7 @@ export function createStateConstraint<ReferencedType>(value: IResolved<Reference
 // tslint:disable-next-line: max-classes-per-file
 class ReferenceImp<ReferencedType> extends ConstraintImp<ReferencedType> implements IResolvedReference<ReferencedType> {
     private readonly key: string
-    constructor(key: string, value: IResolved<ReferencedType>) {
+    constructor(key: string, value: IResolvedConstraint<ReferencedType>) {
         super(value)
         this.key = key
     }
@@ -49,6 +49,6 @@ class ReferenceImp<ReferencedType> extends ConstraintImp<ReferencedType> impleme
     }
 }
 
-export function createReference<ReferencedType>(key: string, value: IResolved<ReferencedType>): IResolvedReference<ReferencedType> {
+export function createReference<ReferencedType>(key: string, value: IResolvedConstraint<ReferencedType>): IResolvedReference<ReferencedType> {
     return new ReferenceImp(key, value)
 }

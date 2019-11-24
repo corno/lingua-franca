@@ -1,16 +1,7 @@
 import { Constraint, Dictionary, Reference } from "lingua-franca"
 import { ConstraintCastResult  } from "./ConstraintCastResult"
 
-
-export interface IDelayedResolveBaseLookup<Type> {
-    createReference(
-        key: string,
-        typeInfo: string,
-        isForwardDeclaration: boolean,
-    ): IDelayedResolveReference<Type>
-}
-
-export interface IDelayedResolveSubLookup<Type> {
+export interface IDelayedResolveLookup<Type> {
     validateFulfillingEntries(keys: string[], typeInfo: string, requiresExhaustive: boolean): void
     createReference(
         key: string,
@@ -18,17 +9,23 @@ export interface IDelayedResolveSubLookup<Type> {
     ): IDelayedResolveReference<Type>
 }
 
-export interface IDelayedResolvable<ReferencedType> {
-    getLookup<Type>(callback: (type: ReferencedType) => Dictionary<Type>): IResolvePromise<IDelayedResolveSubLookup<Type>>
-    castToConstraint<NewType>(callback: (type: ReferencedType) => ConstraintCastResult<NewType>, typeInfo: string): IDelayedResolveConstraint<NewType>
-    convert<NewType>(callback: (type: ReferencedType) => NewType): IDelayedResolvable<NewType>
+export interface IDelayedResolveConstraint<Type> extends Constraint<Type> {
+    getLookup<NewType>(callback: (type: Type) => Dictionary<NewType>): IDelayedResolveLookup<NewType>
+    castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string): IDelayedResolveStateConstraint<NewType>
+    convert<NewType>(callback: (type: Type) => NewType): IDelayedResolveConstraint<NewType>
 }
-export interface IDelayedResolveReference<ReferencedType> extends IDelayedResolvable<ReferencedType>, Reference<ReferencedType> { }
-export interface IDelayedResolveConstraint<Type> extends IDelayedResolvable<Type>, Constraint<Type> { }
 
-export interface IResolvePromise<T> {
-    handlePromise(onFailed: (failed: null) => void, onResult: (result: T) => void): void
-    //getRequiringDictionary<NewType>(callback: (type: T) => RequiringDictionary<NewType>): IResolvePromise<RequiringDictionary<NewType>>
-    //cast<NewType>(callback: (type: T) => [false] | [true, NewType]): IIntermediateDelayedResolveConstraint<NewType>
-    map<NewType>(callback: (x: T) => NewType): IResolvePromise<NewType>
+export interface IDelayedResolveReference<ReferencedType> extends IDelayedResolveConstraint<ReferencedType>, Reference<ReferencedType> { }
+export interface IDelayedResolveStateConstraint<Type> extends IDelayedResolveConstraint<Type>, Constraint<Type> { }
+
+export interface IDelayedResolvable<Type> {
+    getLookup<NewType>(callback: (type: Type) => Dictionary<NewType>): IDelayedResolveLookup<NewType>
+}
+
+export interface IDelayedResolvableBuilder<Type> extends IDelayedResolvable<Type> {
+    resolve(value: Type): void
+}
+
+export interface IPossibleContext<Type> {
+    validateExistence(): IDelayedResolveConstraint<Type>
 }

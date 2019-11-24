@@ -1,12 +1,12 @@
 // tslint:disable: max-classes-per-file
 import { Constraint, Dictionary } from "lingua-franca"
 import { ConstraintCastResult } from "../../interfaces/ConstraintCastResult"
-import { ILookup, IResolved, IResolvedStateConstraint, Repeat } from "../../interfaces/instantResolve"
+import { ILookup, IResolvedConstraint, IResolvedStateConstraint, Repeat } from "../../interfaces/instantResolve"
 import { IResolveReporter } from "../../IResolveReporter"
 import { createFailedLookup, createLookup } from "./lookup"
 import { createStateConstraint } from "./referenceBaseClasses"
 
-class ResolvedImp<Type> implements IResolved<Type> {
+class ResolvedImp<Type> implements IResolvedConstraint<Type> {
     private readonly value: Type
     private readonly resolveReporter: IResolveReporter
     constructor(value: Type, resolveReporter: IResolveReporter) {
@@ -73,7 +73,7 @@ class ResolvedImp<Type> implements IResolved<Type> {
             }
         }
     }
-    public convert<NewType>(callback: (type: Type) => NewType): IResolved<NewType> {
+    public convert<NewType>(callback: (type: Type) => NewType): IResolvedConstraint<NewType> {
         return wrapResolved(callback(this.value), this.resolveReporter)
     }
     public map<NewType>(callback: (type: Type) => Constraint<NewType>) {
@@ -84,11 +84,11 @@ class ResolvedImp<Type> implements IResolved<Type> {
     }
 }
 
-export function wrapResolved<T>(t: T, resolveReporter: IResolveReporter): IResolved<T> {
+export function wrapResolved<T>(t: T, resolveReporter: IResolveReporter): IResolvedConstraint<T> {
     return new ResolvedImp<T>(t, resolveReporter)
 }
 
-class FailedResolved<Type> implements IResolved<Type> {
+class FailedResolved<Type> implements IResolvedConstraint<Type> {
     private readonly resolveReporter: IResolveReporter
     constructor(resolveReporter: IResolveReporter) {
         this.resolveReporter = resolveReporter
@@ -128,11 +128,11 @@ class FailedResolved<Type> implements IResolved<Type> {
         this.resolveReporter.reportDependentConstraintViolation(typeInfo, false)
         return createFailedResolved<Type>(this.resolveReporter)
     }
-    public convert<NewType>(): IResolved<NewType> {
+    public convert<NewType>(): IResolvedConstraint<NewType> {
         return createFailedResolved(this.resolveReporter)
     }
 }
 
-export function createFailedResolved<Type>(resolveReporter: IResolveReporter): IResolved<Type> {
+export function createFailedResolved<Type>(resolveReporter: IResolveReporter): IResolvedConstraint<Type> {
     return new FailedResolved<Type>(resolveReporter)
 }

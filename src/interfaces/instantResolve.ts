@@ -19,21 +19,21 @@ export type Repeat<Type> =
 | [true, Constraint<Type>]
 
 
-export interface IResolved<Type> extends Constraint<Type> {
+export interface IResolvedConstraint<Type> extends Constraint<Type> {
     castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string): IResolvedStateConstraint<NewType>
-    navigateConstraint<NewType>(callback: (type: Type) => Constraint<NewType>, typeInfo: string): IResolved<NewType>
-    convert<NewType>(callback: (type: Type) => NewType): IResolved<NewType>
+    navigateConstraint<NewType>(callback: (type: Type) => Constraint<NewType>, typeInfo: string): IResolvedConstraint<NewType>
+    convert<NewType>(callback: (type: Type) => NewType): IResolvedConstraint<NewType>
     getLookup<NewType>(callback: (value: Type) => Dictionary<NewType>): ILookup<NewType>
     mapResolved<NewType>(callback: (type: Type) => NewType, onNotResolved: () => NewType): NewType
-    repeatNavigate(callback: (type: Type) => Repeat<Type>, typeInfo: string): IResolved<Type>
+    repeatNavigate(callback: (type: Type) => Repeat<Type>, typeInfo: string): IResolvedConstraint<Type>
 }
 
 export interface IResolvedStateConstraint<ReferencedType> extends Constraint<ReferencedType> {
-    imp: IResolved<ReferencedType>
+    imp: IResolvedConstraint<ReferencedType>
 }
 
 export interface IResolvedReference<ReferencedType> extends Reference<ReferencedType> {
-    imp: IResolved<ReferencedType>
+    imp: IResolvedConstraint<ReferencedType>
 }
 
 export type MissingEntryCreator<Type> = (key: string) => null | Type
