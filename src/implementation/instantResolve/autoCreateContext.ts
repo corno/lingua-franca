@@ -12,6 +12,9 @@ class AutoCreateLookup<Type> implements ILookup<Type> {
         this.autoCreateContext = autoCreateContext
         this.resolveReporter = resolveReporter
     }
+    public has(key: string) {
+        return this.autoCreateContext.has(key)
+    }
     public createReference(key: string, typeInfo: string): IResolvedReference<Type> {
         return this.createConstrainedReference(key, typeInfo, () => ({}))
     }
@@ -53,6 +56,9 @@ class AutoCreateContext<Type> implements IAutoCreateContext<Type> {
         this.missingEntryCreator = missingEntryCreator
         this.getParentKeys = getParentKeys
         this.resolveReporter = resolveReporter
+    }
+    public has(key: string) {
+        return this.dict.has(key)
     }
     public tryToCreateReference(
         key: string
@@ -98,6 +104,9 @@ class NonExistentAutoCreateLookup<Type> implements ILookup<Type> {
     constructor(resolveReporter: IResolveReporter) {
         this.resolveReporter = resolveReporter
     }
+    public has() {
+        return false
+    }
     public createReference(key: string, typeInfo: string): IResolvedReference<Type> {
         return this.createConstrainedReference(key, typeInfo, () => ({}))
     }
@@ -117,6 +126,9 @@ class NonExistentAutoCreateContext<Type> implements IAutoCreateContext<Type> {
     private readonly resolveReporter: IResolveReporter
     constructor(resolveReporter: IResolveReporter) {
         this.resolveReporter = resolveReporter
+    }
+    public has() {
+        return false
     }
     public tryToCreateReference() {
         return null

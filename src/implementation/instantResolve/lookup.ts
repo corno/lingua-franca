@@ -12,6 +12,9 @@ class LookupImp<Type> implements ILookup<Type> {
         this.dictionary = dictionary
         this.resolveReporter = resolveReporter
     }
+    public has(key: string) {
+        return this.dictionary.getEntry(key) !== null
+    }
     public createReference(key: string, typeInfo: string): IResolvedReference<Type> {
         return this.createConstrainedReference(key, typeInfo, () => ({}))
     }
@@ -49,6 +52,9 @@ class NonExistentLookup<Type> implements ILookup<Type> {
     constructor(resolveReporter: IResolveReporter) {
         this.resolveReporter = resolveReporter
     }
+    public has() {
+        return false
+    }
     public createReference(key: string, typeInfo: string): IResolvedReference<Type> {
         return this.createConstrainedReference(key, typeInfo, () => ({}))
     }
@@ -68,6 +74,9 @@ class FailedLookup<Type> implements ILookup<Type> {
     private readonly resolveReporter: IResolveReporter
     constructor(resolveReporter: IResolveReporter) {
         this.resolveReporter = resolveReporter
+    }
+    public has() {
+        return false
     }
     public createReference(key: string, typeInfo: string): IResolvedReference<Type> {
         return this.createConstrainedReference(key, typeInfo, () => ({}))

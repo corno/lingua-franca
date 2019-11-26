@@ -8,12 +8,14 @@ export interface ILookup<Type> {
         key: string, typeInfo: string, getConstraints: (reference: IDependentResolvedConstraintBuilder<Type>) => Constraints
     ): IResolvedConstrainedReference<Type, Constraints>
     validateFulfillingEntries(keys: string[], typeInfo: string, requiresExhaustive: boolean): void
+    has(key: string): boolean
 }
 
 export interface IAutoCreateContext<Type> {
     tryToCreateReference(key: string): null | IResolvedReference<Type>
     toLookup(): ILookup<Type>
     getKeys(): string[]
+    has(key: string): boolean
 }
 
 

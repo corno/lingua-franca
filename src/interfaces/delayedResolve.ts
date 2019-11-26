@@ -7,11 +7,11 @@ export interface IDelayedResolveLookup<Type> {
         key: string,
         typeInfo: string
     ): IDelayedResolveReference<Type>
-    // createConstrainedReference<Constraints>(
-    //     key: string,
-    //     typeInfo: string,
-    //     getConstraints: (builder: IDerivedDelayedResolvableBuilder<Type>) => Constraints
-    // ): IDelayedResolveReference<Type>
+    createConstrainedReference<Constraints>(
+        key: string,
+        typeInfo: string,
+        getConstraints: (builder: IDelayedResolvableBuilder<Type>) => Constraints
+    ): IDelayedResolveConstrainedReference<Type, Constraints>
 }
 
 export interface IDelayedResolvableBuilder<Type> {
