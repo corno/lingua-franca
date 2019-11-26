@@ -1,13 +1,12 @@
 import {
     Dictionary,
-    DictionaryOrdering,
     List,
 } from "lingua-franca"
 import { IDelayedResolvableBuilder, IDelayedResolveLookup, IPossibleContext } from "../interfaces/delayedResolve"
 import { IAutoCreateDictionary, IDictionaryBuilder } from "../interfaces/dictionary"
-import { IBuildContext } from "../interfaces/IBuildContext"
-import { IAutoCreateContext, ILookup, IResolvedConstraint, MissingEntryCreator } from "../interfaces/instantResolve"
+import { IBuildContext, IOrderingCreator } from "../interfaces/IBuildContext"
 import { IListBuilder } from "../interfaces/IListBuilder"
+import { IAutoCreateContext, IDependentResolvedConstraintBuilder, ILookup, MissingEntryCreator } from "../interfaces/instantResolve"
 import { IResolveReporter } from "../IResolveReporter"
 import { createDelayedResolvable } from "./delayedResolve/delayedResolve"
 import { createExistingContext, createNonExistingContext } from "./delayedResolve/possibleContext"
@@ -26,11 +25,6 @@ class BuildContext implements IBuildContext {
         typeInfo: string, callback: (dictBuilder: IDictionaryBuilder<Type>) => void, missingEntryCreator: MissingEntryCreator<Type>, getParentKeys: () => string[]
     ): IAutoCreateDictionary<Type> {
         return createAutoCreateDictionary(typeInfo, this.resolveReporter, callback, missingEntryCreator, getParentKeys)
-    }
-    public createOrderedDictionary<Type>(
-        typeInfo: string, dictionary: Dictionary<Type>, getDependencies: (entry: Type) => string[]
-    ): DictionaryOrdering<Type> {
-        return createOrderedDictionary(typeInfo, this.resolveReporter, dictionary, getDependencies)
     }
     public createDelayedResolvable<Type>(): IDelayedResolvableBuilder<Type> {
         return createDelayedResolvable(this.resolveReporter)
@@ -55,6 +49,13 @@ class BuildContext implements IBuildContext {
     ): Dictionary<Type> {
         return createDictionary(typeInfo, this.resolveReporter, callback)
     }
+    public createOrderedDictionary<Type, Orderings>(
+        typeInfo: string,
+        callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
+        getOrderings: (orderingCreator: IOrderingCreator<Type>) => Orderings
+    ) {
+        return createOrderedDictionary(typeInfo, this.resolveReporter, callback, getOrderings)
+    }
     public createExistingContext<Type>(): IPossibleContext<Type> {
         return createExistingContext(this.resolveReporter)
     }
@@ -76,7 +77,7 @@ class BuildContext implements IBuildContext {
     public createNonExistentLookup<Type>(): ILookup<Type> {
         return createNonExistentLookupPlaceholder(this.resolveReporter)
     }
-    public wrapResolved<Type>(value: Type): IResolvedConstraint<Type> {
+    public wrapResolved<Type>(value: Type): IDependentResolvedConstraintBuilder<Type> {
         return wrapResolved(value, this.resolveReporter)
     }
 }

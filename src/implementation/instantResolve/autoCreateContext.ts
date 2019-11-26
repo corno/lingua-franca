@@ -1,9 +1,9 @@
 // tslint:disable: max-classes-per-file
-import { IAutoCreateContext, ILookup, IResolvedReference, MissingEntryCreator } from "../../interfaces/instantResolve"
+import { IAutoCreateContext, IDependentResolvedConstraintBuilder, ILookup, IResolvedConstrainedReference, IResolvedReference, MissingEntryCreator } from "../../interfaces/instantResolve"
 import { IResolveReporter } from "../../IResolveReporter"
 import { RawDictionary } from "../RawDictionary"
 import { createReference } from "./referenceBaseClasses"
-import { createFailedResolved, wrapResolved } from "./resolved"
+import { createFailedResolvedBuilder, wrapResolved } from "./resolved"
 
 class AutoCreateLookup<Type> implements ILookup<Type> {
     private readonly autoCreateContext: IAutoCreateContext<Type>
@@ -13,12 +13,18 @@ class AutoCreateLookup<Type> implements ILookup<Type> {
         this.resolveReporter = resolveReporter
     }
     public createReference(key: string, typeInfo: string): IResolvedReference<Type> {
+        return this.createConstrainedReference(key, typeInfo, () => ({}))
+    }
+    public createConstrainedReference<Constraints>(
+        key: string, typeInfo: string, getConstraints: (ref: IDependentResolvedConstraintBuilder<Type>) => Constraints
+    ): IResolvedConstrainedReference<Type, Constraints> {
         const entry = this.autoCreateContext.tryToCreateReference(key)
         if (entry === null) {
             this.resolveReporter.reportUnresolvedReference(typeInfo, key, this.autoCreateContext.getKeys(), false)
-            return createReference(key, createFailedResolved(this.resolveReporter))
+            const failedResolved = createFailedResolvedBuilder<Type>(this.resolveReporter)
+            return createReference(key, failedResolved, getConstraints(failedResolved))
         }
-        return entry
+        return createReference(key, entry, getConstraints(entry))
     }
     public validateFulfillingEntries(keys: string[], typeInfo: string, requiresExhaustive: boolean) {
         const requiredKeys = this.autoCreateContext.getKeys()
@@ -50,10 +56,10 @@ class AutoCreateContext<Type> implements IAutoCreateContext<Type> {
     }
     public tryToCreateReference(
         key: string
-    ): null | IResolvedReference<Type> {
+    ): null | IDependentResolvedConstraintBuilder<Type> {
         const entry = this.dict.get(key)
         if (entry !== null) {
-            return createReference(key, wrapResolved(entry, this.resolveReporter))
+            return wrapResolved(entry, this.resolveReporter)
         } else {
             //entry does not exist
             const possibleEntry = this.missingEntryCreator(key)
@@ -61,7 +67,7 @@ class AutoCreateContext<Type> implements IAutoCreateContext<Type> {
                 return null
             } else {
                 this.dict.set(key, possibleEntry)
-                return createReference(key, wrapResolved(possibleEntry, this.resolveReporter))
+                return wrapResolved(possibleEntry, this.resolveReporter)
             }
         }
     }
@@ -93,8 +99,14 @@ class NonExistentAutoCreateLookup<Type> implements ILookup<Type> {
         this.resolveReporter = resolveReporter
     }
     public createReference(key: string, typeInfo: string): IResolvedReference<Type> {
+        return this.createConstrainedReference(key, typeInfo, () => ({}))
+    }
+    public createConstrainedReference<Constraints>(
+        key: string, typeInfo: string, getConstraints: (ref: IDependentResolvedConstraintBuilder<Type>) => Constraints
+    ): IResolvedConstrainedReference<Type, Constraints> {
         this.resolveReporter.reportLookupDoesNotExistForReference(typeInfo, key)
-        return createReference(key, createFailedResolved(this.resolveReporter))
+        const failedResolved = createFailedResolvedBuilder<Type>(this.resolveReporter)
+        return createReference(key, failedResolved, getConstraints(failedResolved))
     }
     public validateFulfillingEntries(keys: string[], typeInfo: string, _requiresExhaustive: boolean) {
         this.resolveReporter.reportLookupDoesNotExistForFulfillingDictionary(typeInfo, keys)

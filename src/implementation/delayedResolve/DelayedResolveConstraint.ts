@@ -53,10 +53,10 @@ export class DelayedResolveConstraint<Type> implements IDelayedResolveConstraint
             }
         )
     }
-    public map<NewType>(_callback: (type: Type) => Constraint<NewType>): Constraint<NewType> {
+    public getConstraint<NewType>(_callback: (type: Type) => Constraint<NewType>): Constraint<NewType> {
         throw new Error("IMPLEMENT ME")
     }
-    public mapX<NewType>(_callback: (type: Type) => NewType): Constraint<NewType> {
+    public getNonConstraint<NewType>(_callback: (type: Type) => NewType): Constraint<NewType> {
         throw new Error("IMPLEMENT ME")
     }
 

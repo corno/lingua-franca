@@ -1,16 +1,21 @@
 import { Constraint } from "lingua-franca"
-import { IResolvedConstraint, IResolvedReference, IResolvedStateConstraint } from "../../interfaces/instantResolve"
+import { IDependentResolvedConstraintBuilder, IResolvedConstrainedReference, IResolvedConstrainedStateConstraint } from "../../interfaces/instantResolve"
 
-class ConstraintImp<Type> implements IResolvedStateConstraint<Type> {
-    public readonly imp: IResolvedConstraint<Type>
-    constructor(value: IResolvedConstraint<Type>) {
-        this.imp = value
+class ConstraintImp<Type, Constraints> implements IResolvedConstrainedStateConstraint<Type, Constraints> {
+    public readonly builder: IDependentResolvedConstraintBuilder<Type>
+    private readonly constraints: Constraints
+    constructor(builder: IDependentResolvedConstraintBuilder<Type>, constraints: Constraints) {
+        this.builder = builder
+        this.constraints = constraints
+    }
+    public getConstraints() {
+        return this.constraints
     }
     public mapResolved<NewType>(
         callback: (type: Type) => NewType,
         onNotRolved: () => NewType
     ) {
-        return this.imp.mapResolved(callback, onNotRolved)
+        return this.builder.mapResolved(callback, onNotRolved)
     }
     public withResolved(callback: (type: Type) => void, onNotResolved?: () => void) {
         this.mapResolved(callback, onNotResolved === undefined ? () => { } : onNotResolved)
@@ -23,25 +28,32 @@ class ConstraintImp<Type> implements IResolvedStateConstraint<Type> {
             }
         )
     }
-    public map<NewType>(callback: (type: Type) => Constraint<NewType>): Constraint<NewType> {
-        return this.imp.map(callback)
+    public getConstraint<NewType>(callback: (type: Type) => Constraint<NewType>): Constraint<NewType> {
+        return this.builder.getConstraint(callback)
     }
-    public mapX<NewType>(callback: (type: Type) => NewType): Constraint<NewType> {
-        return this.imp.mapX(callback)
+    public getNonConstraint<NewType>(callback: (type: Type) => NewType): Constraint<NewType> {
+        return this.builder.getNonConstraint(callback)
     }
 }
 
 
-export function createStateConstraint<ReferencedType>(value: IResolvedConstraint<ReferencedType>): IResolvedStateConstraint<ReferencedType> {
-    return new ConstraintImp(value)
+export function createConstraint<ReferencedType, Constraints>(
+    value: IDependentResolvedConstraintBuilder<ReferencedType>, constraints: Constraints
+): Constraint<ReferencedType> {
+    return new ConstraintImp(value, constraints)
 }
 
+export function createStateConstraint<ReferencedType, Constraints>(
+    value: IDependentResolvedConstraintBuilder<ReferencedType>, constraints: Constraints
+): IResolvedConstrainedStateConstraint<ReferencedType, Constraints> {
+    return new ConstraintImp(value, constraints)
+}
 
 // tslint:disable-next-line: max-classes-per-file
-class ReferenceImp<ReferencedType> extends ConstraintImp<ReferencedType> implements IResolvedReference<ReferencedType> {
+class ReferenceImp<ReferencedType, Constraints> extends ConstraintImp<ReferencedType, Constraints> implements IResolvedConstrainedReference<ReferencedType, Constraints> {
     private readonly key: string
-    constructor(key: string, value: IResolvedConstraint<ReferencedType>) {
-        super(value)
+    constructor(key: string, value: IDependentResolvedConstraintBuilder<ReferencedType>, constraints: Constraints) {
+        super(value, constraints)
         this.key = key
     }
     public getKey(sanitize: (rawKey: string) => string) {
@@ -49,6 +61,8 @@ class ReferenceImp<ReferencedType> extends ConstraintImp<ReferencedType> impleme
     }
 }
 
-export function createReference<ReferencedType>(key: string, value: IResolvedConstraint<ReferencedType>): IResolvedReference<ReferencedType> {
-    return new ReferenceImp(key, value)
+export function createReference<ReferencedType, Constraints>(
+    key: string, value: IDependentResolvedConstraintBuilder<ReferencedType>, constraints: Constraints
+): IResolvedConstrainedReference<ReferencedType, Constraints> {
+    return new ReferenceImp(key, value, constraints)
 }

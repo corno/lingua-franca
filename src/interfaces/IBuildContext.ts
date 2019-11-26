@@ -2,21 +2,26 @@ import {
     Dictionary,
     DictionaryOrdering,
     List,
+    OrderedDictionary,
 } from "lingua-franca"
 import { IDelayedResolvableBuilder, IDelayedResolveLookup, IPossibleContext } from "./delayedResolve";
 import { IAutoCreateDictionary, IDictionaryBuilder } from "./dictionary";
-import { IAutoCreateContext, ILookup, IResolvedConstraint, MissingEntryCreator } from "./instantResolve";
 import { IListBuilder } from "./IListBuilder";
+import { IAutoCreateContext, IDependentResolvedConstraintBuilder, ILookup, MissingEntryCreator } from "./instantResolve";
 
+
+export interface IOrderingCreator<Type> {
+    createBasedOnDependency(
+        typeInfo: string, getDependencies: (entry: Type) => string[]
+    ): DictionaryOrdering<Type>
+    createBasedOnInsertionOrder(): DictionaryOrdering<Type>
+}
 
 export interface IBuildContext {
-
     createAutoCreateDictionary<Type>(
         typeInfo: string, callback: (dictBuilder: IDictionaryBuilder<Type>) => void, missingEntryCreator: MissingEntryCreator<Type>, getParentKeys: () => string[]
     ): IAutoCreateDictionary<Type>
-    createOrderedDictionary<Type>(
-        typeInfo: string, dictionary: Dictionary<Type>, getDependencies: (entry: Type) => string[]
-    ): DictionaryOrdering<Type>
+
     createDelayedResolvable<Type>(): IDelayedResolvableBuilder<Type>
     createDelayedResolveFulfillingDictionary<Type, ReferencedType>(
         typeInfo: string,
@@ -32,6 +37,11 @@ export interface IBuildContext {
     createDictionary<Type>(
         typeInfo: string, callback: (dictBuilder: IDictionaryBuilder<Type>) => void
     ): Dictionary<Type>
+    createOrderedDictionary<Type, Orderings>(
+        typeInfo: string,
+        callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
+        createOrderings: (orderingCreator: IOrderingCreator<Type>) => Orderings
+    ): OrderedDictionary<Type, Orderings>
     createExistingContext<Type>(): IPossibleContext<Type>
     createFailedLookup<Type>(): ILookup<Type>
     createList<Type>(callback: (arrayBuilder: IListBuilder<Type>) => void): List<Type>
@@ -39,5 +49,5 @@ export interface IBuildContext {
     createNonExistentAutoCreateContext<Type>(): IAutoCreateContext<Type>
     createNonExistentContext<Type>(): IPossibleContext<Type>
     createNonExistentLookup<Type>(): ILookup<Type>
-    wrapResolved<Type>(value: Type): IResolvedConstraint<Type>
+    wrapResolved<Type>(value: Type): IDependentResolvedConstraintBuilder<Type>
 }

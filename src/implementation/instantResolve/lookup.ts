@@ -1,9 +1,9 @@
 // tslint:disable: max-classes-per-file
 import { Dictionary } from "lingua-franca"
-import { ILookup, IResolvedReference } from "../../interfaces/instantResolve"
+import { IDependentResolvedConstraintBuilder, ILookup, IResolvedConstrainedReference, IResolvedReference } from "../../interfaces/instantResolve"
 import { IResolveReporter } from "../../IResolveReporter"
 import { createReference } from "./referenceBaseClasses"
-import { createFailedResolved, wrapResolved } from "./resolved"
+import { createFailedResolvedBuilder, wrapResolved } from "./resolved"
 
 class LookupImp<Type> implements ILookup<Type> {
     protected readonly resolveReporter: IResolveReporter
@@ -13,13 +13,21 @@ class LookupImp<Type> implements ILookup<Type> {
         this.resolveReporter = resolveReporter
     }
     public createReference(key: string, typeInfo: string): IResolvedReference<Type> {
+        return this.createConstrainedReference(key, typeInfo, () => ({}))
+    }
+    public createConstrainedReference<Constraints>(
+        key: string, typeInfo: string, getConstraints: (reference: IDependentResolvedConstraintBuilder<Type>) => Constraints
+    ): IResolvedConstrainedReference<Type, Constraints> {
         const entry = this.dictionary.getEntry(key)
         if (entry === null) {
             this.resolveReporter.reportUnresolvedReference(typeInfo, key, this.dictionary.getKeys(), false)
-            return createReference(key, createFailedResolved<Type>(this.resolveReporter))
+            const failedResolved = createFailedResolvedBuilder<Type>(this.resolveReporter)
+            return createReference(key, failedResolved, getConstraints(failedResolved))
         }
-        return createReference(key, wrapResolved(entry, this.resolveReporter))
+        const resolved = wrapResolved(entry, this.resolveReporter)
+        return createReference(key, resolved, getConstraints(resolved))
     }
+
     public validateFulfillingEntries(keys: string[], typeInfo: string, requiresExhaustive: boolean) {
         const requiredKeys = this.dictionary.getKeys()
         if (requiresExhaustive) {
@@ -42,8 +50,14 @@ class NonExistentLookup<Type> implements ILookup<Type> {
         this.resolveReporter = resolveReporter
     }
     public createReference(key: string, typeInfo: string): IResolvedReference<Type> {
+        return this.createConstrainedReference(key, typeInfo, () => ({}))
+    }
+    public createConstrainedReference<Constraints>(
+        key: string, typeInfo: string, getConstraints: (ref: IDependentResolvedConstraintBuilder<Type>) => Constraints
+    ): IResolvedConstrainedReference<Type, Constraints> {
         this.resolveReporter.reportLookupDoesNotExistForReference(typeInfo, key)
-        return createReference(key, createFailedResolved(this.resolveReporter))
+        const failedResolved = createFailedResolvedBuilder<Type>(this.resolveReporter)
+        return createReference(key, failedResolved, getConstraints(failedResolved))
     }
     public validateFulfillingEntries(keys: string[], typeInfo: string, _requiresExhaustive: boolean) {
         this.resolveReporter.reportLookupDoesNotExistForFulfillingDictionary(typeInfo, keys)
@@ -56,8 +70,14 @@ class FailedLookup<Type> implements ILookup<Type> {
         this.resolveReporter = resolveReporter
     }
     public createReference(key: string, typeInfo: string): IResolvedReference<Type> {
+        return this.createConstrainedReference(key, typeInfo, () => ({}))
+    }
+    public createConstrainedReference<Constraints>(
+        key: string, typeInfo: string, getConstraints: (ref: IDependentResolvedConstraintBuilder<Type>) => Constraints
+    ): IResolvedConstrainedReference<Type, Constraints> {
         this.resolveReporter.reportDependentUnresolvedReference(typeInfo, key, false)
-        return createReference(key, createFailedResolved(this.resolveReporter))
+        const failedResolved = createFailedResolvedBuilder<Type>(this.resolveReporter)
+        return createReference(key, failedResolved, getConstraints(failedResolved))
     }
     public validateFulfillingEntries(keys: string[], typeInfo: string, _requiresExhaustive: boolean) {
         keys.forEach(key => {

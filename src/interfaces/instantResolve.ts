@@ -1,40 +1,53 @@
 
-import { Constraint, Dictionary, Reference } from "lingua-franca"
-import { ConstraintCastResult  } from "./ConstraintCastResult"
+import { ConstrainedConstraint, ConstrainedReference, Constraint, Dictionary, Reference } from "lingua-franca"
+import { ConstraintCastResult } from "./ConstraintCastResult"
 
 export interface ILookup<Type> {
     createReference(key: string, typeInfo: string): IResolvedReference<Type>
+    createConstrainedReference<Constraints>(
+        key: string, typeInfo: string, getConstraints: (reference: IDependentResolvedConstraintBuilder<Type>) => Constraints
+    ): IResolvedConstrainedReference<Type, Constraints>
     validateFulfillingEntries(keys: string[], typeInfo: string, requiresExhaustive: boolean): void
 }
 
 export interface IAutoCreateContext<Type> {
-    tryToCreateReference(key: string): null | IResolvedReference<Type>
+    tryToCreateReference(key: string): null | IDependentResolvedConstraintBuilder<Type>
     toLookup(): ILookup<Type>
     getKeys(): string[]
 }
 
 
 export type Repeat<Type> =
-| [false]
-| [true, Constraint<Type>]
+    | [false]
+    | [true, Constraint<Type>]
 
 
-export interface IResolvedConstraint<Type> extends Constraint<Type> {
+export interface IDependentResolvedConstraintBuilder<Type> {
+    readonly value: Type | null
     castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string): IResolvedStateConstraint<NewType>
-    navigateConstraint<NewType>(callback: (type: Type) => Constraint<NewType>, typeInfo: string): IResolvedConstraint<NewType>
-    convert<NewType>(callback: (type: Type) => NewType): IResolvedConstraint<NewType>
+    castToConstrainedConstraint<NewType, Constraints>(
+        callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string, getConstraints: (current: IDependentResolvedConstraintBuilder<NewType>) => Constraints
+    ): IResolvedConstrainedStateConstraint<NewType, Constraints>
+    navigateConstraint<NewType>(callback: (type: Type) => Constraint<NewType>, typeInfo: string): IDependentResolvedConstraintBuilder<NewType>
+    //convert<NewType>(callback: (type: Type) => NewType): IResolvedConstraint<NewType>
     getLookup<NewType>(callback: (value: Type) => Dictionary<NewType>): ILookup<NewType>
+    //mapResolved<NewType>(callback: (type: Type) => NewType, onNotResolved: () => NewType): NewType
+    repeatNavigate(callback: (type: Type) => Repeat<Type>, typeInfo: string): IDependentResolvedConstraintBuilder<Type>
+
     mapResolved<NewType>(callback: (type: Type) => NewType, onNotResolved: () => NewType): NewType
-    repeatNavigate(callback: (type: Type) => Repeat<Type>, typeInfo: string): IResolvedConstraint<Type>
+    getConstraint<NewType>(callback: (type: Type) => Constraint<NewType>): Constraint<NewType>
+    getNonConstraint<NewType>(callback: (type: Type) => NewType): Constraint<NewType>
 }
 
 export interface IResolvedStateConstraint<ReferencedType> extends Constraint<ReferencedType> {
-    imp: IResolvedConstraint<ReferencedType>
+    builder: IDependentResolvedConstraintBuilder<ReferencedType>
 }
+export interface IResolvedConstrainedStateConstraint<ReferencedType, Constraints> extends IResolvedStateConstraint<ReferencedType>, ConstrainedConstraint<ReferencedType, Constraints> { }
 
 export interface IResolvedReference<ReferencedType> extends Reference<ReferencedType> {
-    imp: IResolvedConstraint<ReferencedType>
+    builder: IDependentResolvedConstraintBuilder<ReferencedType>
 }
+export interface IResolvedConstrainedReference<Type, Constraints> extends IResolvedReference<Type>, ConstrainedReference<Type, Constraints> { }
 
 export type MissingEntryCreator<Type> = (key: string) => null | Type
 

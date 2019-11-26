@@ -1,11 +1,12 @@
 // tslint:disable: max-classes-per-file
-import { Dictionary, DictionaryOrdering, Sanitizer } from "lingua-franca"
+import { Dictionary, DictionaryOrdering, OrderedDictionary, Sanitizer } from "lingua-franca"
 import { IDelayedResolveLookup } from "../../interfaces/delayedResolve"
 import { IAutoCreateDictionary, IDictionaryBuilder } from "../../interfaces/dictionary"
+import { IOrderingCreator } from "../../interfaces/IBuildContext"
 import { ILookup, MissingEntryCreator } from "../../interfaces/instantResolve"
 import { IResolveReporter } from "../../IResolveReporter"
-import { RawDictionary } from "../RawDictionary"
 import { createAutoCreateContext } from "../instantResolve/autoCreateContext"
+import { RawDictionary } from "../RawDictionary"
 import { createDictionaryBuilder } from "./dictionaryBuilder"
 
 type KeyValuePair<Type> = { key: string; value: Type }
@@ -132,37 +133,6 @@ class DictionaryOrderingImp<Type> implements DictionaryOrdering<Type> {
     }
 }
 
-export function createOrderedDictionary<Type>(
-    typeInfo: string,
-    resolveReporter: IResolveReporter,
-    dictionary: Dictionary<Type>,
-    getDependencies: (entry: Type) => string[],
-): DictionaryOrdering<Type> {
-    const array: Array<KeyValuePair<Type>> = []
-    const alreadyInserted = new RawDictionary<FinishedInsertion>()
-    const process = (key: string) => {
-        const isInserted = alreadyInserted.get(key)
-        if (isInserted === null) {
-            const entry = dictionary.getEntry(key)
-            if (entry === null) {
-                //this can happen when the caller returns an invalid key upon getDependencies
-                //console.error("Entry does not exist: " + key)
-                return
-            }
-            alreadyInserted.set(key, false)
-            getDependencies(entry).forEach(process)
-            array.push({ key: key, value: entry })
-            alreadyInserted.update(key, true)
-        } else {
-            if (!isInserted) {
-                resolveReporter.reportCircularDependency(typeInfo, key)
-            }
-        }
-    }
-    dictionary.getKeys().forEach(process)
-    return new DictionaryOrderingImp(array)
-}
-
 export function createDelayedResolveFulfillingDictionary<Type, ReferencedType>(
     typeInfo: string,
     resolveReporter: IResolveReporter,
@@ -193,7 +163,6 @@ export function createFulfillingDictionary<Type, ReferencedType>(
     return new DictionaryImp<Type>(dict)
 }
 
-
 export function createDictionary<Type>(
     typeInfo: string,
     resolveReporter: IResolveReporter,
@@ -204,4 +173,68 @@ export function createDictionary<Type>(
     callback(db)
     db.finalize()
     return new DictionaryImp<Type>(dict)
+}
+
+
+function createDictionaryOrdering<Type>(
+    typeInfo: string,
+    resolveReporter: IResolveReporter,
+    dictionary: RawDictionary<Type>,
+    getDependencies: (entry: Type) => string[],
+): DictionaryOrdering<Type> {
+    const array: Array<KeyValuePair<Type>> = []
+    const alreadyInserted = new RawDictionary<FinishedInsertion>()
+    const process = (key: string) => {
+        const isInserted = alreadyInserted.get(key)
+        if (isInserted === null) {
+            const entry = dictionary.get(key)
+            if (entry === null) {
+                //this can happen when the caller returns an invalid key upon getDependencies
+                //console.error("Entry does not exist: " + key)
+                return
+            }
+            alreadyInserted.set(key, false)
+            getDependencies(entry).forEach(process)
+            array.push({ key: key, value: entry })
+            alreadyInserted.update(key, true)
+        } else {
+            if (!isInserted) {
+                resolveReporter.reportCircularDependency(typeInfo, key)
+            }
+        }
+    }
+    dictionary.getKeys().forEach(process)
+    return new DictionaryOrderingImp(array)
+}
+
+class OrderedDictionaryImp<Type, Orderings> extends DictionaryImp<Type> implements OrderedDictionary<Type, Orderings> {
+    private readonly orderings: Orderings
+    constructor(dictionary: RawDictionary<Type>, orderings: Orderings) {
+        super(dictionary)
+        this.orderings = orderings
+    }
+    public getOrderings() {
+        return this.orderings
+    }
+}
+
+export function createOrderedDictionary<Type, Orderings>(
+    typeInfo: string,
+    resolveReporter: IResolveReporter,
+    callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
+    getOrderings: (orderingCreator: IOrderingCreator<Type>) => Orderings,
+): OrderedDictionary<Type, Orderings> {
+    const dict = new RawDictionary<Type>()
+    const db = createDictionaryBuilder<Type>(dict, resolveReporter, typeInfo)
+    callback(db)
+    db.finalize()
+    const orderings = getOrderings({
+        createBasedOnDependency: (circularDependencyTypeInfo: string, getDependencies: (entry: Type) => string[]) => {
+            return createDictionaryOrdering(circularDependencyTypeInfo, resolveReporter, dict, getDependencies)
+        },
+        createBasedOnInsertionOrder: (): DictionaryOrdering<Type> => {
+            return new DictionaryOrderingImp(dict.map((value, key) => ({ key: key, value: value })))
+        },
+    })
+    return new OrderedDictionaryImp<Type, Orderings>(dict, orderings)
 }
