@@ -4,7 +4,7 @@ import {
     List,
     OrderedDictionary,
 } from "lingua-franca"
-import { IDelayedResolvableBuilder, IDelayedResolveLookup, IPossibleContext } from "./delayedResolve";
+import { IRootDelayedResolvableBuilder, IDelayedResolveLookup, IPossibleContext } from "./delayedResolve";
 import { IAutoCreateDictionary, IDictionaryBuilder } from "./dictionary";
 import { IListBuilder } from "./IListBuilder";
 import { IAutoCreateContext, IDependentResolvedConstraintBuilder, ILookup, MissingEntryCreator } from "./instantResolve";
@@ -22,7 +22,7 @@ export interface IBuildContext {
         typeInfo: string, callback: (dictBuilder: IDictionaryBuilder<Type>) => void, missingEntryCreator: MissingEntryCreator<Type>, getParentKeys: () => string[]
     ): IAutoCreateDictionary<Type>
 
-    createDelayedResolvable<Type>(): IDelayedResolvableBuilder<Type>
+    createDelayedResolvableBuilder<Type>(): IRootDelayedResolvableBuilder<Type>
     createDelayedResolveFulfillingDictionary<Type, ReferencedType>(
         typeInfo: string,
         delayedResolveLookup: IDelayedResolveLookup<ReferencedType>,
@@ -49,5 +49,5 @@ export interface IBuildContext {
     createNonExistentAutoCreateContext<Type>(): IAutoCreateContext<Type>
     createNonExistentContext<Type>(): IPossibleContext<Type>
     createNonExistentLookup<Type>(): ILookup<Type>
-    wrapResolved<Type>(value: Type): IDependentResolvedConstraintBuilder<Type>
+    createResolveBuilder<Type>(value: Type): IDependentResolvedConstraintBuilder<Type>
 }

@@ -1,5 +1,5 @@
-import { Constraint, Dictionary, Reference } from "lingua-franca"
-import { ConstraintCastResult  } from "./ConstraintCastResult"
+import { ConstrainedConstraint, ConstrainedReference, Constraint, Dictionary, Reference } from "lingua-franca"
+import { ConstraintCastResult } from "./ConstraintCastResult"
 
 export interface IDelayedResolveLookup<Type> {
     validateFulfillingEntries(keys: string[], typeInfo: string, requiresExhaustive: boolean): void
@@ -7,22 +7,35 @@ export interface IDelayedResolveLookup<Type> {
         key: string,
         typeInfo: string
     ): IDelayedResolveReference<Type>
+    // createConstrainedReference<Constraints>(
+    //     key: string,
+    //     typeInfo: string,
+    //     getConstraints: (builder: IDerivedDelayedResolvableBuilder<Type>) => Constraints
+    // ): IDelayedResolveReference<Type>
 }
 
-export interface IDelayedResolveConstraint<Type> extends Constraint<Type> {
-    getLookup<NewType>(callback: (type: Type) => Dictionary<NewType>): IDelayedResolveLookup<NewType>
+export interface IDelayedResolvableBuilder<Type> {
+    getValue(): undefined | [false] | [true, Type]
     castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string): IDelayedResolveStateConstraint<NewType>
+    castToConstrainedConstraint<NewType, Constraints>(
+        callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string, getConstraints: (builder: IDelayedResolvableBuilder<NewType>) => Constraints
+    ): IDelayedResolveConstrainedStateConstraint<NewType, Constraints>
+    getLookup<NewType>(callback: (type: Type) => Dictionary<NewType>): IDelayedResolveLookup<NewType>
     convert<NewType>(callback: (type: Type) => NewType): IDelayedResolveConstraint<NewType>
 }
 
-export interface IDelayedResolveReference<ReferencedType> extends IDelayedResolveConstraint<ReferencedType>, Reference<ReferencedType> { }
-export interface IDelayedResolveStateConstraint<Type> extends IDelayedResolveConstraint<Type>, Constraint<Type> { }
-
-export interface IDelayedResolvable<Type> {
-    getLookup<NewType>(callback: (type: Type) => Dictionary<NewType>): IDelayedResolveLookup<NewType>
+export interface IDelayedResolveConstraint<Type> extends Constraint<Type> {
+    readonly builder: IDelayedResolvableBuilder<Type>
 }
 
-export interface IDelayedResolvableBuilder<Type> extends IDelayedResolvable<Type> {
+export interface IDelayedResolveReference<ReferencedType> extends IDelayedResolveConstraint<ReferencedType>, Reference<ReferencedType> { }
+export interface IDelayedResolveConstrainedReference<ReferencedType, Constraints> extends IDelayedResolveReference<ReferencedType>, ConstrainedReference<ReferencedType, Constraints> { }
+
+export interface IDelayedResolveStateConstraint<Type> extends IDelayedResolveConstraint<Type>, Constraint<Type> { }
+export interface IDelayedResolveConstrainedStateConstraint<Type, Constraints> extends IDelayedResolveStateConstraint<Type>, ConstrainedConstraint<Type, Constraints> { }
+
+export interface IRootDelayedResolvableBuilder<Type> {
+    builder: IDelayedResolvableBuilder<Type>
     resolve(value: Type): void
 }
 

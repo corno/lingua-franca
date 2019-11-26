@@ -1,8 +1,9 @@
 // tslint:disable max-classes-per-file
 import { Dictionary } from "lingua-franca"
-import { IDelayedResolveLookup, IDelayedResolveReference } from "../../interfaces/delayedResolve"
+import { IDelayedResolveConstrainedReference, IDelayedResolveLookup, IDelayedResolveReference, IDelayedResolvableBuilder } from "../../interfaces/delayedResolve"
 import { IResolveReporter } from "../../IResolveReporter"
 import { DelayedResolveReference } from "./delayedResolve"
+import { XBuilder } from "./delayedResolveConstraint"
 
 interface IResolvedSubscriber<Type> {
     onSuccess: (value: Type) => void,
@@ -43,7 +44,15 @@ export class DelayedResolveLookup<Type> implements IDelayedResolveLookup<Type> {
         key: string,
         typeInfo: string
     ): IDelayedResolveReference<Type> {
-        const ref = new DelayedResolveReference<Type>(key, this.resolveReporter)
+        return this.createConstrainedReference(key, typeInfo, ()  => ({}))
+    }
+    public createConstrainedReference<Constraints>(
+        key: string,
+        typeInfo: string,
+        getConstraints: (builder: IDelayedResolvableBuilder<Type>) => Constraints
+    ): IDelayedResolveConstrainedReference<Type, Constraints> {
+        const builder = new XBuilder<Type>(this.resolveReporter)
+        const ref = new DelayedResolveReference<Type, Constraints>(key, this.resolveReporter, builder, getConstraints(builder))
         this.addSubscriber(
             () => {
                 this.resolveReporter.reportDependentUnresolvedReference(typeInfo, key, true)
@@ -52,9 +61,9 @@ export class DelayedResolveLookup<Type> implements IDelayedResolveLookup<Type> {
             const entry = dict.getEntry(key)
             if (entry === null) {
                 this.resolveReporter.reportUnresolvedReference(typeInfo, key, dict.getKeys(), true)
-                ref.setToFailedResolve()
+                builder.setToFailedResolve()
             } else {
-                ref.resolve(entry)
+                builder.resolve(entry)
             }
         }
         )

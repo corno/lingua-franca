@@ -3,7 +3,7 @@ import { IAutoCreateContext, IDependentResolvedConstraintBuilder, ILookup, IReso
 import { IResolveReporter } from "../../IResolveReporter"
 import { RawDictionary } from "../RawDictionary"
 import { createReference } from "./referenceBaseClasses"
-import { createFailedResolvedBuilder, wrapResolved } from "./resolved"
+import { createFailedResolvedBuilder, createResolveBuilder as createResolvedBuilder } from "./resolved"
 
 class AutoCreateLookup<Type> implements ILookup<Type> {
     private readonly autoCreateContext: IAutoCreateContext<Type>
@@ -24,7 +24,7 @@ class AutoCreateLookup<Type> implements ILookup<Type> {
             const failedResolved = createFailedResolvedBuilder<Type>(this.resolveReporter)
             return createReference(key, failedResolved, getConstraints(failedResolved))
         }
-        return createReference(key, entry, getConstraints(entry))
+        return createReference(key, entry.builder, getConstraints(entry.builder))
     }
     public validateFulfillingEntries(keys: string[], typeInfo: string, requiresExhaustive: boolean) {
         const requiredKeys = this.autoCreateContext.getKeys()
@@ -56,10 +56,10 @@ class AutoCreateContext<Type> implements IAutoCreateContext<Type> {
     }
     public tryToCreateReference(
         key: string
-    ): null | IDependentResolvedConstraintBuilder<Type> {
+    ): null | IResolvedReference<Type> {
         const entry = this.dict.get(key)
         if (entry !== null) {
-            return wrapResolved(entry, this.resolveReporter)
+            return createReference(key, createResolvedBuilder(entry, this.resolveReporter), {})
         } else {
             //entry does not exist
             const possibleEntry = this.missingEntryCreator(key)
@@ -67,7 +67,7 @@ class AutoCreateContext<Type> implements IAutoCreateContext<Type> {
                 return null
             } else {
                 this.dict.set(key, possibleEntry)
-                return wrapResolved(possibleEntry, this.resolveReporter)
+                return createReference(key, createResolvedBuilder(possibleEntry, this.resolveReporter), {})
             }
         }
     }

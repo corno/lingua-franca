@@ -3,7 +3,7 @@ import { Dictionary } from "lingua-franca"
 import { IDependentResolvedConstraintBuilder, ILookup, IResolvedConstrainedReference, IResolvedReference } from "../../interfaces/instantResolve"
 import { IResolveReporter } from "../../IResolveReporter"
 import { createReference } from "./referenceBaseClasses"
-import { createFailedResolvedBuilder, wrapResolved } from "./resolved"
+import { createFailedResolvedBuilder, createResolveBuilder } from "./resolved"
 
 class LookupImp<Type> implements ILookup<Type> {
     protected readonly resolveReporter: IResolveReporter
@@ -24,7 +24,7 @@ class LookupImp<Type> implements ILookup<Type> {
             const failedResolved = createFailedResolvedBuilder<Type>(this.resolveReporter)
             return createReference(key, failedResolved, getConstraints(failedResolved))
         }
-        const resolved = wrapResolved(entry, this.resolveReporter)
+        const resolved = createResolveBuilder(entry, this.resolveReporter)
         return createReference(key, resolved, getConstraints(resolved))
     }
 

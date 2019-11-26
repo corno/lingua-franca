@@ -1,6 +1,6 @@
 import { IPossibleContext } from "../../interfaces/delayedResolve";
 import { IResolveReporter } from "../../IResolveReporter";
-import { DelayedResolveConstraint } from "./delayedResolveConstraint";
+import { DelayedResolveConstraint, XBuilder } from "./delayedResolveConstraint";
 
 class NonExistentContext<Type> implements IPossibleContext<Type> {
     private readonly resolveReporter: IResolveReporter
@@ -8,8 +8,9 @@ class NonExistentContext<Type> implements IPossibleContext<Type> {
         this.resolveReporter = resolveReporter
     }
     public validateExistence() {
-        const constraint = new DelayedResolveConstraint<Type>(this.resolveReporter)
-        constraint.setToFailedResolve()
+        const builder = new XBuilder<Type>(this.resolveReporter)
+        const constraint = new DelayedResolveConstraint<Type>(this.resolveReporter, builder)
+        builder.setToFailedResolve()
         return constraint
     }
 }
@@ -21,7 +22,7 @@ export function createNonExistingContext<Type>(resolveReporter: IResolveReporter
 // tslint:disable-next-line: max-classes-per-file
 class ExistingContext<Type> implements IPossibleContext<Type> {
     private readonly resolveReporter: IResolveReporter
-    private readonly subscribers: Array<DelayedResolveConstraint<Type>> = []
+    private readonly subscribers: Array<XBuilder<Type>> = []
     private isSet = false
     constructor(resolveReporter: IResolveReporter) {
         this.resolveReporter = resolveReporter
@@ -30,8 +31,9 @@ class ExistingContext<Type> implements IPossibleContext<Type> {
         if (this.isSet) {
             throw new Error("UNEXPECTED")
         }
-        const constraint = new DelayedResolveConstraint<Type>(this.resolveReporter)
-        this.subscribers.push(constraint)
+        const builder = new XBuilder<Type>(this.resolveReporter)
+        const constraint = new DelayedResolveConstraint<Type>(this.resolveReporter, builder)
+        this.subscribers.push(builder)
         return constraint
     }
     public set(value: Type) {

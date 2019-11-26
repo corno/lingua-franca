@@ -1,7 +1,7 @@
 import { Constraint } from "lingua-franca"
-import { IDependentResolvedConstraintBuilder, IResolvedConstrainedReference, IResolvedConstrainedStateConstraint } from "../../interfaces/instantResolve"
+import { IDependentResolvedConstraintBuilder,  IResolvedConstrainedConstraint, IResolvedConstrainedReference, IResolvedConstraint } from "../../interfaces/instantResolve"
 
-class ConstraintImp<Type, Constraints> implements IResolvedConstrainedStateConstraint<Type, Constraints> {
+class ConstraintImp<Type, Constraints> implements IResolvedConstrainedConstraint<Type, Constraints> {
     public readonly builder: IDependentResolvedConstraintBuilder<Type>
     private readonly constraints: Constraints
     constructor(builder: IDependentResolvedConstraintBuilder<Type>, constraints: Constraints) {
@@ -38,14 +38,14 @@ class ConstraintImp<Type, Constraints> implements IResolvedConstrainedStateConst
 
 
 export function createConstraint<ReferencedType, Constraints>(
-    value: IDependentResolvedConstraintBuilder<ReferencedType>, constraints: Constraints
-): Constraint<ReferencedType> {
-    return new ConstraintImp(value, constraints)
+    builder: IDependentResolvedConstraintBuilder<ReferencedType>, constraints: Constraints
+): IResolvedConstraint<ReferencedType> {
+    return new ConstraintImp(builder, constraints)
 }
 
 export function createStateConstraint<ReferencedType, Constraints>(
     value: IDependentResolvedConstraintBuilder<ReferencedType>, constraints: Constraints
-): IResolvedConstrainedStateConstraint<ReferencedType, Constraints> {
+): IResolvedConstrainedConstraint<ReferencedType, Constraints> {
     return new ConstraintImp(value, constraints)
 }
 

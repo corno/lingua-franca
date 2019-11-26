@@ -11,7 +11,7 @@ export interface ILookup<Type> {
 }
 
 export interface IAutoCreateContext<Type> {
-    tryToCreateReference(key: string): null | IDependentResolvedConstraintBuilder<Type>
+    tryToCreateReference(key: string): null | IResolvedReference<Type>
     toLookup(): ILookup<Type>
     getKeys(): string[]
 }
@@ -24,10 +24,10 @@ export type Repeat<Type> =
 
 export interface IDependentResolvedConstraintBuilder<Type> {
     readonly value: Type | null
-    castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string): IResolvedStateConstraint<NewType>
+    castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string): IResolvedConstraint<NewType>
     castToConstrainedConstraint<NewType, Constraints>(
         callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string, getConstraints: (current: IDependentResolvedConstraintBuilder<NewType>) => Constraints
-    ): IResolvedConstrainedStateConstraint<NewType, Constraints>
+    ): IResolvedConstrainedConstraint<NewType, Constraints>
     navigateConstraint<NewType>(callback: (type: Type) => Constraint<NewType>, typeInfo: string): IDependentResolvedConstraintBuilder<NewType>
     //convert<NewType>(callback: (type: Type) => NewType): IResolvedConstraint<NewType>
     getLookup<NewType>(callback: (value: Type) => Dictionary<NewType>): ILookup<NewType>
@@ -35,14 +35,14 @@ export interface IDependentResolvedConstraintBuilder<Type> {
     repeatNavigate(callback: (type: Type) => Repeat<Type>, typeInfo: string): IDependentResolvedConstraintBuilder<Type>
 
     mapResolved<NewType>(callback: (type: Type) => NewType, onNotResolved: () => NewType): NewType
-    getConstraint<NewType>(callback: (type: Type) => Constraint<NewType>): Constraint<NewType>
-    getNonConstraint<NewType>(callback: (type: Type) => NewType): Constraint<NewType>
+    getConstraint<NewType>(callback: (type: Type) => Constraint<NewType>): IResolvedConstraint<NewType>
+    getNonConstraint<NewType>(callback: (type: Type) => NewType): IResolvedConstraint<NewType>
 }
 
-export interface IResolvedStateConstraint<ReferencedType> extends Constraint<ReferencedType> {
+export interface IResolvedConstraint<ReferencedType> extends Constraint<ReferencedType> {
     builder: IDependentResolvedConstraintBuilder<ReferencedType>
 }
-export interface IResolvedConstrainedStateConstraint<ReferencedType, Constraints> extends IResolvedStateConstraint<ReferencedType>, ConstrainedConstraint<ReferencedType, Constraints> { }
+export interface IResolvedConstrainedConstraint<ReferencedType, Constraints> extends IResolvedConstraint<ReferencedType>, ConstrainedConstraint<ReferencedType, Constraints> { }
 
 export interface IResolvedReference<ReferencedType> extends Reference<ReferencedType> {
     builder: IDependentResolvedConstraintBuilder<ReferencedType>

@@ -2,18 +2,18 @@ import {
     Dictionary,
     List,
 } from "lingua-franca"
-import { IDelayedResolvableBuilder, IDelayedResolveLookup, IPossibleContext } from "../interfaces/delayedResolve"
+import { IRootDelayedResolvableBuilder, IDelayedResolveLookup, IPossibleContext } from "../interfaces/delayedResolve"
 import { IAutoCreateDictionary, IDictionaryBuilder } from "../interfaces/dictionary"
 import { IBuildContext, IOrderingCreator } from "../interfaces/IBuildContext"
 import { IListBuilder } from "../interfaces/IListBuilder"
 import { IAutoCreateContext, IDependentResolvedConstraintBuilder, ILookup, MissingEntryCreator } from "../interfaces/instantResolve"
 import { IResolveReporter } from "../IResolveReporter"
-import { createDelayedResolvable } from "./delayedResolve/delayedResolve"
+import { createDelayedResolvableBuilder } from "./delayedResolve/delayedResolve"
 import { createExistingContext, createNonExistingContext } from "./delayedResolve/possibleContext"
 import { createAutoCreateDictionary, createDelayedResolveFulfillingDictionary, createDictionary, createFulfillingDictionary, createOrderedDictionary } from "./dictionary/createDictionary"
 import { createNonExistentAutoCreateContext } from "./instantResolve/autoCreateContext"
 import { createFailedLookup, createLookup, createNonExistentLookupPlaceholder } from "./instantResolve/lookup"
-import { wrapResolved } from "./instantResolve/resolved"
+import { createResolveBuilder } from "./instantResolve/resolved"
 import { createList } from "./list"
 
 class BuildContext implements IBuildContext {
@@ -26,8 +26,8 @@ class BuildContext implements IBuildContext {
     ): IAutoCreateDictionary<Type> {
         return createAutoCreateDictionary(typeInfo, this.resolveReporter, callback, missingEntryCreator, getParentKeys)
     }
-    public createDelayedResolvable<Type>(): IDelayedResolvableBuilder<Type> {
-        return createDelayedResolvable(this.resolveReporter)
+    public createDelayedResolvableBuilder<Type>(): IRootDelayedResolvableBuilder<Type> {
+        return createDelayedResolvableBuilder(this.resolveReporter)
     }
     public createDelayedResolveFulfillingDictionary<Type, ReferencedType>(
         typeInfo: string,
@@ -72,13 +72,13 @@ class BuildContext implements IBuildContext {
         return createNonExistentAutoCreateContext(this.resolveReporter)
     }
     public createNonExistentContext<Type>(): IPossibleContext<Type> {
-        return createNonExistingContext(this.resolveReporter)
+        return createNonExistingContext<Type>(this.resolveReporter)
     }
     public createNonExistentLookup<Type>(): ILookup<Type> {
         return createNonExistentLookupPlaceholder(this.resolveReporter)
     }
-    public wrapResolved<Type>(value: Type): IDependentResolvedConstraintBuilder<Type> {
-        return wrapResolved(value, this.resolveReporter)
+    public createResolveBuilder<Type>(value: Type): IDependentResolvedConstraintBuilder<Type> {
+        return createResolveBuilder(value, this.resolveReporter)
     }
 }
 

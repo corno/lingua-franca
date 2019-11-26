@@ -1,45 +1,47 @@
 // tslint:disable max-classes-per-file
-import { Dictionary, Sanitizer } from "lingua-franca"
-import { IDelayedResolvable, IDelayedResolvableBuilder, IDelayedResolveLookup, IDelayedResolveReference, IDelayedResolveStateConstraint } from "../../interfaces/delayedResolve"
+import { Sanitizer } from "lingua-franca"
+import { IRootDelayedResolvableBuilder, IDelayedResolveReference, IDelayedResolveStateConstraint, IDelayedResolvableBuilder } from "../../interfaces/delayedResolve"
 import { IResolveReporter } from "../../IResolveReporter"
-import { DelayedResolveConstraint } from "./delayedResolveConstraint"
-import { DelayedResolveLookup } from "./DelayedResolveLookup"
+import { DelayedResolveConstraint, XBuilder } from "./delayedResolveConstraint"
 
-export class DelayedResolveStateConstraint<Type> extends DelayedResolveConstraint<Type> implements IDelayedResolveStateConstraint<Type> {
-    constructor(resolveReporter: IResolveReporter) {
-        super(resolveReporter)
+export class DelayedResolveStateConstraint<Type, Constraints> extends DelayedResolveConstraint<Type> implements IDelayedResolveStateConstraint<Type> {
+    private readonly constraints: Constraints
+    constructor(resolveReporter: IResolveReporter, builder: IDelayedResolvableBuilder<Type>, constraints: Constraints) {
+        super(resolveReporter, builder)
+        this.constraints = constraints
+    }
+    public getConstraints() {
+        return this.constraints
     }
 }
 
-export class DelayedResolveReference<Type> extends DelayedResolveConstraint<Type> implements IDelayedResolveReference<Type> {
+export class DelayedResolveReference<Type, Constraints> extends DelayedResolveConstraint<Type> implements IDelayedResolveReference<Type> {
     private readonly key: string
-    constructor(key: string, resolveReporter: IResolveReporter) {
-        super(resolveReporter)
+    private readonly constraints: Constraints
+    constructor(key: string, resolveReporter: IResolveReporter, builder: IDelayedResolvableBuilder<Type>, constraints: Constraints) {
+        super(resolveReporter, builder)
         this.key = key
+        this.constraints = constraints
     }
     public getKey(sanitizer: Sanitizer) {
         return sanitizer(this.key)
     }
+    public getConstraints() {
+        return this.constraints
+    }
 }
 
-class DelayedResolvable<Type> implements IDelayedResolvable<Type> {
-    private readonly resolveReporter: IResolveReporter
-    private readonly subscribers: Array<(value: Type) => void> = []
-    constructor(resolveReporter: IResolveReporter) {
-        this.resolveReporter = resolveReporter
-    }
-    public getLookup<NewType>(callback: (type: Type) => Dictionary<NewType>): IDelayedResolveLookup<NewType> {
-        const lookup = new DelayedResolveLookup<NewType>(this.resolveReporter)
-        this.subscribers.push(value => {
-            lookup.resolve(callback(value))
-        })
-        return lookup
+class DelayedResolvable<Type> implements IRootDelayedResolvableBuilder<Type> {
+    public readonly builder: XBuilder<Type>
+    constructor(builder: XBuilder<Type>) {
+        this.builder = builder
     }
     public resolve(value: Type) {
-        this.subscribers.forEach(s => s(value))
+        this.builder.resolve(value)
     }
 }
 
-export function createDelayedResolvable<T>(resolveReporter: IResolveReporter): IDelayedResolvableBuilder<T> {
-    return new DelayedResolvable<T>(resolveReporter)
+export function createDelayedResolvableBuilder<T>(resolveReporter: IResolveReporter): IRootDelayedResolvableBuilder<T> {
+    const builder = new XBuilder<T>(resolveReporter)
+    return new DelayedResolvable<T>(builder)
 }
