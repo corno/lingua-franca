@@ -1,6 +1,6 @@
 // tslint:disable max-classes-per-file
 import { Sanitizer } from "lingua-franca"
-import { IRootDelayedResolvableBuilder, IDelayedResolveReference, IDelayedResolveStateConstraint, IDelayedResolvableBuilder } from "../../interfaces/delayedResolve"
+import { IDelayedResolvableBuilder, IDelayedResolveReference, IDelayedResolveStateConstraint, IRootDelayedResolvableBuilder } from "../../interfaces/delayedResolve"
 import { IResolveReporter } from "../../IResolveReporter"
 import { DelayedResolveConstraint, XBuilder } from "./delayedResolveConstraint"
 
