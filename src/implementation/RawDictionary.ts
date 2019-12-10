@@ -28,4 +28,7 @@ export class RawDictionary<Type> {
     public map<NewType>(callback: (entry: Type, key: string) => NewType) {
         return this.getKeys().map(key => callback(this.data[key], key))
     }
+    public isEmpty() {
+        return this.getKeys().length === 0
+    }
 }

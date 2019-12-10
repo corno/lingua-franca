@@ -13,33 +13,19 @@ type KeyValuePair<Type> = { key: string; value: Type }
 
 type FinishedInsertion = boolean
 
-function orderedIterate<Type>(
+function orderedIterate<Type, NewType>(
     orderedElements: Array<KeyValuePair<Type>>,
-    onElement: (element: Type, getKey: (sanitizer: Sanitizer) => string) => void,
-    onSepartor?: () => void,
-    onBeforeFirst?: () => void,
-    onAfterLast?: () => void,
-    onEmpty?: () => void,
+    onElement: (element: Type, getKey: (sanitizer: Sanitizer) => string) => NewType,
+    onSepartor?: () => NewType,
 ) {
-    const isEmpty = orderedIterate.length === 0
-    if (isEmpty) {
-        if (onEmpty !== undefined) {
-            onEmpty()
-        }
-        return
-    }
-    if (isEmpty && onBeforeFirst !== undefined) {
-        onBeforeFirst()
-    }
+    const target: Array<NewType> = []
     orderedElements.forEach((kvPair, index) => {
         if (index !== 0 && onSepartor !== undefined) {
-            onSepartor()
+            target.push(onSepartor())
         }
-        onElement(kvPair.value, sanitizer => sanitizer(kvPair.key))
+        target.push(onElement(kvPair.value, sanitizer => sanitizer(kvPair.key)))
     })
-    if (!isEmpty && onAfterLast !== undefined) {
-        onAfterLast()
-    }
+    return target
 }
 
 class DictionaryImp<Type> implements Dictionary<Type> {
@@ -50,16 +36,23 @@ class DictionaryImp<Type> implements Dictionary<Type> {
     public getEntry(key: string): null | Type {
         return this.dictionary.get(key)
     }
-    public forEachAlphabetically(
-        onElement: (element: Type, getKey: (sanitizer: Sanitizer) => string) => void,
-        onSepartor?: () => void,
-        onBeforeFirst?: () => void,
-        onAfterLast?: () => void,
-        onEmpty?: () => void,
+    public mapAlphabetically<NewType>(
+        onElement: (element: Type, getKey: (sanitizer: Sanitizer) => string) => NewType,
+        onSepartor?: () => NewType
     ) {
-        orderedIterate(this.dictionary.map((entry, key) => ({ key: key, value: entry })).sort((a, b) => {
+        return orderedIterate(this.dictionary.map((entry, key) => ({ key: key, value: entry })).sort((a, b) => {
             return a.key.toLowerCase().localeCompare(b.key.toLowerCase())
-        }), onElement, onSepartor, onBeforeFirst, onAfterLast, onEmpty)
+        }), onElement, onSepartor)
+    }
+    public onEmpty<NewType>(
+        onEmpty: () => NewType,
+        onNotEmpty: () => NewType,
+    ) {
+        if (this.dictionary.isEmpty()) {
+            return onEmpty()
+        } else {
+            return onNotEmpty()
+        }
     }
     public getKeys() {
         return this.dictionary.getKeys().sort((a, b) => {
@@ -119,14 +112,11 @@ class DictionaryOrderingImp<Type> implements DictionaryOrdering<Type> {
     constructor(orderedArray: Array<KeyValuePair<Type>>) {
         this.orderedArray = orderedArray
     }
-    public forEach(
-        onElement: (element: Type, getKey: (sanitizer: Sanitizer) => string) => void,
-        onSepartor?: () => void,
-        onBeforeFirst?: () => void,
-        onAfterLast?: () => void,
-        onEmpty?: () => void,
+    public map<NewType>(
+        onElement: (element: Type, getKey: (sanitizer: Sanitizer) => string) => NewType,
+        onSepartor?: () => NewType
     ) {
-        orderedIterate(this.orderedArray, onElement, onSepartor, onBeforeFirst, onAfterLast, onEmpty)
+        return orderedIterate(this.orderedArray, onElement, onSepartor)
     }
     public mapToArray<NewType>(callback: (entry: Type, key: string) => NewType) {
         return this.orderedArray.map(kvPair => callback(kvPair.value, kvPair.key))
