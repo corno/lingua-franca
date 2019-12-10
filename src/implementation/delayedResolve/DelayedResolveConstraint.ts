@@ -1,7 +1,7 @@
 // tslint:disable max-classes-per-file
 import { Constraint, Dictionary } from "lingua-franca"
 import { ConstraintCastResult } from "../../interfaces/ConstraintCastResult"
-import { IDelayedResolveConstrainedStateConstraint, IDelayedResolveConstraint, IDelayedResolveLookup, IDelayedResolveStateConstraint, IDelayedResolvableBuilder } from "../../interfaces/delayedResolve"
+import { IDelayedResolvableBuilder, IDelayedResolveConstrainedStateConstraint, IDelayedResolveConstraint, IDelayedResolveLookup, IDelayedResolveStateConstraint } from "../../interfaces/delayedResolve"
 import { IResolveReporter } from "../../IResolveReporter"
 import { DelayedResolveStateConstraint } from "./delayedResolve"
 import { DelayedResolveLookup } from "./DelayedResolveLookup"
