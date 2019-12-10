@@ -1,8 +1,8 @@
 //import { IDelayedResolveReference } from "../../interfaces/delayedResolve"
 import { IFinalizableDictionaryBuilder } from "../../interfaces/dictionary"
 import { IResolveReporter } from "../../IResolveReporter"
-import { RawDictionary } from "../RawDictionary"
 import { createLookup } from "../instantResolve/lookup"
+import { RawDictionary } from "../RawDictionary"
 import { wrapDictionary } from "./createDictionary"
 
 class DictionaryBuilder<Type> implements IFinalizableDictionaryBuilder<Type> {

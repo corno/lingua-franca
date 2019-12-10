@@ -4,7 +4,7 @@ import {
     List,
     OrderedDictionary,
 } from "lingua-franca"
-import { IRootDelayedResolvableBuilder, IDelayedResolveLookup, IPossibleContext } from "./delayedResolve";
+import { IDelayedResolveLookup, IPossibleContext, IRootDelayedResolvableBuilder } from "./delayedResolve";
 import { IAutoCreateDictionary, IDictionaryBuilder } from "./dictionary";
 import { IListBuilder } from "./IListBuilder";
 import { IAutoCreateContext, IDependentResolvedConstraintBuilder, ILookup, MissingEntryCreator } from "./instantResolve";

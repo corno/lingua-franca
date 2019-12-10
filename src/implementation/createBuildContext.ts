@@ -2,7 +2,7 @@ import {
     Dictionary,
     List,
 } from "lingua-franca"
-import { IRootDelayedResolvableBuilder, IDelayedResolveLookup, IPossibleContext } from "../interfaces/delayedResolve"
+import { IDelayedResolveLookup, IPossibleContext, IRootDelayedResolvableBuilder } from "../interfaces/delayedResolve"
 import { IAutoCreateDictionary, IDictionaryBuilder } from "../interfaces/dictionary"
 import { IBuildContext, IOrderingCreator } from "../interfaces/IBuildContext"
 import { IListBuilder } from "../interfaces/IListBuilder"
