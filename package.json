@@ -27,7 +27,7 @@
     "dist/*"
   ],
   "dependencies": {
-    "lingua-franca": "^0.2.2"
+    "lingua-franca": "^0.2.4"
   },
   "devDependencies": {
     "@types/chai": "^4.2.6",

@@ -36,31 +36,15 @@ class DictionaryImp<Type> implements Dictionary<Type> {
     public getEntry(key: string): null | Type {
         return this.dictionary.get(key)
     }
-    public mapAlphabetically<NewType>(
-        onElement: (element: Type, getKey: (sanitizer: Sanitizer) => string) => NewType,
-        onSepartor?: () => NewType
-    ) {
-        return orderedIterate(this.dictionary.map((entry, key) => ({ key: key, value: entry })).sort((a, b) => {
+    public getAlphabeticalOrdering(): DictionaryOrdering<Type> {
+        return new DictionaryOrderingImp(this.dictionary.map((entry, key) => ({ key: key, value: entry })).sort((a, b) => {
             return a.key.toLowerCase().localeCompare(b.key.toLowerCase())
-        }), onElement, onSepartor)
-    }
-    public onEmpty<NewType>(
-        onEmpty: () => NewType,
-        onNotEmpty: () => NewType,
-    ) {
-        if (this.dictionary.isEmpty()) {
-            return onEmpty()
-        } else {
-            return onNotEmpty()
-        }
+        }))
     }
     public getKeys() {
         return this.dictionary.getKeys().sort((a, b) => {
             return a.toLowerCase().localeCompare(b.toLowerCase())
         })
-    }
-    get isEmpty() {
-        return this.getKeys().length === 0
     }
 }
 
@@ -118,9 +102,32 @@ class DictionaryOrderingImp<Type> implements DictionaryOrdering<Type> {
     ) {
         return orderedIterate(this.orderedArray, onElement, onSepartor)
     }
-    public mapToArray<NewType>(callback: (entry: Type, key: string) => NewType) {
-        return this.orderedArray.map(kvPair => callback(kvPair.value, kvPair.key))
+    public filter<NewType>(
+        onElement: (element: Type) => null | NewType,
+    ) {
+        const target: Array<KeyValuePair<NewType>> = []
+        this.orderedArray.forEach(kvPair => {
+            const result = onElement(kvPair.value)
+            if (result !== null) {
+                target.push({
+                    key: kvPair.key,
+                    value: result,
+                })
+            }
+        })
+        return new DictionaryOrderingImp(target)
     }
+    public onEmpty<NewType>(
+        onEmpty: () => NewType,
+        onNotEmpty: (dictionaryOrdering: DictionaryOrdering<Type>) => NewType,
+    ): NewType {
+        if (this.orderedArray.length === 0) {
+            return onEmpty()
+        } else {
+            return onNotEmpty(this)
+        }
+    }
+
 }
 
 export function createDelayedResolveFulfillingDictionary<Type, ReferencedType>(

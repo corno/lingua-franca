@@ -21,16 +21,25 @@ class ListImp<Type> implements List<Type> {
     }
     public onEmpty<NewType>(
         onEmpty: () => NewType,
-        onNotEmpty: () => NewType,
-    ) {
+        onNotEmpty: (list: List<Type>) => NewType,
+    ): NewType {
         if (this.imp.length === 0) {
             return onEmpty()
         } else {
-            return onNotEmpty()
+            return onNotEmpty(this)
         }
     }
-    get isEmpty() {
-        return this.imp.length === 0
+    public filter<NewType>(
+        onElement: (element: Type) => null | NewType,
+    ) {
+        const target: Array<NewType> = []
+        this.imp.forEach(element => {
+            const result = onElement(element)
+            if (result !== null) {
+                target.push(result)
+            }
+        })
+        return new ListImp(target)
     }
 }
 
