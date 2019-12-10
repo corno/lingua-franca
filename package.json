@@ -4,7 +4,7 @@
   "description": "package for building up 'AST's'",
   "main": "dist/src/index.js",
   "scripts": {
-    "build": "rd /s /q .\\dist && tsc",
+    "build": "mkdir .\\dist & rd /s /q .\\dist && tsc",
     "lint": "tslint --project tsconfig.json ./src/*",
     "pubMin": "git diff --exit-code && ncu -u --packageFile package.json && npm install && rd /s /q .\\dist && tsc && npm run lint && npm run test && npm version minor && git push && npm publish",
     "pubPatch": "git diff --exit-code && ncu -u --packageFile package.json && npm install && rd /s /q .\\dist && tsc && npm run lint && npm run test && npm version patch && git push && npm publish",
@@ -36,6 +36,7 @@
     "mocha": "^6.2.2",
     "nyc": "^14.1.1",
     "ts-node": "^8.5.4",
+    "tslint": "^5.20.1",
     "typescript": "^3.7.3"
   }
 }
