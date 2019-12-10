@@ -5,9 +5,11 @@
   "main": "dist/src/index.js",
   "scripts": {
     "build": "mkdir .\\dist & rd /s /q .\\dist && tsc",
-    "lint": "tslint --project tsconfig.json ./src/*",
-    "pubMin": "git diff --exit-code && ncu -u --packageFile package.json && npm install && rd /s /q .\\dist && tsc && npm run lint && npm run test && npm version minor && git push && npm publish",
-    "pubPatch": "git diff --exit-code && ncu -u --packageFile package.json && npm install && rd /s /q .\\dist && tsc && npm run lint && npm run test && npm version patch && git push && npm publish",
+    "lint": "tslint --project tsconfig.json",
+    "buildLintAndTest": "npm run build && npm run lint && npm run test",
+    "validatePublishReadiness": "git diff --exit-code && ncu -u --packageFile package.json && npm install && npm run buildLintAndTest",
+    "pubMin": "npm run validatePublishReadiness && npm version minor && git push && npm publish",
+    "pubPatch": "npm run validatePublishReadiness && npm version patch && git push && npm publish",
     "test": "cross-env TS_NODE_FILES=true mocha --exit --require ts-node/register --colors test/**/*.ts",
     "u2l": "ncu -u --packageFile package.json && nsi",
     "coverage": "nyc npm run test"
