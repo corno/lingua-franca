@@ -114,8 +114,8 @@ export class DelayedResolveConstraint<Type> implements IDelayedResolveConstraint
     //Constraint methods
 
     public mapResolved<NewType>(p: {
-       readonly callback: (type: Type) => NewType,
-       readonly onNotResolved: () => NewType
+        readonly callback: (type: Type) => NewType,
+        readonly onNotResolved: () => NewType
     }) {
         const resolvedValue = this.builder.getValue()
         if (resolvedValue === undefined) {
@@ -137,20 +137,20 @@ export class DelayedResolveConstraint<Type> implements IDelayedResolveConstraint
         }
     }
     public withResolved(p: { readonly callback: (type: Type) => void, readonly onNotResolved?: () => void }) {
-        this.mapResolved({ callback: p.callback, onNotResolved: p.onNotResolved === undefined ? () => { } : p.onNotResolved})
+        this.mapResolved({ callback: p.callback, onNotResolved: p.onNotResolved === undefined ? () => { } : p.onNotResolved })
     }
     public getResolved(_p: {}) {
         return this.mapResolved({
-         callback:   x => x,
-         onNotResolved:   () => {
+            callback: x => x,
+            onNotResolved: () => {
                 throw new Error("Reference failed to resolve")
-            }
+            },
         })
     }
-    public getConstraint<NewType>(_p: { readonly callback: (type: Type) => Constraint<NewType>}): Constraint<NewType> {
+    public getConstraint<NewType>(_p: { readonly callback: (type: Type) => Constraint<NewType> }): Constraint<NewType> {
         throw new Error("IMPLEMENT ME")
     }
-    public getNonConstraint<NewType>(_p: { readonly callback: (type: Type) => NewType}): Constraint<NewType> {
+    public getNonConstraint<NewType>(_p: { readonly callback: (type: Type) => NewType }): Constraint<NewType> {
         throw new Error("IMPLEMENT ME")
     }
 
