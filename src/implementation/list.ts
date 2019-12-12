@@ -8,7 +8,12 @@ class ListImp<Type> implements List<Type> {
     }
     public map<NewType>(
         onElement: (element: Type) => NewType,
-        onSepartor?: () => NewType
+    ) {
+        return this.imp.map(onElement)
+    }
+    public mapWithSeparator<NewType>(
+        onSepartor: () => NewType,
+        onElement: (element: Type) => NewType,
     ) {
         const target: Array<NewType> = []
         this.imp.forEach((element, index) => {

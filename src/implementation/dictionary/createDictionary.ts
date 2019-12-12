@@ -1,5 +1,5 @@
 // tslint:disable: max-classes-per-file
-import { Dictionary, DictionaryOrdering, OrderedDictionary, Sanitizer } from "lingua-franca"
+import { Dictionary, DictionaryOrdering, OrderedDictionary } from "lingua-franca"
 import { IDelayedResolveLookup } from "../../interfaces/delayedResolve"
 import { IAutoCreateDictionary, IDictionaryBuilder } from "../../interfaces/dictionary"
 import { IOrderingCreator } from "../../interfaces/IBuildContext"
@@ -15,7 +15,7 @@ type FinishedInsertion = boolean
 
 function orderedIterate<Type, NewType>(
     orderedElements: Array<KeyValuePair<Type>>,
-    onElement: (element: Type, getKey: (sanitizer: Sanitizer) => string) => NewType,
+    onElement: (element: Type, key: string) => NewType,
     onSepartor?: () => NewType,
 ) {
     const target: Array<NewType> = []
@@ -23,7 +23,7 @@ function orderedIterate<Type, NewType>(
         if (index !== 0 && onSepartor !== undefined) {
             target.push(onSepartor())
         }
-        target.push(onElement(kvPair.value, sanitizer => sanitizer(kvPair.key)))
+        target.push(onElement(kvPair.value, kvPair.key))
     })
     return target
 }
@@ -97,8 +97,13 @@ class DictionaryOrderingImp<Type> implements DictionaryOrdering<Type> {
         this.orderedArray = orderedArray
     }
     public map<NewType>(
-        onElement: (element: Type, getKey: (sanitizer: Sanitizer) => string) => NewType,
-        onSepartor?: () => NewType
+        onElement: (element: Type, key: string) => NewType,
+    ) {
+        return orderedIterate(this.orderedArray, onElement)
+    }
+    public mapWithSeparator<NewType>(
+        onSepartor: () => NewType,
+        onElement: (element: Type, key: string) => NewType,
     ) {
         return orderedIterate(this.orderedArray, onElement, onSepartor)
     }
