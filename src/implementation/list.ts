@@ -1,45 +1,45 @@
-import { List} from "lingua-franca"
+import { List } from "lingua-franca"
 import { IListBuilder } from "../interfaces/IListBuilder"
 
 class ListImp<Type> implements List<Type> {
     private readonly imp: Type[]
-    constructor(imp: Type[])  {
+    constructor(imp: Type[]) {
         this.imp = imp
     }
-    public map<NewType>(
-        onElement: (element: Type) => NewType,
-    ) {
-        return this.imp.map(onElement)
+    public map<NewType>(p: {
+        readonly callback: (element: Type) => NewType
+    }) {
+        return this.imp.map(p.callback)
     }
-    public mapWithSeparator<NewType>(
-        onSepartor: () => NewType,
-        onElement: (element: Type) => NewType,
-    ) {
+    public mapWithSeparator<NewType>(p: {
+        readonly onSepartor: () => NewType
+        readonly onElement: (element: Type) => NewType
+    }) {
         const target: Array<NewType> = []
         this.imp.forEach((element, index) => {
-            if (index !== 0 && onSepartor !== undefined) {
-                target.push(onSepartor())
+            if (index !== 0 && p.onSepartor !== undefined) {
+                target.push(p.onSepartor())
             }
-            target.push(onElement(element))
+            target.push(p.onElement(element))
         })
         return target
     }
-    public onEmpty<NewType>(
-        onEmpty: () => NewType,
-        onNotEmpty: (list: List<Type>) => NewType,
-    ): NewType {
+    public onEmpty<NewType>(p: {
+      readonly  onEmpty: () => NewType
+      readonly  onNotEmpty: (list: List<Type>) => NewType
+    }): NewType {
         if (this.imp.length === 0) {
-            return onEmpty()
+            return p.onEmpty()
         } else {
-            return onNotEmpty(this)
+            return p.onNotEmpty(this)
         }
     }
-    public filter<NewType>(
-        onElement: (element: Type) => null | NewType,
-    ) {
+    public filter<NewType>(p: {
+       readonly callback: (element: Type) => null | NewType
+    }) {
         const target: Array<NewType> = []
         this.imp.forEach(element => {
-            const result = onElement(element)
+            const result = p.callback(element)
             if (result !== null) {
                 target.push(result)
             }

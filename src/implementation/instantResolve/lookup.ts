@@ -13,7 +13,7 @@ class LookupImp<Type> implements ILookup<Type> {
         this.resolveReporter = resolveReporter
     }
     public has(key: string) {
-        return this.dictionary.getEntry(key) !== null
+        return this.dictionary.getEntry({ key: key}) !== null
     }
     public createReference(key: string, typeInfo: string): IResolvedReference<Type> {
         return this.createConstrainedReference(key, typeInfo, () => ({}))
@@ -21,9 +21,9 @@ class LookupImp<Type> implements ILookup<Type> {
     public createConstrainedReference<Constraints>(
         key: string, typeInfo: string, getConstraints: (reference: IDependentResolvedConstraintBuilder<Type>) => Constraints
     ): IResolvedConstrainedReference<Type, Constraints> {
-        const entry = this.dictionary.getEntry(key)
+        const entry = this.dictionary.getEntry({key: key})
         if (entry === null) {
-            this.resolveReporter.reportUnresolvedReference(typeInfo, key, this.dictionary.getKeys(), false)
+            this.resolveReporter.reportUnresolvedReference(typeInfo, key, this.dictionary.getKeys({}), false)
             const failedResolved = createFailedResolvedBuilder<Type>(this.resolveReporter)
             return createReference(key, failedResolved, getConstraints(failedResolved))
         }
@@ -32,7 +32,7 @@ class LookupImp<Type> implements ILookup<Type> {
     }
 
     public validateFulfillingEntries(keys: string[], typeInfo: string, requiresExhaustive: boolean) {
-        const requiredKeys = this.dictionary.getKeys()
+        const requiredKeys = this.dictionary.getKeys({})
         if (requiresExhaustive) {
             const missingEntries = requiredKeys.filter(key => keys.indexOf(key) === -1)
             if (missingEntries.length > 0) {

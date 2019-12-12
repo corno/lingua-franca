@@ -18,7 +18,7 @@ class ResolvedImp<Type> implements IDependentResolvedConstraintBuilder<Type> {
     }
     // public mapResolved<NewType>(
     //     callback: (type: Type) => NewType,
-    //     _onNotRolved: () => NewType
+    //     _onNotResolved: () => NewType
     // ) {
     //     return callback(this.value)
     // }
@@ -51,15 +51,15 @@ class ResolvedImp<Type> implements IDependentResolvedConstraintBuilder<Type> {
     }
     public navigateConstraint<NewType>(callback: (type: Type) => Constraint<NewType>, typeInfo: string) {
         const result = callback(this.value)
-        return result.mapResolved(
-            value => {
+        return result.mapResolved({
+            callback: value => {
                 return createResolveBuilder(value, this.resolveReporter)
             },
-            () => {
+            onNotResolved: () => {
                 this.resolveReporter.reportDependentConstraintViolation(typeInfo, false)
                 return createFailedResolvedBuilder<NewType>(this.resolveReporter)
-            }
-        )
+            },
+        })
     }
     public repeatNavigate(callback: (type: Type) => Repeat<Type>, typeInfo: string) {
         let currentValue = this.value
@@ -68,10 +68,10 @@ class ResolvedImp<Type> implements IDependentResolvedConstraintBuilder<Type> {
             if (result[0] === false) {
                 return createResolveBuilder(currentValue, this.resolveReporter)
             } else {
-                const mapResult = result[1].mapResolved<[false] | [true, Type]>(
-                    newValue => [true, newValue],
-                    () => [false]
-                )
+                const mapResult = result[1].mapResolved<[false] | [true, Type]>({
+                    callback: newValue => [true, newValue],
+                    onNotResolved: () => [false],
+                })
                 if (mapResult[0] === false) {
                     this.resolveReporter.reportDependentConstraintViolation(typeInfo, false)
                     return createFailedResolvedBuilder<Type>(this.resolveReporter)
@@ -85,10 +85,10 @@ class ResolvedImp<Type> implements IDependentResolvedConstraintBuilder<Type> {
     }
     public getConstraint<NewType>(callback: (type: Type) => Constraint<NewType>): IResolvedConstraint<NewType> {
         const constraint = callback(this.value)
-        return constraint.mapResolved(
-            x => createConstraint(createResolveBuilder(x, this.resolveReporter), {}),
-            () => createConstraint(createFailedResolvedBuilder(this.resolveReporter), {}),
-        )
+        return constraint.mapResolved({
+            callback: x => createConstraint(createResolveBuilder(x, this.resolveReporter), {}),
+            onNotResolved: () => createConstraint(createFailedResolvedBuilder(this.resolveReporter), {}),
+        })
     }
     public getNonConstraint<NewType>(callback: (type: Type) => NewType) {
         return createConstraint(createResolveBuilder(callback(this.value), this.resolveReporter), {})
@@ -110,9 +110,9 @@ class FailedResolved<Type> implements IDependentResolvedConstraintBuilder<Type> 
     }
     public mapResolved<NewType>(
         _callback: (type: Type) => NewType,
-        onNotRolved: () => NewType
+        onNotResolved: () => NewType
     ) {
-        return onNotRolved()
+        return onNotResolved()
     }
     // public withResolved(_callback: (type: Type) => void, onNotResolved?: () => void) {
     //     if (onNotResolved !== undefined) {

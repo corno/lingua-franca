@@ -1,5 +1,5 @@
 import { Constraint } from "lingua-franca"
-import { IDependentResolvedConstraintBuilder,  IResolvedConstrainedConstraint, IResolvedConstrainedReference, IResolvedConstraint } from "../../interfaces/instantResolve"
+import { IDependentResolvedConstraintBuilder, IResolvedConstrainedConstraint, IResolvedConstrainedReference, IResolvedConstraint } from "../../interfaces/instantResolve"
 
 class ConstraintImp<Type, Constraints> implements IResolvedConstrainedConstraint<Type, Constraints> {
     public readonly builder: IDependentResolvedConstraintBuilder<Type>
@@ -11,28 +11,31 @@ class ConstraintImp<Type, Constraints> implements IResolvedConstrainedConstraint
     public getConstraints() {
         return this.constraints
     }
-    public mapResolved<NewType>(
-        callback: (type: Type) => NewType,
-        onNotRolved: () => NewType
-    ) {
-        return this.builder.mapResolved(callback, onNotRolved)
+    public mapResolved<NewType>(p: {
+        readonly callback: (type: Type) => NewType
+        readonly onNotResolved: () => NewType
+    }) {
+        return this.builder.mapResolved(p.callback, p.onNotResolved)
     }
-    public withResolved(callback: (type: Type) => void, onNotResolved?: () => void) {
-        this.mapResolved(callback, onNotResolved === undefined ? () => { } : onNotResolved)
+    public withResolved(p: { readonly callback: (type: Type) => void, readonly onNotResolved?: () => void }) {
+        this.mapResolved({
+            callback: p.callback,
+            onNotResolved: p.onNotResolved === undefined ? () => { } : p.onNotResolved,
+        })
     }
-    public getResolved() {
-        return this.mapResolved(
-            x => x,
-            () => {
+    public getResolved(_p: {}) {
+        return this.mapResolved({
+            callback: x => x,
+            onNotResolved: () => {
                 throw new Error("Reference failed to resolve")
-            }
-        )
+            },
+        })
     }
-    public getConstraint<NewType>(callback: (type: Type) => Constraint<NewType>): Constraint<NewType> {
-        return this.builder.getConstraint(callback)
+    public getConstraint<NewType>(p: { readonly callback: (type: Type) => Constraint<NewType> }): Constraint<NewType> {
+        return this.builder.getConstraint(p.callback)
     }
-    public getNonConstraint<NewType>(callback: (type: Type) => NewType): Constraint<NewType> {
-        return this.builder.getNonConstraint(callback)
+    public getNonConstraint<NewType>(p: { readonly callback: (type: Type) => NewType }): Constraint<NewType> {
+        return this.builder.getNonConstraint(p.callback)
     }
 }
 
@@ -56,8 +59,8 @@ class ReferenceImp<ReferencedType, Constraints> extends ConstraintImp<Referenced
         super(value, constraints)
         this.key = key
     }
-    public getKey(sanitize: (rawKey: string) => string) {
-        return sanitize(this.key)
+    public getKey(p: { readonly sanitizer: (rawKey: string) => string}) {
+        return p.sanitizer(this.key)
     }
 }
 

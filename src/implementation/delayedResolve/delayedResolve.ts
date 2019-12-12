@@ -23,10 +23,10 @@ export class DelayedResolveReference<Type, Constraints> extends DelayedResolveCo
         this.key = key
         this.constraints = constraints
     }
-    public getKey(sanitizer: Sanitizer) {
-        return sanitizer(this.key)
+    public getKey(p: { readonly sanitizer: Sanitizer}) {
+        return p.sanitizer(this.key)
     }
-    public getConstraints() {
+    public getConstraints(_p: {}) {
         return this.constraints
     }
 }

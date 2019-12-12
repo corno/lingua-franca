@@ -25,7 +25,7 @@ export class DelayedResolveLookup<Type> implements IDelayedResolveLookup<Type> {
                 })
             },
             dict => {
-                const requiredKeys = dict.getKeys()
+                const requiredKeys = dict.getKeys({})
                 if (requiresExhaustive) {
                     const missingEntries = requiredKeys.filter(key => keys.indexOf(key) === -1)
                     if (missingEntries.length > 0) {
@@ -58,9 +58,9 @@ export class DelayedResolveLookup<Type> implements IDelayedResolveLookup<Type> {
                 this.resolveReporter.reportDependentUnresolvedReference(typeInfo, key, true)
             },
             dict => {
-            const entry = dict.getEntry(key)
+            const entry = dict.getEntry({key: key})
             if (entry === null) {
-                this.resolveReporter.reportUnresolvedReference(typeInfo, key, dict.getKeys(), true)
+                this.resolveReporter.reportUnresolvedReference(typeInfo, key, dict.getKeys({}), true)
                 builder.setToFailedResolve()
             } else {
                 builder.resolve(entry)

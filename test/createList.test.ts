@@ -8,6 +8,6 @@ describe("createList", () => {
         const list = createList<number>(x => {
             x.push(42)
         })
-        assert.deepEqual(list.map(x => x), [ 42 ] )
+        assert.deepEqual(list.map({ callback: x => x }), [42])
     })
 })

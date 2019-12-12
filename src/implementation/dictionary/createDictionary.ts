@@ -33,15 +33,15 @@ class DictionaryImp<Type> implements Dictionary<Type> {
     constructor(dictionary: RawDictionary<Type>) {
         this.dictionary = dictionary
     }
-    public getEntry(key: string): null | Type {
-        return this.dictionary.get(key)
+    public getEntry(p: { readonly key: string }): null | Type {
+        return this.dictionary.get(p.key)
     }
-    public getAlphabeticalOrdering(): DictionaryOrdering<Type> {
+    public getAlphabeticalOrdering(_p: {}): DictionaryOrdering<Type> {
         return new DictionaryOrderingImp(this.dictionary.map((entry, key) => ({ key: key, value: entry })).sort((a, b) => {
             return a.key.toLowerCase().localeCompare(b.key.toLowerCase())
         }))
     }
-    public getKeys() {
+    public getKeys(_p: {}) {
         return this.dictionary.getKeys().sort((a, b) => {
             return a.toLowerCase().localeCompare(b.toLowerCase())
         })
@@ -96,23 +96,23 @@ class DictionaryOrderingImp<Type> implements DictionaryOrdering<Type> {
     constructor(orderedArray: Array<KeyValuePair<Type>>) {
         this.orderedArray = orderedArray
     }
-    public map<NewType>(
-        onElement: (element: Type, key: string) => NewType,
-    ) {
-        return orderedIterate(this.orderedArray, onElement)
+    public map<NewType>(p: {
+        callback: (element: Type, key: string) => NewType
+    }) {
+        return orderedIterate(this.orderedArray, p.callback)
     }
-    public mapWithSeparator<NewType>(
-        onSepartor: () => NewType,
-        onElement: (element: Type, key: string) => NewType,
-    ) {
-        return orderedIterate(this.orderedArray, onElement, onSepartor)
+    public mapWithSeparator<NewType>(p: {
+        readonly onSepartor: () => NewType
+        readonly onElement: (element: Type, key: string) => NewType
+    }) {
+        return orderedIterate(this.orderedArray, p.onElement, p.onSepartor)
     }
-    public filter<NewType>(
-        onElement: (element: Type) => null | NewType,
-    ) {
+    public filter<NewType>(p: {
+        readonly callback: (element: Type) => null | NewType
+    }) {
         const target: Array<KeyValuePair<NewType>> = []
         this.orderedArray.forEach(kvPair => {
-            const result = onElement(kvPair.value)
+            const result = p.callback(kvPair.value)
             if (result !== null) {
                 target.push({
                     key: kvPair.key,
@@ -122,14 +122,14 @@ class DictionaryOrderingImp<Type> implements DictionaryOrdering<Type> {
         })
         return new DictionaryOrderingImp(target)
     }
-    public onEmpty<NewType>(
-        onEmpty: () => NewType,
-        onNotEmpty: (dictionaryOrdering: DictionaryOrdering<Type>) => NewType,
-    ): NewType {
+    public onEmpty<NewType>(p: {
+        readonly onEmpty: () => NewType
+        readonly onNotEmpty: (dictionaryOrdering: DictionaryOrdering<Type>) => NewType
+    }): NewType {
         if (this.orderedArray.length === 0) {
-            return onEmpty()
+            return p.onEmpty()
         } else {
-            return onNotEmpty(this)
+            return p.onNotEmpty(this)
         }
     }
 
