@@ -6,7 +6,7 @@ export * from "./interfaces/instantResolve"
 
 export { createBuildContext } from "./implementation/createBuildContext"
 
-export * from "./IResolveReporter"
+export * from "./reporters"
 export * from "./SimpleResolveReporter"
 
 export * from "./assertUnreachable"

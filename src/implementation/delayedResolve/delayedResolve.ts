@@ -1,13 +1,12 @@
 // tslint:disable max-classes-per-file
 import { Sanitizer } from "lingua-franca"
 import { IDelayedResolvableBuilder, IDelayedResolveReference, IDelayedResolveStateConstraint, IRootDelayedResolvableBuilder } from "../../interfaces/delayedResolve"
-import { IResolveReporter } from "../../IResolveReporter"
 import { DelayedResolveConstraint, XBuilder } from "./delayedResolveConstraint"
 
 export class DelayedResolveStateConstraint<Type, Constraints> extends DelayedResolveConstraint<Type> implements IDelayedResolveStateConstraint<Type> {
     private readonly constraints: Constraints
-    constructor(resolveReporter: IResolveReporter, builder: IDelayedResolvableBuilder<Type>, constraints: Constraints) {
-        super(resolveReporter, builder)
+    constructor(builder: IDelayedResolvableBuilder<Type>, constraints: Constraints) {
+        super(builder)
         this.constraints = constraints
     }
     public getConstraints() {
@@ -18,8 +17,8 @@ export class DelayedResolveStateConstraint<Type, Constraints> extends DelayedRes
 export class DelayedResolveReference<Type, Constraints> extends DelayedResolveConstraint<Type> implements IDelayedResolveReference<Type> {
     private readonly key: string
     private readonly constraints: Constraints
-    constructor(key: string, resolveReporter: IResolveReporter, builder: IDelayedResolvableBuilder<Type>, constraints: Constraints) {
-        super(resolveReporter, builder)
+    constructor(key: string, builder: IDelayedResolvableBuilder<Type>, constraints: Constraints) {
+        super(builder)
         this.key = key
         this.constraints = constraints
     }
@@ -41,7 +40,7 @@ class DelayedResolvable<Type> implements IRootDelayedResolvableBuilder<Type> {
     }
 }
 
-export function createDelayedResolvableBuilder<T>(resolveReporter: IResolveReporter): IRootDelayedResolvableBuilder<T> {
-    const builder = new XBuilder<T>(resolveReporter)
+export function createDelayedResolvableBuilder<T>(): IRootDelayedResolvableBuilder<T> {
+    const builder = new XBuilder<T>()
     return new DelayedResolvable<T>(builder)
 }

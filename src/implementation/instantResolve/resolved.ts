@@ -2,19 +2,17 @@
 import { Constraint, Dictionary } from "lingua-franca"
 import { ConstraintCastResult } from "../../interfaces/ConstraintCastResult"
 import { IDependentResolvedConstraintBuilder, ILookup, IResolvedConstrainedConstraint, IResolvedConstraint, Repeat } from "../../interfaces/instantResolve"
-import { IResolveReporter } from "../../IResolveReporter"
+import { IConstraintViolationReporter } from "../../reporters"
 import { createFailedLookup, createLookup } from "./lookup"
 import { createConstraint, createStateConstraint } from "./referenceBaseClasses"
 
 class ResolvedImp<Type> implements IDependentResolvedConstraintBuilder<Type> {
     public readonly value: Type
-    private readonly resolveReporter: IResolveReporter
-    constructor(value: Type, resolveReporter: IResolveReporter) {
+    constructor(value: Type) {
         this.value = value
-        this.resolveReporter = resolveReporter
     }
     public getLookup<NewType>(callback: (value: Type) => Dictionary<NewType>): ILookup<NewType> {
-        return createLookup(callback(this.value), this.resolveReporter)
+        return createLookup(callback(this.value))
     }
     // public mapResolved<NewType>(
     //     callback: (type: Type) => NewType,
@@ -33,48 +31,48 @@ class ResolvedImp<Type> implements IDependentResolvedConstraintBuilder<Type> {
     //         }
     //     )
     // }
-    public castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string): IResolvedConstraint<NewType> {
-        return this.castToConstrainedConstraint(callback, typeInfo, () => ({}))
+    public castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, reporter: IConstraintViolationReporter): IResolvedConstraint<NewType> {
+        return this.castToConstrainedConstraint(callback, reporter, () => ({}))
     }
     public castToConstrainedConstraint<NewType, Constraints>(
-        callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string, getConstraints: (current: IDependentResolvedConstraintBuilder<NewType>) => Constraints
+        callback: (type: Type) => ConstraintCastResult<NewType>, reporter: IConstraintViolationReporter, getConstraints: (current: IDependentResolvedConstraintBuilder<NewType>) => Constraints
     ): IResolvedConstrainedConstraint<NewType, Constraints> {
         const castResult = callback(this.value)
         if (castResult[0] === false) {
-            this.resolveReporter.reportConstraintViolation(typeInfo, castResult[1].expected, castResult[1].found, false)
-            const failedResolved = createFailedResolvedBuilder<NewType>(this.resolveReporter)
+            reporter.reportConstraintViolation(castResult[1].expected, castResult[1].found)
+            const failedResolved = createFailedResolvedBuilder<NewType>()
             return createStateConstraint(failedResolved, getConstraints(failedResolved))
         } else {
-            const resolved = createResolveBuilder(castResult[1], this.resolveReporter)
+            const resolved = createResolveBuilder(castResult[1])
             return createStateConstraint(resolved, getConstraints(resolved))
         }
     }
-    public navigateConstraint<NewType>(callback: (type: Type) => Constraint<NewType>, typeInfo: string) {
+    public navigateConstraint<NewType>(callback: (type: Type) => Constraint<NewType>, reporter: IConstraintViolationReporter) {
         const result = callback(this.value)
         return result.mapResolved({
             callback: value => {
-                return createResolveBuilder(value, this.resolveReporter)
+                return createResolveBuilder(value)
             },
             onNotResolved: () => {
-                this.resolveReporter.reportDependentConstraintViolation(typeInfo, false)
-                return createFailedResolvedBuilder<NewType>(this.resolveReporter)
+                reporter.reportDependentConstraintViolation(false)
+                return createFailedResolvedBuilder<NewType>()
             },
         })
     }
-    public repeatNavigate(callback: (type: Type) => Repeat<Type>, typeInfo: string) {
+    public repeatNavigate(callback: (type: Type) => Repeat<Type>, reporter: IConstraintViolationReporter) {
         let currentValue = this.value
         while (true) {
             const result = callback(currentValue)
             if (result[0] === false) {
-                return createResolveBuilder(currentValue, this.resolveReporter)
+                return createResolveBuilder(currentValue)
             } else {
                 const mapResult = result[1].mapResolved<[false] | [true, Type]>({
                     callback: newValue => [true, newValue],
                     onNotResolved: () => [false],
                 })
                 if (mapResult[0] === false) {
-                    this.resolveReporter.reportDependentConstraintViolation(typeInfo, false)
-                    return createFailedResolvedBuilder<Type>(this.resolveReporter)
+                    reporter.reportDependentConstraintViolation(false)
+                    return createFailedResolvedBuilder<Type>()
                 }
                 currentValue = mapResult[1]
             }
@@ -86,27 +84,26 @@ class ResolvedImp<Type> implements IDependentResolvedConstraintBuilder<Type> {
     public getConstraint<NewType>(callback: (type: Type) => Constraint<NewType>): IResolvedConstraint<NewType> {
         const constraint = callback(this.value)
         return constraint.mapResolved({
-            callback: x => createConstraint(createResolveBuilder(x, this.resolveReporter), {}),
-            onNotResolved: () => createConstraint(createFailedResolvedBuilder(this.resolveReporter), {}),
+            callback: x => createConstraint(createResolveBuilder(x), {}),
+            onNotResolved: () => createConstraint(createFailedResolvedBuilder(), {}),
         })
     }
     public getNonConstraint<NewType>(callback: (type: Type) => NewType) {
-        return createConstraint(createResolveBuilder(callback(this.value), this.resolveReporter), {})
+        return createConstraint(createResolveBuilder(callback(this.value)), {})
     }
 }
 
-export function createResolveBuilder<T>(t: T, resolveReporter: IResolveReporter): IDependentResolvedConstraintBuilder<T> {
-    return new ResolvedImp<T>(t, resolveReporter)
+export function createResolveBuilder<T>(t: T): IDependentResolvedConstraintBuilder<T> {
+    return new ResolvedImp<T>(t)
 }
 
 class FailedResolved<Type> implements IDependentResolvedConstraintBuilder<Type> {
     public readonly value: null
-    private readonly resolveReporter: IResolveReporter
-    constructor(resolveReporter: IResolveReporter) {
-        this.resolveReporter = resolveReporter
+    constructor() {
+        //
     }
     public getLookup<NewType>(): ILookup<NewType> {
-        return createFailedLookup(this.resolveReporter)
+        return createFailedLookup()
     }
     public mapResolved<NewType>(
         _callback: (type: Type) => NewType,
@@ -123,35 +120,35 @@ class FailedResolved<Type> implements IDependentResolvedConstraintBuilder<Type> 
     //     throw new Error("Reference failed to resolve")
     // }
     public getConstraint<NewType>(): IResolvedConstraint<NewType> {
-        return createConstraint(createFailedResolvedBuilder(this.resolveReporter), {})
+        return createConstraint(createFailedResolvedBuilder(), {})
     }
     public getNonConstraint<NewType>(): IResolvedConstraint<NewType> {
-        return createConstraint(createFailedResolvedBuilder(this.resolveReporter), {})
+        return createConstraint(createFailedResolvedBuilder(), {})
     }
-    public castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string): IResolvedConstraint<NewType> {
-        return this.castToConstrainedConstraint(callback, typeInfo, () => ({}))
+    public castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, reporter: IConstraintViolationReporter): IResolvedConstraint<NewType> {
+        return this.castToConstrainedConstraint(callback, reporter, () => ({}))
     }
     public castToConstrainedConstraint<NewType, Constraints>(
-        _callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string,
+        _callback: (type: Type) => ConstraintCastResult<NewType>, reporter: IConstraintViolationReporter,
         getConstraints: (current: IDependentResolvedConstraintBuilder<NewType>) => Constraints
     ): IResolvedConstrainedConstraint<NewType, Constraints> {
-        this.resolveReporter.reportDependentConstraintViolation(typeInfo, false)
-        const failedResolved = createFailedResolvedBuilder<NewType>(this.resolveReporter)
+        reporter.reportDependentConstraintViolation(false)
+        const failedResolved = createFailedResolvedBuilder<NewType>()
         return createStateConstraint(failedResolved, getConstraints(failedResolved))
     }
-    public navigateConstraint<NewType>(_callback: (type: Type) => Constraint<NewType>, typeInfo: string) {
-        this.resolveReporter.reportDependentConstraintViolation(typeInfo, false)
-        return createFailedResolvedBuilder<NewType>(this.resolveReporter)
+    public navigateConstraint<NewType>(_callback: (type: Type) => Constraint<NewType>, reporter: IConstraintViolationReporter) {
+        reporter.reportDependentConstraintViolation(false)
+        return createFailedResolvedBuilder<NewType>()
     }
-    public repeatNavigate(_callback: (type: Type) => Repeat<Type>, typeInfo: string) {
-        this.resolveReporter.reportDependentConstraintViolation(typeInfo, false)
-        return createFailedResolvedBuilder<Type>(this.resolveReporter)
+    public repeatNavigate(_callback: (type: Type) => Repeat<Type>, reporter: IConstraintViolationReporter) {
+        reporter.reportDependentConstraintViolation(false)
+        return createFailedResolvedBuilder<Type>()
     }
     public convert<NewType>(): IDependentResolvedConstraintBuilder<NewType> {
-        return createFailedResolvedBuilder(this.resolveReporter)
+        return createFailedResolvedBuilder()
     }
 }
 
-export function createFailedResolvedBuilder<Type>(resolveReporter: IResolveReporter): IDependentResolvedConstraintBuilder<Type> {
-    return new FailedResolved<Type>(resolveReporter)
+export function createFailedResolvedBuilder<Type>(): IDependentResolvedConstraintBuilder<Type> {
+    return new FailedResolved<Type>()
 }

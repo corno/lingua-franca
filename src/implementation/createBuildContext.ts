@@ -7,7 +7,7 @@ import { IAutoCreateDictionary, IDictionaryBuilder } from "../interfaces/diction
 import { IBuildContext, IOrderingCreator } from "../interfaces/IBuildContext"
 import { IListBuilder } from "../interfaces/IListBuilder"
 import { IAutoCreateContext, IDependentResolvedConstraintBuilder, ILookup, MissingEntryCreator } from "../interfaces/instantResolve"
-import { IResolveReporter } from "../IResolveReporter"
+import { IConflictingEntryReporter, IFulfillingDictionaryReporter } from "../reporters"
 import { createDelayedResolvableBuilder } from "./delayedResolve/delayedResolve"
 import { createExistingContext, createNonExistingContext } from "./delayedResolve/possibleContext"
 import { createAutoCreateDictionary, createDelayedResolveFulfillingDictionary, createDictionary, createFulfillingDictionary, createOrderedDictionary } from "./dictionary/createDictionary"
@@ -17,71 +17,74 @@ import { createResolveBuilder } from "./instantResolve/resolved"
 import { createList } from "./list"
 
 class BuildContext implements IBuildContext {
-    private readonly resolveReporter: IResolveReporter
-    constructor(resolveReporter: IResolveReporter) {
-        this.resolveReporter = resolveReporter
-    }
     public createAutoCreateDictionary<Type>(
-        typeInfo: string, callback: (dictBuilder: IDictionaryBuilder<Type>) => void, missingEntryCreator: MissingEntryCreator<Type>, getParentKeys: () => string[]
+        reporter: IConflictingEntryReporter,
+        callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
+        missingEntryCreator: MissingEntryCreator<Type>,
+        getParentKeys: () => string[]
     ): IAutoCreateDictionary<Type> {
-        return createAutoCreateDictionary(typeInfo, this.resolveReporter, callback, missingEntryCreator, getParentKeys)
+        return createAutoCreateDictionary(reporter, callback, missingEntryCreator, getParentKeys)
     }
     public createDelayedResolvableBuilder<Type>(): IRootDelayedResolvableBuilder<Type> {
-        return createDelayedResolvableBuilder(this.resolveReporter)
+        return createDelayedResolvableBuilder()
     }
     public createDelayedResolveFulfillingDictionary<Type, ReferencedType>(
-        typeInfo: string,
+        mrer: IFulfillingDictionaryReporter,
+        cer: IConflictingEntryReporter,
         delayedResolveLookup: IDelayedResolveLookup<ReferencedType>,
         callback: (dictBuilder: IDictionaryBuilder<Type>, delayedResolveLookup: IDelayedResolveLookup<ReferencedType>) => void,
         requiresExhaustive: boolean
     ): Dictionary<Type> {
-        return createDelayedResolveFulfillingDictionary(typeInfo, this.resolveReporter, delayedResolveLookup, callback, requiresExhaustive)
+        return createDelayedResolveFulfillingDictionary(mrer, cer, delayedResolveLookup, callback, requiresExhaustive)
     }
     public createFulfillingDictionary<Type, ReferencedType>(
-        typeInfo: string, lookup: ILookup<ReferencedType>,
+        mrer: IFulfillingDictionaryReporter,
+        cer: IConflictingEntryReporter,
+        lookup: ILookup<ReferencedType>,
         callback: (dictBuilder: IDictionaryBuilder<Type>, lookup: ILookup<ReferencedType>) => void,
         requiresExhaustive: boolean
     ): Dictionary<Type> {
-        return createFulfillingDictionary(typeInfo, this.resolveReporter, lookup, callback, requiresExhaustive)
+        return createFulfillingDictionary(mrer, cer, lookup, callback, requiresExhaustive)
     }
     public createDictionary<Type>(
-        typeInfo: string, callback: (dictBuilder: IDictionaryBuilder<Type>) => void
+        reporter: IConflictingEntryReporter,
+        callback: (dictBuilder: IDictionaryBuilder<Type>) => void
     ): Dictionary<Type> {
-        return createDictionary(typeInfo, this.resolveReporter, callback)
+        return createDictionary(reporter, callback)
     }
     public createOrderedDictionary<Type, Orderings>(
-        typeInfo: string,
+        reporter: IConflictingEntryReporter,
         callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
         getOrderings: (orderingCreator: IOrderingCreator<Type>) => Orderings
     ) {
-        return createOrderedDictionary(typeInfo, this.resolveReporter, callback, getOrderings)
+        return createOrderedDictionary(reporter, callback, getOrderings)
     }
     public createExistingContext<Type>(): IPossibleContext<Type> {
-        return createExistingContext(this.resolveReporter)
+        return createExistingContext()
     }
     public createFailedLookup<Type>(): ILookup<Type> {
-        return createFailedLookup(this.resolveReporter)
+        return createFailedLookup()
     }
     public createList<Type>(callback: (arrayBuilder: IListBuilder<Type>) => void): List<Type> {
         return createList(callback)
     }
     public createLookup<Type>(dict: Dictionary<Type>): ILookup<Type> {
-        return createLookup(dict, this.resolveReporter)
+        return createLookup(dict)
     }
     public createNonExistentAutoCreateContext<Type>(): IAutoCreateContext<Type> {
-        return createNonExistentAutoCreateContext(this.resolveReporter)
+        return createNonExistentAutoCreateContext()
     }
     public createNonExistentContext<Type>(): IPossibleContext<Type> {
-        return createNonExistingContext<Type>(this.resolveReporter)
+        return createNonExistingContext<Type>()
     }
     public createNonExistentLookup<Type>(): ILookup<Type> {
-        return createNonExistentLookupPlaceholder(this.resolveReporter)
+        return createNonExistentLookupPlaceholder()
     }
     public createResolveBuilder<Type>(value: Type): IDependentResolvedConstraintBuilder<Type> {
-        return createResolveBuilder(value, this.resolveReporter)
+        return createResolveBuilder(value)
     }
 }
 
-export function createBuildContext(resolveReporter: IResolveReporter) {
-    return new BuildContext(resolveReporter)
+export function createBuildContext() {
+    return new BuildContext()
 }

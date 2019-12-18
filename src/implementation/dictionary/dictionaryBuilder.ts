@@ -1,6 +1,6 @@
 //import { IDelayedResolveReference } from "../../interfaces/delayedResolve"
 import { IFinalizableDictionaryBuilder } from "../../interfaces/dictionary"
-import { IResolveReporter } from "../../IResolveReporter"
+import { IConflictingEntryReporter } from "../../reporters"
 import { createLookup } from "../instantResolve/lookup"
 import { RawDictionary } from "../RawDictionary"
 import { wrapDictionary } from "./createDictionary"
@@ -8,27 +8,25 @@ import { wrapDictionary } from "./createDictionary"
 class DictionaryBuilder<Type> implements IFinalizableDictionaryBuilder<Type> {
     public readonly dictionary: RawDictionary<Type>
     private finalized = false
-    private readonly resolveReporter: IResolveReporter
-    private readonly typeInfo: string
-    constructor(dictionary: RawDictionary<Type>, resolveReporter: IResolveReporter, typeInfo: string) {
+    private readonly reporter: IConflictingEntryReporter
+    constructor(dictionary: RawDictionary<Type>, reporter: IConflictingEntryReporter) {
         this.dictionary = dictionary
-        this.resolveReporter = resolveReporter
-        this.typeInfo = typeInfo
+        this.reporter = reporter
     }
     public add(key: string, entry: Type) {
         if (this.finalized) {
             throw new Error("Already finalized")
         }
         if (this.dictionary.has(key)) {
-            this.resolveReporter.reportConflictingEntry(this.typeInfo, key)
+            this.reporter.reportConflictingEntry(key)
         } else {
             this.dictionary.set(key, entry)
         }
     }
-    // public getValidatedEntry(key: string, resolveReporter: IResolveReporter, typeInfo: string): null | Type {
+    // public getValidatedEntry(key: string, reporter: string): null | Type {
     //     const entry = this.dictionary.get(key)
     //     if (entry === null) {
-    //         resolveReporter.reportUnresolvedReference(typeInfo, key, this.getKeys(), false)
+    //         resolveReporter.reportUnresolvedReference(reporter, key, this.getKeys(), false)
     //         return null
     //     } else {
     //         return entry
@@ -40,7 +38,7 @@ class DictionaryBuilder<Type> implements IFinalizableDictionaryBuilder<Type> {
         })
     }
     public toPrecedingEntriesLookup() {
-        return createLookup(wrapDictionary(this.dictionary), this.resolveReporter)
+        return createLookup(wrapDictionary(this.dictionary))
     }
     // public toDelayedResolveLookup() {
     //     return this
@@ -48,7 +46,7 @@ class DictionaryBuilder<Type> implements IFinalizableDictionaryBuilder<Type> {
 
     // public createReference(
     //     key: string,
-    //     typeInfo: string,
+    //     reporter: string,
     //     isForwardDeclaration: boolean,
     // ): IDelayedResolveReference<Type> {
     //     const promise = createResolvePromise<GetEntryResult<Type>>((onFailed, onResult) => {
@@ -71,7 +69,7 @@ class DictionaryBuilder<Type> implements IFinalizableDictionaryBuilder<Type> {
     //             })
     //         }
     //     })
-    //     return createReferenceToDelayedResolveLookup(key, promise, this.resolveReporter, typeInfo, isForwardDeclaration)
+    //     return createReferenceToDelayedResolveLookup(key, promise, reporter, isForwardDeclaration)
     // }
     public finalize() {
         if (this.finalized) {
@@ -83,8 +81,7 @@ class DictionaryBuilder<Type> implements IFinalizableDictionaryBuilder<Type> {
 
 export function createDictionaryBuilder<Type>(
     dictionary: RawDictionary<Type>,
-    resolveReporter: IResolveReporter,
-    typeInfo: string
+    reporter: IConflictingEntryReporter
 ): IFinalizableDictionaryBuilder<Type> {
-    return new DictionaryBuilder<Type>(dictionary, resolveReporter, typeInfo)
+    return new DictionaryBuilder<Type>(dictionary, reporter)
 }

@@ -1,38 +1,29 @@
 import { IPossibleContext } from "../../interfaces/delayedResolve";
-import { IResolveReporter } from "../../IResolveReporter";
 import { DelayedResolveConstraint, XBuilder } from "./delayedResolveConstraint";
 
 class NonExistentContext<Type> implements IPossibleContext<Type> {
-    private readonly resolveReporter: IResolveReporter
-    constructor(resolveReporter: IResolveReporter) {
-        this.resolveReporter = resolveReporter
-    }
     public validateExistence() {
-        const builder = new XBuilder<Type>(this.resolveReporter)
-        const constraint = new DelayedResolveConstraint<Type>(this.resolveReporter, builder)
+        const builder = new XBuilder<Type>()
+        const constraint = new DelayedResolveConstraint<Type>(builder)
         builder.setToFailedResolve()
         return constraint
     }
 }
 
-export function createNonExistingContext<Type>(resolveReporter: IResolveReporter) {
-    return new NonExistentContext<Type>(resolveReporter)
+export function createNonExistingContext<Type>() {
+    return new NonExistentContext<Type>()
 }
 
 // tslint:disable-next-line: max-classes-per-file
 class ExistingContext<Type> implements IPossibleContext<Type> {
-    private readonly resolveReporter: IResolveReporter
     private readonly subscribers: Array<XBuilder<Type>> = []
     private isSet = false
-    constructor(resolveReporter: IResolveReporter) {
-        this.resolveReporter = resolveReporter
-    }
     public validateExistence() {
         if (this.isSet) {
             throw new Error("UNEXPECTED")
         }
-        const builder = new XBuilder<Type>(this.resolveReporter)
-        const constraint = new DelayedResolveConstraint<Type>(this.resolveReporter, builder)
+        const builder = new XBuilder<Type>()
+        const constraint = new DelayedResolveConstraint<Type>(builder)
         this.subscribers.push(builder)
         return constraint
     }
@@ -45,6 +36,6 @@ class ExistingContext<Type> implements IPossibleContext<Type> {
     }
 }
 
-export function createExistingContext<Type>(resolveReporter: IResolveReporter) {
-    return new ExistingContext<Type>(resolveReporter)
+export function createExistingContext<Type>() {
+    return new ExistingContext<Type>()
 }

@@ -1,24 +1,25 @@
 import { ConstrainedConstraint, ConstrainedReference, Constraint, Dictionary, Reference } from "lingua-franca"
+import { IConstraintViolationReporter, IFulfillingDictionaryReporter, IReferenceResolveReporter } from "../reporters"
 import { ConstraintCastResult } from "./ConstraintCastResult"
 
 export interface IDelayedResolveLookup<Type> {
-    validateFulfillingEntries(keys: string[], typeInfo: string, requiresExhaustive: boolean): void
+    validateFulfillingEntries(keys: string[], mrer: IFulfillingDictionaryReporter, requiresExhaustive: boolean): void
     createReference(
         key: string,
-        typeInfo: string
+        reporter: IReferenceResolveReporter
     ): IDelayedResolveReference<Type>
     createConstrainedReference<Constraints>(
         key: string,
-        typeInfo: string,
+        reporter: IReferenceResolveReporter,
         getConstraints: (builder: IDelayedResolvableBuilder<Type>) => Constraints
     ): IDelayedResolveConstrainedReference<Type, Constraints>
 }
 
 export interface IDelayedResolvableBuilder<Type> {
     getValue(): undefined | [false] | [true, Type]
-    castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string): IDelayedResolveStateConstraint<NewType>
+    castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, reporter: IConstraintViolationReporter): IDelayedResolveStateConstraint<NewType>
     castToConstrainedConstraint<NewType, Constraints>(
-        callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string, getConstraints: (builder: IDelayedResolvableBuilder<NewType>) => Constraints
+        callback: (type: Type) => ConstraintCastResult<NewType>, reporter: IConstraintViolationReporter, getConstraints: (builder: IDelayedResolvableBuilder<NewType>) => Constraints
     ): IDelayedResolveConstrainedStateConstraint<NewType, Constraints>
     getLookup<NewType>(callback: (type: Type) => Dictionary<NewType>): IDelayedResolveLookup<NewType>
     convert<NewType>(callback: (type: Type) => NewType): IDelayedResolveConstraint<NewType>

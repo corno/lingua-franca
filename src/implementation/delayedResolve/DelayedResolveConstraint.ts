@@ -2,7 +2,7 @@
 import { Constraint, Dictionary } from "lingua-franca"
 import { ConstraintCastResult } from "../../interfaces/ConstraintCastResult"
 import { IDelayedResolvableBuilder, IDelayedResolveConstrainedStateConstraint, IDelayedResolveConstraint, IDelayedResolveLookup, IDelayedResolveStateConstraint } from "../../interfaces/delayedResolve"
-import { IResolveReporter } from "../../IResolveReporter"
+import { IConstraintViolationReporter } from "../../reporters"
 import { DelayedResolveStateConstraint } from "./delayedResolve"
 import { DelayedResolveLookup } from "./DelayedResolveLookup"
 
@@ -14,10 +14,6 @@ interface IResolvedSubscriber<Type> {
 export class XBuilder<Type> implements IDelayedResolvableBuilder<Type> {
     private resolvedValue: undefined | [false] | [true, Type]
     private readonly subscribers: Array<IResolvedSubscriber<Type>> = []
-    private readonly resolveReporter: IResolveReporter
-    constructor(resolveReporter: IResolveReporter) {
-        this.resolveReporter = resolveReporter
-    }
     public getValue() {
         return this.resolvedValue
     }
@@ -33,26 +29,28 @@ export class XBuilder<Type> implements IDelayedResolvableBuilder<Type> {
     }
 
     //IDelayedResolveConstraint methods
-    public castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string): IDelayedResolveStateConstraint<NewType> {
-        return this.castToConstrainedConstraint(callback, typeInfo, () => ({}))
+    public castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, reporter: IConstraintViolationReporter): IDelayedResolveStateConstraint<NewType> {
+        return this.castToConstrainedConstraint(callback, reporter, () => ({}))
     }
 
     //IDelayedResolveConstraint methods
     public castToConstrainedConstraint<NewType, Constraints>(
-        callback: (type: Type) => ConstraintCastResult<NewType>, typeInfo: string, getConstraints: (builder: IDelayedResolvableBuilder<NewType>) => Constraints
+        callback: (type: Type) => ConstraintCastResult<NewType>,
+        reporter: IConstraintViolationReporter,
+        getConstraints: (builder: IDelayedResolvableBuilder<NewType>) => Constraints
     ): IDelayedResolveConstrainedStateConstraint<NewType, Constraints> {
-        const builder = new XBuilder<NewType>(this.resolveReporter)
+        const builder = new XBuilder<NewType>()
         const constraints = getConstraints(builder)
-        const constraint = new DelayedResolveStateConstraint<NewType, Constraints>(this.resolveReporter, builder, constraints)
+        const constraint = new DelayedResolveStateConstraint<NewType, Constraints>(builder, constraints)
         this.addSubscriber(
             () => {
-                this.resolveReporter.reportDependentConstraintViolation(typeInfo, true)
+                reporter.reportDependentConstraintViolation(true)
                 builder.setToFailedResolve()
             },
             value => {
                 const castResult = callback(value)
                 if (castResult[0] === false) {
-                    this.resolveReporter.reportConstraintViolation(typeInfo, castResult[1].expected, castResult[1].found, true)
+                    reporter.reportConstraintViolation(castResult[1].expected, castResult[1].found)
                     builder.setToFailedResolve()
                 } else {
                     builder.resolve(castResult[1])
@@ -62,7 +60,7 @@ export class XBuilder<Type> implements IDelayedResolvableBuilder<Type> {
         return constraint
     }
     public getLookup<NewType>(callback: (type: Type) => Dictionary<NewType>): IDelayedResolveLookup<NewType> {
-        const lookup = new DelayedResolveLookup<NewType>(this.resolveReporter)
+        const lookup = new DelayedResolveLookup<NewType>()
         this.addSubscriber(
             () => {
                 lookup.setToFailedResolve()
@@ -74,8 +72,8 @@ export class XBuilder<Type> implements IDelayedResolvableBuilder<Type> {
         return lookup
     }
     public convert<NewType>(callback: (type: Type) => NewType): IDelayedResolveConstraint<NewType> {
-        const builder = new XBuilder<NewType>(this.resolveReporter)
-        const newConstraint = new DelayedResolveConstraint<NewType>(this.resolveReporter, builder)
+        const builder = new XBuilder<NewType>()
+        const newConstraint = new DelayedResolveConstraint<NewType>(builder)
         this.addSubscriber(
             () => {
                 builder.setToFailedResolve()
@@ -106,10 +104,8 @@ export class XBuilder<Type> implements IDelayedResolvableBuilder<Type> {
 
 export class DelayedResolveConstraint<Type> implements IDelayedResolveConstraint<Type> {
     public builder: IDelayedResolvableBuilder<Type>
-    protected readonly resolveReporter: IResolveReporter
-    constructor(resolveReporter: IResolveReporter, builder: IDelayedResolvableBuilder<Type>) {
-        this.resolveReporter = resolveReporter
-        this.builder = builder
+    constructor(builder: IDelayedResolvableBuilder<Type>) {
+                this.builder = builder
     }
     //Constraint methods
 

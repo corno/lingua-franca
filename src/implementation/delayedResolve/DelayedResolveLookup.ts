@@ -1,7 +1,7 @@
 // tslint:disable max-classes-per-file
 import { Dictionary } from "lingua-franca"
 import { IDelayedResolvableBuilder, IDelayedResolveConstrainedReference, IDelayedResolveLookup, IDelayedResolveReference } from "../../interfaces/delayedResolve"
-import { IResolveReporter } from "../../IResolveReporter"
+import { IFulfillingDictionaryReporter, IReferenceResolveReporter } from "../../reporters"
 import { DelayedResolveReference } from "./delayedResolve"
 import { XBuilder } from "./delayedResolveConstraint"
 
@@ -12,16 +12,12 @@ interface IResolvedSubscriber<Type> {
 
 export class DelayedResolveLookup<Type> implements IDelayedResolveLookup<Type> {
     private resolvedDictionary: undefined | null | Dictionary<Type>
-    private readonly resolveReporter: IResolveReporter
     private readonly subscribers: Array<IResolvedSubscriber<Dictionary<Type>>> = []
-    constructor(resolveReporter: IResolveReporter) {
-        this.resolveReporter = resolveReporter
-    }
-    public validateFulfillingEntries(keys: string[], typeInfo: string, requiresExhaustive: boolean) {
+    public validateFulfillingEntries(keys: string[], reporter: IFulfillingDictionaryReporter, requiresExhaustive: boolean) {
         this.addSubscriber(
             () => {
                 keys.forEach(key => {
-                    this.resolveReporter.reportDependentUnresolvedFulfillingDictionaryEntry(typeInfo, key, true)
+                    reporter.reportDependentUnresolvedEntry(key)
                 })
             },
             dict => {
@@ -29,12 +25,12 @@ export class DelayedResolveLookup<Type> implements IDelayedResolveLookup<Type> {
                 if (requiresExhaustive) {
                     const missingEntries = requiredKeys.filter(key => keys.indexOf(key) === -1)
                     if (missingEntries.length > 0) {
-                        this.resolveReporter.reportMissingRequiredEntries(typeInfo, missingEntries, keys, true)
+                        reporter.reportMissingRequiredEntries(missingEntries, keys)
                     }
                 }
                 keys.forEach(key => {
                     if (requiredKeys.indexOf(key) === -1) {
-                        this.resolveReporter.reportUnresolvedFulfillingDictionaryEntry(typeInfo, key, requiredKeys, true)
+                        reporter.reportUnresolvedEntry(key, requiredKeys)
                     }
                 })
             }
@@ -42,30 +38,30 @@ export class DelayedResolveLookup<Type> implements IDelayedResolveLookup<Type> {
     }
     public createReference(
         key: string,
-        typeInfo: string
+        reporter: IReferenceResolveReporter
     ): IDelayedResolveReference<Type> {
-        return this.createConstrainedReference(key, typeInfo, ()  => ({}))
+        return this.createConstrainedReference(key, reporter, () => ({}))
     }
     public createConstrainedReference<Constraints>(
         key: string,
-        typeInfo: string,
+        reporter: IReferenceResolveReporter,
         getConstraints: (builder: IDelayedResolvableBuilder<Type>) => Constraints
     ): IDelayedResolveConstrainedReference<Type, Constraints> {
-        const builder = new XBuilder<Type>(this.resolveReporter)
-        const ref = new DelayedResolveReference<Type, Constraints>(key, this.resolveReporter, builder, getConstraints(builder))
+        const builder = new XBuilder<Type>()
+        const ref = new DelayedResolveReference<Type, Constraints>(key, builder, getConstraints(builder))
         this.addSubscriber(
             () => {
-                this.resolveReporter.reportDependentUnresolvedReference(typeInfo, key, true)
+                reporter.reportDependentUnresolvedReference(key)
             },
             dict => {
-            const entry = dict.getEntry({key: key})
-            if (entry === null) {
-                this.resolveReporter.reportUnresolvedReference(typeInfo, key, dict.getKeys({}), true)
-                builder.setToFailedResolve()
-            } else {
-                builder.resolve(entry)
+                const entry = dict.getEntry({ key: key })
+                if (entry === null) {
+                    reporter.reportUnresolvedReference(key, dict.getKeys({}))
+                    builder.setToFailedResolve()
+                } else {
+                    builder.resolve(entry)
+                }
             }
-        }
         )
         return ref
     }

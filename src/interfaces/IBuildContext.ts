@@ -4,41 +4,48 @@ import {
     List,
     OrderedDictionary,
 } from "lingua-franca"
-import { IDelayedResolveLookup, IPossibleContext, IRootDelayedResolvableBuilder } from "./delayedResolve";
-import { IAutoCreateDictionary, IDictionaryBuilder } from "./dictionary";
-import { IListBuilder } from "./IListBuilder";
-import { IAutoCreateContext, IDependentResolvedConstraintBuilder, ILookup, MissingEntryCreator } from "./instantResolve";
+import { ICircularDependencyReporter, IConflictingEntryReporter, IFulfillingDictionaryReporter } from "../reporters"
+import { IDelayedResolveLookup, IPossibleContext, IRootDelayedResolvableBuilder } from "./delayedResolve"
+import { IAutoCreateDictionary, IDictionaryBuilder } from "./dictionary"
+import { IListBuilder } from "./IListBuilder"
+import { IAutoCreateContext, IDependentResolvedConstraintBuilder, ILookup, MissingEntryCreator } from "./instantResolve"
 
 
 export interface IOrderingCreator<Type> {
     createBasedOnDependency(
-        typeInfo: string, getDependencies: (entry: Type) => string[]
+        reporter: ICircularDependencyReporter, getDependencies: (entry: Type) => string[]
     ): DictionaryOrdering<Type>
     createBasedOnInsertionOrder(): DictionaryOrdering<Type>
 }
 
 export interface IBuildContext {
     createAutoCreateDictionary<Type>(
-        typeInfo: string, callback: (dictBuilder: IDictionaryBuilder<Type>) => void, missingEntryCreator: MissingEntryCreator<Type>, getParentKeys: () => string[]
+        reporter: IConflictingEntryReporter,
+        callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
+        missingEntryCreator: MissingEntryCreator<Type>, getParentKeys: () => string[]
     ): IAutoCreateDictionary<Type>
 
     createDelayedResolvableBuilder<Type>(): IRootDelayedResolvableBuilder<Type>
     createDelayedResolveFulfillingDictionary<Type, ReferencedType>(
-        typeInfo: string,
+        mrer: IFulfillingDictionaryReporter,
+        cer: IConflictingEntryReporter,
         delayedResolveLookup: IDelayedResolveLookup<ReferencedType>,
         callback: (dictBuilder: IDictionaryBuilder<Type>, delayedResolveLookup: IDelayedResolveLookup<ReferencedType>) => void,
         requiresExhaustive: boolean
     ): Dictionary<Type>
     createFulfillingDictionary<Type, ReferencedType>(
-        typeInfo: string, lookup: ILookup<ReferencedType>,
+        mrer: IFulfillingDictionaryReporter,
+        cer: IConflictingEntryReporter,
+        lookup: ILookup<ReferencedType>,
         callback: (dictBuilder: IDictionaryBuilder<Type>, lookup: ILookup<ReferencedType>) => void,
         requiresExhaustive: boolean
     ): Dictionary<Type>
     createDictionary<Type>(
-        typeInfo: string, callback: (dictBuilder: IDictionaryBuilder<Type>) => void
+        reporter: IConflictingEntryReporter,
+        callback: (dictBuilder: IDictionaryBuilder<Type>) => void
     ): Dictionary<Type>
     createOrderedDictionary<Type, Orderings>(
-        typeInfo: string,
+        reporter: IConflictingEntryReporter,
         callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
         createOrderings: (orderingCreator: IOrderingCreator<Type>) => Orderings
     ): OrderedDictionary<Type, Orderings>
