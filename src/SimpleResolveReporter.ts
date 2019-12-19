@@ -1,7 +1,7 @@
 //tslint:disable: max-classes-per-file
 import * as r from "./reporters"
 
-export class SimpleCircularConstraintReporter implements r.ICircularDependencyReporter {
+class SimpleCircularConstraintReporter implements r.ICircularDependencyReporter {
     private readonly typeInfo: string
     private readonly reportError: (dependent: boolean, message: string) => void
     constructor(p: { typeInfo: string, reportError: (dependent: boolean, message: string) => void }) {
@@ -13,7 +13,11 @@ export class SimpleCircularConstraintReporter implements r.ICircularDependencyRe
     }
 }
 
-export class SimpleConflictingEntryReporter implements r.IConflictingEntryReporter {
+export function createSimpleCircularConstraintReporter(p: { typeInfo: string, reportError: (dependent: boolean, message: string) => void }) {
+    return new SimpleCircularConstraintReporter(p)
+}
+
+class SimpleConflictingEntryReporter implements r.IConflictingEntryReporter {
     private readonly typeInfo: string
     private readonly reportError: (dependent: boolean, message: string) => void
     constructor(p: { typeInfo: string, reportError: (dependent: boolean, message: string) => void }) {
@@ -25,7 +29,11 @@ export class SimpleConflictingEntryReporter implements r.IConflictingEntryReport
     }
 }
 
-export class SimpleConstraintViolationReporter implements r.IConstraintViolationReporter {
+export function createSimpleConflictingEntryReporter(p: { typeInfo: string, reportError: (dependent: boolean, message: string) => void }) {
+    return new SimpleConflictingEntryReporter(p)
+}
+
+class SimpleConstraintViolationReporter implements r.IConstraintViolationReporter {
     private readonly typeInfo: string
     private readonly delayed: boolean
     private readonly reportError: (dependent: boolean, message: string) => void
@@ -42,7 +50,11 @@ export class SimpleConstraintViolationReporter implements r.IConstraintViolation
     }
 }
 
-export class SimpleFulfillingDictionaryReporter implements r.IFulfillingDictionaryReporter {
+export function createSimpleConstraintViolationReporter(p: { typeInfo: string, delayed: boolean, reportError: (dependent: boolean, message: string) => void }) {
+    return new SimpleConstraintViolationReporter(p)
+}
+
+class SimpleFulfillingDictionaryReporter implements r.IFulfillingDictionaryReporter {
     private readonly typeInfo: string
     private readonly delayed: boolean
     private readonly reportError: (dependent: boolean, message: string) => void
@@ -63,17 +75,20 @@ export class SimpleFulfillingDictionaryReporter implements r.IFulfillingDictiona
     public reportUnresolvedEntry(p: { key: string, options: string[] }) {
         this.reportError(false, `unresolved ${this.delayed ? "this.delayed " : ""}fulfilling entry: ${p.key} (${this.typeInfo}). found entries: ${p.options.join(`, `)}`)
     }
-
 }
 
-export class SimpleReferenceResolveReporter implements r.IReferenceResolveReporter {
+export function createSimpleFulfillingDictionaryReporter(p: { typeInfo: string, delayed: boolean, reportError: (dependent: boolean, message: string) => void }) {
+    return new SimpleFulfillingDictionaryReporter(p)
+}
+
+class SimpleReferenceResolveReporter implements r.IReferenceResolveReporter {
     private readonly typeInfo: string
     private readonly delayed: boolean
     private readonly reportError: (dependent: boolean, message: string) => void
-    constructor(typeInfo: string, delayed: boolean, reportError: (dependent: boolean, message: string) => void) {
-        this.typeInfo = typeInfo
-        this.delayed = delayed
-        this.reportError = reportError
+    constructor(p: { typeInfo: string, delayed: boolean, reportError: (dependent: boolean, message: string) => void }) {
+        this.typeInfo = p.typeInfo
+        this.delayed = p.delayed
+        this.reportError = p.reportError
     }
     public reportUnresolvedReference(p: { key: string, options: string[] }) {
         this.reportError(false, `unresolved ${this.delayed ? "this.delayed " : ""}reference: ${p.key} (${this.typeInfo}). found entries: ${p.options.join(`, `)}`)
@@ -84,6 +99,10 @@ export class SimpleReferenceResolveReporter implements r.IReferenceResolveReport
     public reportLookupDoesNotExist(p: { key: string }) {
         this.reportError(false, `lookup for ${p.key} does not exist (${this.typeInfo})`)
     }
+}
+
+export function createSimpleReferenceResolveReporter(p: { typeInfo: string, delayed: boolean, reportError: (dependent: boolean, message: string) => void }) {
+    return new SimpleReferenceResolveReporter(p)
 }
 
 // export class SimpleResolveReporter implements IResolveReporter {
