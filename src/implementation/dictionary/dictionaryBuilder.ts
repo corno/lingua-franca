@@ -13,14 +13,14 @@ class DictionaryBuilder<Type> implements IFinalizableDictionaryBuilder<Type> {
         this.dictionary = dictionary
         this.reporter = reporter
     }
-    public add(key: string, entry: Type) {
+    public add(p: { key: string, entry: Type }) {
         if (this.finalized) {
             throw new Error("Already finalized")
         }
-        if (this.dictionary.has(key)) {
-            this.reporter.reportConflictingEntry(key)
+        if (this.dictionary.has(p.key)) {
+            this.reporter.reportConflictingEntry({ key: p.key })
         } else {
-            this.dictionary.set(key, entry)
+            this.dictionary.set(p.key, p.entry)
         }
     }
     // public getValidatedEntry(key: string, reporter: string): null | Type {

@@ -6,7 +6,7 @@ import { createList } from "../src/implementation/list"
 describe("createList", () => {
     it("basic operations", () => {
         const list = createList<number>(x => {
-            x.push(42)
+            x.push({element: 42})
         })
         assert.deepEqual(list.map({ callback: x => x }), [42])
     })

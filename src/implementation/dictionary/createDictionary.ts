@@ -157,7 +157,7 @@ export function createFulfillingDictionary<Type, ReferencedType>(
     const db = createDictionaryBuilder<Type>(dict, cer)
     callback(db, lookup)
     db.finalize({})
-    lookup.validateFulfillingEntries({ keys: db.getKeys({}), reporter: mrer, requiresExhaustive: requiresExhaustive})
+    lookup.validateFulfillingEntries({ keys: db.getKeys({}), reporter: mrer, requiresExhaustive: requiresExhaustive })
     return new DictionaryImp<Type>(dict)
 }
 
@@ -195,7 +195,7 @@ function createDictionaryOrdering<Type>(
             alreadyInserted.update(key, true)
         } else {
             if (!isInserted) {
-                reporter.reportCircularDependency(key)
+                reporter.reportCircularDependency({ key: key })
             }
         }
     }

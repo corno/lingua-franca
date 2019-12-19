@@ -10,34 +10,44 @@ class AutoCreateLookup<Type> implements ILookup<Type> {
     constructor(autoCreateContext: IAutoCreateContext<Type>) {
         this.autoCreateContext = autoCreateContext
     }
-    public has(key: string) {
-        return this.autoCreateContext.has(key)
+    public has(p: { key: string }) {
+        return this.autoCreateContext.has({ key: p.key })
     }
-    public createReference(key: string, reporter: IReferenceResolveReporter): IResolvedReference<Type> {
-        return this.createConstrainedReference(key, reporter, () => ({}))
+    public createReference(p: { key: string, reporter: IReferenceResolveReporter }): IResolvedReference<Type> {
+        return this.createConstrainedReference({
+            key: p.key,
+            reporter: p.reporter,
+            getConstraints: () => ({}),
+        })
     }
-    public createConstrainedReference<Constraints>(
+    public createConstrainedReference<Constraints>(p: {
         key: string, reporter: IReferenceResolveReporter, getConstraints: (ref: IDependentResolvedConstraintBuilder<Type>) => Constraints
-    ): IResolvedConstrainedReference<Type, Constraints> {
-        const entry = this.autoCreateContext.tryToCreateReference(key)
+    }): IResolvedConstrainedReference<Type, Constraints> {
+        const entry = this.autoCreateContext.tryToCreateReference({ key: p.key })
         if (entry === null) {
-            reporter.reportUnresolvedReference(key, this.autoCreateContext.getKeys())
+            p.reporter.reportUnresolvedReference({ key: p.key, options: this.autoCreateContext.getKeys({}) })
             const failedResolved = createFailedResolvedBuilder<Type>()
-            return createReference(key, failedResolved, getConstraints(failedResolved))
+            return createReference(p.key, failedResolved, p.getConstraints(failedResolved))
         }
-        return createReference(key, entry.builder, getConstraints(entry.builder))
+        return createReference(p.key, entry.builder, p.getConstraints(entry.builder))
     }
-    public validateFulfillingEntries(keys: string[], reporter: IFulfillingDictionaryReporter, requiresExhaustive: boolean) {
-        const requiredKeys = this.autoCreateContext.getKeys()
-        if (requiresExhaustive) {
-            const missingEntries = requiredKeys.filter(key => keys.indexOf(key) === -1)
+    public validateFulfillingEntries(p: { keys: string[], reporter: IFulfillingDictionaryReporter, requiresExhaustive: boolean }) {
+        const requiredKeys = this.autoCreateContext.getKeys({})
+        if (p.requiresExhaustive) {
+            const missingEntries = requiredKeys.filter(key => p.keys.indexOf(key) === -1)
             if (missingEntries.length > 0) {
-                reporter.reportMissingRequiredEntries(missingEntries, keys)
+                p.reporter.reportMissingRequiredEntries({
+                    missingEntries: missingEntries,
+                    foundEntries: p.keys,
+                })
             }
         }
-        keys.forEach(key => {
+        p.keys.forEach(key => {
             if (requiredKeys.indexOf(key) === -1) {
-                reporter.reportUnresolvedEntry(key, requiredKeys)
+                p.reporter.reportUnresolvedEntry({
+                    key: key,
+                    options: requiredKeys,
+                })
             }
         })
     }
@@ -53,23 +63,23 @@ class AutoCreateContext<Type> implements IAutoCreateContext<Type> {
         this.missingEntryCreator = missingEntryCreator
         this.getParentKeys = getParentKeys
     }
-    public has(key: string) {
-        return this.dict.has(key)
+    public has(p: { key: string }) {
+        return this.dict.has(p.key)
     }
-    public tryToCreateReference(
+    public tryToCreateReference(p: {
         key: string
-    ): null | IResolvedReference<Type> {
-        const entry = this.dict.get(key)
+    }): null | IResolvedReference<Type> {
+        const entry = this.dict.get(p.key)
         if (entry !== null) {
-            return createReference(key, createResolvedBuilder(entry), {})
+            return createReference(p.key, createResolvedBuilder(entry), {})
         } else {
             //entry does not exist
-            const possibleEntry = this.missingEntryCreator(key)
+            const possibleEntry = this.missingEntryCreator(p.key)
             if (possibleEntry === null) {
                 return null
             } else {
-                this.dict.set(key, possibleEntry)
-                return createReference(key, createResolvedBuilder(possibleEntry), {})
+                this.dict.set(p.key, possibleEntry)
+                return createReference(p.key, createResolvedBuilder(possibleEntry), {})
             }
         }
     }
@@ -98,18 +108,22 @@ class NonExistentAutoCreateLookup<Type> implements ILookup<Type> {
     public has() {
         return false
     }
-    public createReference(key: string, reporter: IReferenceResolveReporter): IResolvedReference<Type> {
-        return this.createConstrainedReference(key, reporter, () => ({}))
+    public createReference(p: { key: string, reporter: IReferenceResolveReporter }): IResolvedReference<Type> {
+        return this.createConstrainedReference({
+            key: p.key,
+            reporter: p.reporter,
+            getConstraints: () => ({}),
+        })
     }
-    public createConstrainedReference<Constraints>(
+    public createConstrainedReference<Constraints>(p: {
         key: string, reporter: IReferenceResolveReporter, getConstraints: (ref: IDependentResolvedConstraintBuilder<Type>) => Constraints
-    ): IResolvedConstrainedReference<Type, Constraints> {
-        reporter.reportLookupDoesNotExist(key)
+    }): IResolvedConstrainedReference<Type, Constraints> {
+        p.reporter.reportLookupDoesNotExist({ key: p.key })
         const failedResolved = createFailedResolvedBuilder<Type>()
-        return createReference(key, failedResolved, getConstraints(failedResolved))
+        return createReference(p.key, failedResolved, p.getConstraints(failedResolved))
     }
-    public validateFulfillingEntries(keys: string[], reporter: IFulfillingDictionaryReporter, _requiresExhaustive: boolean) {
-        reporter.reportLookupDoesNotExist(keys)
+    public validateFulfillingEntries(p: { keys: string[], reporter: IFulfillingDictionaryReporter, requiresExhaustive: boolean }) {
+        p.reporter.reportLookupDoesNotExist({ keys: p.keys})
     }
 }
 

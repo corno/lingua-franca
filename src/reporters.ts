@@ -2,7 +2,7 @@ export interface IConflictingEntryReporter {
     /**
      * called when 2 entries in a dictionary have the same key
      */
-    reportConflictingEntry(key: string): void
+    reportConflictingEntry(p: { key: string }): void
 }
 
 export interface ICircularDependencyReporter {
@@ -10,11 +10,11 @@ export interface ICircularDependencyReporter {
      * the entries in an ordered dictionary form a loop and therefor the ordered dictionary
      * cannot be ordered
      */
-    reportCircularDependency(key: string): void
+    reportCircularDependency(p: { key: string }): void
 }
 
 export interface IFulfillingDictionaryReporter {
-    reportLookupDoesNotExist(key: string[]): void
+    reportLookupDoesNotExist(p: { keys: string[] }): void
     /**
      * missing entry in a fulfilling dictionary.
      * A fulfilling dictionary fulfils a requiring dictionary. All keys in a requiring dictionary have to be matched
@@ -23,18 +23,18 @@ export interface IFulfillingDictionaryReporter {
      * @param key
      * @param foundEntries
      */
-    reportMissingRequiredEntries(missingEntries: string[], foundEntries: string[]): void
-    reportUnresolvedEntry(key: string, options: string[]): void
-    reportDependentUnresolvedEntry(key: string): void
+    reportMissingRequiredEntries(p: { missingEntries: string[], foundEntries: string[] }): void
+    reportUnresolvedEntry(p: { key: string, options: string[] }): void
+    reportDependentUnresolvedEntry(p: { key: string }): void
 }
 
 export interface IConstraintViolationReporter {
-    reportConstraintViolation(expectedState: string, foundState: string): void
-    reportDependentConstraintViolation(delayed: boolean): void
+    reportConstraintViolation(p: { expectedState: string, foundState: string }): void
+    reportDependentConstraintViolation(p: { }): void
 }
 
 export interface IReferenceResolveReporter {
-    reportLookupDoesNotExist(key: string): void
-    reportUnresolvedReference(key: string, options: string[]): void
-    reportDependentUnresolvedReference(key: string): void
+    reportLookupDoesNotExist(p: { key: string} ): void
+    reportUnresolvedReference(p: { key: string, options: string[] }): void
+    reportDependentUnresolvedReference(p: { key: string }): void
 }

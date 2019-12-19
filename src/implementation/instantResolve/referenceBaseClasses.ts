@@ -15,7 +15,7 @@ class ConstraintImp<Type, Constraints> implements IResolvedConstrainedConstraint
         readonly callback: (type: Type) => NewType
         readonly onNotResolved: () => NewType
     }) {
-        return this.builder.mapResolved(p.callback, p.onNotResolved)
+        return this.builder.mapResolved({ callback: p.callback, onNotResolved: p.onNotResolved })
     }
     public withResolved(p: { readonly callback: (type: Type) => void, readonly onNotResolved?: () => void }) {
         this.mapResolved({
@@ -32,10 +32,10 @@ class ConstraintImp<Type, Constraints> implements IResolvedConstrainedConstraint
         })
     }
     public getConstraint<NewType>(p: { readonly callback: (type: Type) => Constraint<NewType> }): Constraint<NewType> {
-        return this.builder.getConstraint(p.callback)
+        return this.builder.getConstraint(p)
     }
     public getNonConstraint<NewType>(p: { readonly callback: (type: Type) => NewType }): Constraint<NewType> {
-        return this.builder.getNonConstraint(p.callback)
+        return this.builder.getNonConstraint(p)
     }
 }
 
@@ -59,7 +59,7 @@ class ReferenceImp<ReferencedType, Constraints> extends ConstraintImp<Referenced
         super(value, constraints)
         this.key = key
     }
-    public getKey(p: { readonly sanitizer: (rawKey: string) => string}) {
+    public getKey(p: { readonly sanitizer: (rawKey: string) => string }) {
         return p.sanitizer(this.key)
     }
 }

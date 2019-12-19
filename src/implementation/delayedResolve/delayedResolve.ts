@@ -35,8 +35,8 @@ class DelayedResolvable<Type> implements IRootDelayedResolvableBuilder<Type> {
     constructor(builder: XBuilder<Type>) {
         this.builder = builder
     }
-    public resolve(value: Type) {
-        this.builder.resolve(value)
+    public resolve(p: { value: Type }) {
+        this.builder.resolve(p.value)
     }
 }
 

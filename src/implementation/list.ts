@@ -52,11 +52,11 @@ class ListImp<Type> implements List<Type> {
 class ListBuilder<Type> implements IListBuilder<Type> {
     private finalized = false
     private readonly array: Type[] = []
-    public push(element: Type) {
+    public push(p: { element: Type }) {
         if (this.finalized) {
             throw new Error("array is finalized")
         }
-        this.array.push(element)
+        this.array.push(p.element)
     }
     public finalize() {
         this.finalized = true

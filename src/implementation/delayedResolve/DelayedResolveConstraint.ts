@@ -29,28 +29,35 @@ export class XBuilder<Type> implements IDelayedResolvableBuilder<Type> {
     }
 
     //IDelayedResolveConstraint methods
-    public castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, reporter: IConstraintViolationReporter): IDelayedResolveStateConstraint<NewType> {
-        return this.castToConstrainedConstraint(callback, reporter, () => ({}))
+    public castToConstraint<NewType>(p: { callback: (type: Type) => ConstraintCastResult<NewType>, reporter: IConstraintViolationReporter }): IDelayedResolveStateConstraint<NewType> {
+        return this.castToConstrainedConstraint({
+           callback: p.callback,
+           reporter: p.reporter,
+           getConstraints: () => ({}),
+        })
     }
 
     //IDelayedResolveConstraint methods
-    public castToConstrainedConstraint<NewType, Constraints>(
+    public castToConstrainedConstraint<NewType, Constraints>(p: {
         callback: (type: Type) => ConstraintCastResult<NewType>,
         reporter: IConstraintViolationReporter,
         getConstraints: (builder: IDelayedResolvableBuilder<NewType>) => Constraints
-    ): IDelayedResolveConstrainedStateConstraint<NewType, Constraints> {
+    }): IDelayedResolveConstrainedStateConstraint<NewType, Constraints> {
         const builder = new XBuilder<NewType>()
-        const constraints = getConstraints(builder)
+        const constraints = p.getConstraints(builder)
         const constraint = new DelayedResolveStateConstraint<NewType, Constraints>(builder, constraints)
         this.addSubscriber(
             () => {
-                reporter.reportDependentConstraintViolation(true)
+                p.reporter.reportDependentConstraintViolation(true)
                 builder.setToFailedResolve()
             },
             value => {
-                const castResult = callback(value)
+                const castResult = p.callback(value)
                 if (castResult[0] === false) {
-                    reporter.reportConstraintViolation(castResult[1].expected, castResult[1].found)
+                    p.reporter.reportConstraintViolation({
+                        expectedState: castResult[1].expected,
+                        foundState: castResult[1].found,
+                    })
                     builder.setToFailedResolve()
                 } else {
                     builder.resolve(castResult[1])
@@ -59,19 +66,19 @@ export class XBuilder<Type> implements IDelayedResolvableBuilder<Type> {
         )
         return constraint
     }
-    public getLookup<NewType>(callback: (type: Type) => Dictionary<NewType>): IDelayedResolveLookup<NewType> {
+    public getLookup<NewType>(p: { callback: (type: Type) => Dictionary<NewType> }): IDelayedResolveLookup<NewType> {
         const lookup = new DelayedResolveLookup<NewType>()
         this.addSubscriber(
             () => {
                 lookup.setToFailedResolve()
             },
             value => {
-                lookup.resolve(callback(value))
+                lookup.resolve(p.callback(value))
             }
         )
         return lookup
     }
-    public convert<NewType>(callback: (type: Type) => NewType): IDelayedResolveConstraint<NewType> {
+    public convert<NewType>(p: { callback: (type: Type) => NewType }): IDelayedResolveConstraint<NewType> {
         const builder = new XBuilder<NewType>()
         const newConstraint = new DelayedResolveConstraint<NewType>(builder)
         this.addSubscriber(
@@ -79,7 +86,7 @@ export class XBuilder<Type> implements IDelayedResolvableBuilder<Type> {
                 builder.setToFailedResolve()
             },
             value => {
-                builder.resolve(callback(value))
+                builder.resolve(p.callback(value))
             }
         )
         return newConstraint
@@ -105,7 +112,7 @@ export class XBuilder<Type> implements IDelayedResolvableBuilder<Type> {
 export class DelayedResolveConstraint<Type> implements IDelayedResolveConstraint<Type> {
     public builder: IDelayedResolvableBuilder<Type>
     constructor(builder: IDelayedResolvableBuilder<Type>) {
-                this.builder = builder
+        this.builder = builder
     }
     //Constraint methods
 
@@ -113,7 +120,7 @@ export class DelayedResolveConstraint<Type> implements IDelayedResolveConstraint
         readonly callback: (type: Type) => NewType,
         readonly onNotResolved: () => NewType
     }) {
-        const resolvedValue = this.builder.getValue()
+        const resolvedValue = this.builder.getValue({})
         if (resolvedValue === undefined) {
             if (p.onNotResolved === undefined) {
                 throw new Error("IMPLEMENTATION ERROR: Entry was not resolved!!!!!!!")
