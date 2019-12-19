@@ -1,5 +1,5 @@
 
 
 export interface IListBuilder<Type> {
-    push(element: Type): void
+    push(p: { element: Type }): void
 }

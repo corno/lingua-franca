@@ -16,13 +16,15 @@ export interface IDelayedResolveLookup<Type> {
 }
 
 export interface IDelayedResolvableBuilder<Type> {
-    getValue(): undefined | [false] | [true, Type]
-    castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, reporter: IConstraintViolationReporter): IDelayedResolveStateConstraint<NewType>
-    castToConstrainedConstraint<NewType, Constraints>(
-        callback: (type: Type) => ConstraintCastResult<NewType>, reporter: IConstraintViolationReporter, getConstraints: (builder: IDelayedResolvableBuilder<NewType>) => Constraints
-    ): IDelayedResolveConstrainedStateConstraint<NewType, Constraints>
-    getLookup<NewType>(callback: (type: Type) => Dictionary<NewType>): IDelayedResolveLookup<NewType>
-    convert<NewType>(callback: (type: Type) => NewType): IDelayedResolveConstraint<NewType>
+    getValue(p: {}): undefined | [false] | [true, Type]
+    castToConstraint<NewType>(p: { callback: (type: Type) => ConstraintCastResult<NewType>, reporter: IConstraintViolationReporter }): IDelayedResolveStateConstraint<NewType>
+    castToConstrainedConstraint<NewType, Constraints>(p: {
+        callback: (type: Type) => ConstraintCastResult<NewType>,
+        reporter: IConstraintViolationReporter,
+        getConstraints: (builder: IDelayedResolvableBuilder<NewType>) => Constraints
+    }): IDelayedResolveConstrainedStateConstraint<NewType, Constraints>
+    getLookup<NewType>(p: { callback: (type: Type) => Dictionary<NewType> }): IDelayedResolveLookup<NewType>
+    convert<NewType>(p: { callback: (type: Type) => NewType }): IDelayedResolveConstraint<NewType>
 }
 
 export interface IDelayedResolveConstraint<Type> extends Constraint<Type> {
@@ -37,9 +39,9 @@ export interface IDelayedResolveConstrainedStateConstraint<Type, Constraints> ex
 
 export interface IRootDelayedResolvableBuilder<Type> {
     builder: IDelayedResolvableBuilder<Type>
-    resolve(value: Type): void
+    resolve(p: { value: Type }): void
 }
 
 export interface IPossibleContext<Type> {
-    validateExistence(): IDelayedResolveConstraint<Type>
+    validateExistence(p: {}): IDelayedResolveConstraint<Type>
 }

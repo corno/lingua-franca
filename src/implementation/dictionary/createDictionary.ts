@@ -82,7 +82,7 @@ export function createAutoCreateDictionary<Type>(
         reporter,
     )
     callback(db)
-    db.finalize()
+    db.finalize({})
     return new AutoCreateDictionaryImp(dict, missingEntryCreator, getParentKeys)
 }
 
@@ -141,8 +141,8 @@ export function createDelayedResolveFulfillingDictionary<Type, ReferencedType>(
     const dict = new RawDictionary<Type>()
     const db = createDictionaryBuilder<Type>(dict, cer)
     callback(db, delayedResolveLookup)
-    db.finalize()
-    delayedResolveLookup.validateFulfillingEntries(db.getKeys(), mrer, requiresExhaustive)
+    db.finalize({})
+    delayedResolveLookup.validateFulfillingEntries(db.getKeys({}), mrer, requiresExhaustive)
     return new DictionaryImp<Type>(dict)
 }
 
@@ -156,8 +156,8 @@ export function createFulfillingDictionary<Type, ReferencedType>(
     const dict = new RawDictionary<Type>()
     const db = createDictionaryBuilder<Type>(dict, cer)
     callback(db, lookup)
-    db.finalize()
-    lookup.validateFulfillingEntries(db.getKeys(), mrer, requiresExhaustive)
+    db.finalize({})
+    lookup.validateFulfillingEntries({ keys: db.getKeys({}), reporter: mrer, requiresExhaustive: requiresExhaustive})
     return new DictionaryImp<Type>(dict)
 }
 
@@ -168,7 +168,7 @@ export function createDictionary<Type>(
     const dict = new RawDictionary<Type>()
     const db = createDictionaryBuilder<Type>(dict, reporter)
     callback(db)
-    db.finalize()
+    db.finalize({})
     return new DictionaryImp<Type>(dict)
 }
 
@@ -222,7 +222,7 @@ export function createOrderedDictionary<Type, Orderings>(
     const dict = new RawDictionary<Type>()
     const db = createDictionaryBuilder<Type>(dict, reporter)
     callback(db)
-    db.finalize()
+    db.finalize({})
     const orderings = getOrderings({
         createBasedOnDependency: (p: {
             reporter: ICircularDependencyReporter,

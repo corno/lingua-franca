@@ -5,22 +5,22 @@ import { IAutoCreateContext, ILookup } from "./instantResolve"
 //result class(es)
 
 export interface IAutoCreateDictionary<Type> extends Dictionary<Type> {
-    createAutoCreateContext(): IAutoCreateContext<Type>
+    createAutoCreateContext(p: {}): IAutoCreateContext<Type>
 }
 
 //Builder classes
 
 export interface ICurrentDictionary<Type> {
-    toPrecedingEntriesLookup(): ILookup<Type>
+    toPrecedingEntriesLookup(p: {}): ILookup<Type>
     //toRequiringLookup(): IRequiringLookup<Type>
     //toDelayedResolveLookup(): IDelayedResolveBaseLookup<Type>
 }
 
 export interface IDictionaryBuilder<Type> extends ICurrentDictionary<Type> {
-    add(key: string, entry: Type): void
+    add(p: { key: string, entry: Type }): void
 }
 
 export interface IFinalizableDictionaryBuilder<Type> extends IDictionaryBuilder<Type> {
-    finalize(): void
-    getKeys(): string[]
+    finalize(p: {}): void
+    getKeys(p: {}): string[]
 }

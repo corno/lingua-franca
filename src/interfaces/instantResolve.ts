@@ -4,19 +4,19 @@ import { IConstraintViolationReporter, IFulfillingDictionaryReporter, IReference
 import { ConstraintCastResult } from "./ConstraintCastResult"
 
 export interface ILookup<Type> {
-    createReference(key: string, reporter: IReferenceResolveReporter): IResolvedReference<Type>
-    createConstrainedReference<Constraints>(
+    createReference(p: { key: string, reporter: IReferenceResolveReporter }): IResolvedReference<Type>
+    createConstrainedReference<Constraints>(p: {
         key: string, reporter: IReferenceResolveReporter, getConstraints: (reference: IDependentResolvedConstraintBuilder<Type>) => Constraints
-    ): IResolvedConstrainedReference<Type, Constraints>
-    validateFulfillingEntries(keys: string[], mrer: IFulfillingDictionaryReporter, requiresExhaustive: boolean): void
-    has(key: string): boolean
+    }): IResolvedConstrainedReference<Type, Constraints>
+    validateFulfillingEntries(p: { keys: string[], reporter: IFulfillingDictionaryReporter, requiresExhaustive: boolean }): void
+    has(p: { key: string }): boolean
 }
 
 export interface IAutoCreateContext<Type> {
-    tryToCreateReference(key: string): null | IResolvedReference<Type>
-    toLookup(): ILookup<Type>
-    getKeys(): string[]
-    has(key: string): boolean
+    tryToCreateReference(p: { key: string }): null | IResolvedReference<Type>
+    toLookup(p: {}): ILookup<Type>
+    getKeys(p: {}): string[]
+    has(p: { key: string }): boolean
 }
 
 
@@ -27,19 +27,19 @@ export type Repeat<Type> =
 
 export interface IDependentResolvedConstraintBuilder<Type> {
     readonly value: Type | null
-    castToConstraint<NewType>(callback: (type: Type) => ConstraintCastResult<NewType>, reporter: IConstraintViolationReporter): IResolvedConstraint<NewType>
-    castToConstrainedConstraint<NewType, Constraints>(
+    castToConstraint<NewType>(p: { callback: (type: Type) => ConstraintCastResult<NewType>, reporter: IConstraintViolationReporter }): IResolvedConstraint<NewType>
+    castToConstrainedConstraint<NewType, Constraints>(p: {
         callback: (type: Type) => ConstraintCastResult<NewType>, reporter: IConstraintViolationReporter, getConstraints: (current: IDependentResolvedConstraintBuilder<NewType>) => Constraints
-    ): IResolvedConstrainedConstraint<NewType, Constraints>
-    navigateConstraint<NewType>(callback: (type: Type) => Constraint<NewType>, reporter: IConstraintViolationReporter): IDependentResolvedConstraintBuilder<NewType>
+    }): IResolvedConstrainedConstraint<NewType, Constraints>
+    navigateConstraint<NewType>(p: { callback: (type: Type) => Constraint<NewType>, reporter: IConstraintViolationReporter }): IDependentResolvedConstraintBuilder<NewType>
     //convert<NewType>(callback: (type: Type) => NewType): IResolvedConstraint<NewType>
-    getLookup<NewType>(callback: (value: Type) => Dictionary<NewType>): ILookup<NewType>
+    getLookup<NewType>(p: { callback: (value: Type) => Dictionary<NewType> }): ILookup<NewType>
     //mapResolved<NewType>(callback: (type: Type) => NewType, onNotResolved: () => NewType): NewType
-    repeatNavigate(callback: (type: Type) => Repeat<Type>, reporter: IConstraintViolationReporter): IDependentResolvedConstraintBuilder<Type>
+    repeatNavigate(p: { callback: (type: Type) => Repeat<Type>, reporter: IConstraintViolationReporter }): IDependentResolvedConstraintBuilder<Type>
 
-    mapResolved<NewType>(callback: (type: Type) => NewType, onNotResolved: () => NewType): NewType
-    getConstraint<NewType>(callback: (type: Type) => Constraint<NewType>): IResolvedConstraint<NewType>
-    getNonConstraint<NewType>(callback: (type: Type) => NewType): IResolvedConstraint<NewType>
+    mapResolved<NewType>(p: { callback: (type: Type) => NewType, onNotResolved: () => NewType }): NewType
+    getConstraint<NewType>(p: { callback: (type: Type) => Constraint<NewType> }): IResolvedConstraint<NewType>
+    getNonConstraint<NewType>(p: { callback: (type: Type) => NewType }): IResolvedConstraint<NewType>
 }
 
 export interface IResolvedConstraint<ReferencedType> extends Constraint<ReferencedType> {
