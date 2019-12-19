@@ -72,7 +72,7 @@ class AutoCreateDictionaryImp<Type> extends DictionaryImp<Type> implements IAuto
 
 export function createAutoCreateDictionary<Type>(
     reporter: IConflictingEntryReporter,
-    callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
+    callback: (cp: { builder: IDictionaryBuilder<Type> }) => void,
     missingEntryCreator: MissingEntryCreator<Type>,
     getParentKeys: () => string[],
 ): IAutoCreateDictionary<Type> {
@@ -81,7 +81,7 @@ export function createAutoCreateDictionary<Type>(
         dict,
         reporter,
     )
-    callback(db)
+    callback({ builder: db })
     db.finalize({})
     return new AutoCreateDictionaryImp(dict, missingEntryCreator, getParentKeys)
 }
@@ -135,12 +135,12 @@ export function createDelayedResolveFulfillingDictionary<Type, ReferencedType>(
     mrer: IFulfillingDictionaryReporter,
     cer: IConflictingEntryReporter,
     delayedResolveLookup: IDelayedResolveLookup<ReferencedType>,
-    callback: (dictBuilder: IDictionaryBuilder<Type>, delayedResolveLookup: IDelayedResolveLookup<ReferencedType>) => void,
+    callback: (cp: { builder: IDictionaryBuilder<Type>, lookup: IDelayedResolveLookup<ReferencedType> }) => void,
     requiresExhaustive: boolean,
 ): Dictionary<Type> {
     const dict = new RawDictionary<Type>()
     const db = createDictionaryBuilder<Type>(dict, cer)
-    callback(db, delayedResolveLookup)
+    callback({ builder: db, lookup: delayedResolveLookup })
     db.finalize({})
     delayedResolveLookup.validateFulfillingEntries(db.getKeys({}), mrer, requiresExhaustive)
     return new DictionaryImp<Type>(dict)
@@ -150,12 +150,12 @@ export function createFulfillingDictionary<Type, ReferencedType>(
     mrer: IFulfillingDictionaryReporter,
     cer: IConflictingEntryReporter,
     lookup: ILookup<ReferencedType>,
-    callback: (dictBuilder: IDictionaryBuilder<Type>, lookup: ILookup<ReferencedType>) => void,
+    callback: (cp: { builder: IDictionaryBuilder<Type>, lookup: ILookup<ReferencedType> }) => void,
     requiresExhaustive: boolean,
 ): Dictionary<Type> {
     const dict = new RawDictionary<Type>()
     const db = createDictionaryBuilder<Type>(dict, cer)
-    callback(db, lookup)
+    callback({ builder: db, lookup: lookup })
     db.finalize({})
     lookup.validateFulfillingEntries({ keys: db.getKeys({}), reporter: mrer, requiresExhaustive: requiresExhaustive })
     return new DictionaryImp<Type>(dict)
@@ -163,11 +163,11 @@ export function createFulfillingDictionary<Type, ReferencedType>(
 
 export function createDictionary<Type>(
     reporter: IConflictingEntryReporter,
-    callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
+    callback: (cp: { builder: IDictionaryBuilder<Type> }) => void,
 ): Dictionary<Type> {
     const dict = new RawDictionary<Type>()
     const db = createDictionaryBuilder<Type>(dict, reporter)
-    callback(db)
+    callback({ builder: db })
     db.finalize({})
     return new DictionaryImp<Type>(dict)
 }
@@ -176,7 +176,7 @@ export function createDictionary<Type>(
 function createDictionaryOrdering<Type>(
     reporter: ICircularDependencyReporter,
     dictionary: RawDictionary<Type>,
-    getDependencies: (entry: Type) => string[],
+    getDependencies: (cp: { entry: Type }) => string[],
 ): DictionaryOrdering<Type> {
     const array: Array<KeyValuePair<Type>> = []
     const alreadyInserted = new RawDictionary<FinishedInsertion>()
@@ -190,7 +190,7 @@ function createDictionaryOrdering<Type>(
                 return
             }
             alreadyInserted.set(key, false)
-            getDependencies(entry).forEach(process)
+            getDependencies({entry: entry}).forEach(process)
             array.push({ key: key, value: entry })
             alreadyInserted.update(key, true)
         } else {
@@ -214,25 +214,33 @@ class OrderedDictionaryImp<Type, Orderings> extends DictionaryImp<Type> implemen
     }
 }
 
+class OrderingsCreator<Type> implements IOrderingCreator<Type> {
+    private readonly dict: RawDictionary<Type>
+    constructor(dict: RawDictionary<Type>) {
+        this.dict = dict
+    }
+    public createBasedOnDependency(p: {
+        reporter: ICircularDependencyReporter,
+        getDependencies: (cp: { entry: Type }) => string[]
+    }) {
+        return createDictionaryOrdering(p.reporter, this.dict, p.getDependencies)
+    }
+    public createBasedOnInsertionOrder(_p: {}): DictionaryOrdering<Type> {
+        return new DictionaryOrderingImp(this.dict.map((value, key) => ({ key: key, value: value })))
+    }
+}
+
 export function createOrderedDictionary<Type, Orderings>(
     reporter: IConflictingEntryReporter,
-    callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
-    getOrderings: (orderingCreator: IOrderingCreator<Type>) => Orderings,
+    callback: (cp: { builder: IDictionaryBuilder<Type> }) => void,
+    getOrderings: (cp: { orderingCreator: IOrderingCreator<Type> }) => Orderings,
 ): OrderedDictionary<Type, Orderings> {
     const dict = new RawDictionary<Type>()
     const db = createDictionaryBuilder<Type>(dict, reporter)
-    callback(db)
+    callback({ builder: db })
     db.finalize({})
     const orderings = getOrderings({
-        createBasedOnDependency: (p: {
-            reporter: ICircularDependencyReporter,
-            getDependencies: (entry: Type) => string[]
-        }) => {
-            return createDictionaryOrdering(p.reporter, dict, p.getDependencies)
-        },
-        createBasedOnInsertionOrder: (): DictionaryOrdering<Type> => {
-            return new DictionaryOrderingImp(dict.map((value, key) => ({ key: key, value: value })))
-        },
+        orderingCreator: new OrderingsCreator<Type>(dict),
     })
     return new OrderedDictionaryImp<Type, Orderings>(dict, orderings)
 }

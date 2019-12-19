@@ -19,7 +19,7 @@ import { createList } from "./list"
 class BuildContext implements IBuildContext {
     public createAutoCreateDictionary<Type>(p: {
         reporter: IConflictingEntryReporter,
-        callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
+        callback: (cp: { builder: IDictionaryBuilder<Type> }) => void,
         missingEntryCreator: MissingEntryCreator<Type>,
         getParentKeys: () => string[]
     }): IAutoCreateDictionary<Type> {
@@ -32,7 +32,7 @@ class BuildContext implements IBuildContext {
         mrer: IFulfillingDictionaryReporter,
         cer: IConflictingEntryReporter,
         delayedResolveLookup: IDelayedResolveLookup<ReferencedType>,
-        callback: (dictBuilder: IDictionaryBuilder<Type>, delayedResolveLookup: IDelayedResolveLookup<ReferencedType>) => void,
+        callback: (cp: { builder: IDictionaryBuilder<Type>, lookup: IDelayedResolveLookup<ReferencedType> }) => void,
         requiresExhaustive: boolean
     }): Dictionary<Type> {
         return createDelayedResolveFulfillingDictionary(p.mrer, p.cer, p.delayedResolveLookup, p.callback, p.requiresExhaustive)
@@ -41,21 +41,21 @@ class BuildContext implements IBuildContext {
         mrer: IFulfillingDictionaryReporter,
         cer: IConflictingEntryReporter,
         lookup: ILookup<ReferencedType>,
-        callback: (dictBuilder: IDictionaryBuilder<Type>, lookup: ILookup<ReferencedType>) => void,
+        callback: (p: { builder: IDictionaryBuilder<Type>, lookup: ILookup<ReferencedType> }) => void,
         requiresExhaustive: boolean
     }): Dictionary<Type> {
         return createFulfillingDictionary(p.mrer, p.cer, p.lookup, p.callback, p.requiresExhaustive)
     }
     public createDictionary<Type>(p: {
         reporter: IConflictingEntryReporter,
-        callback: (dictBuilder: IDictionaryBuilder<Type>) => void
+        callback: (p: { builder: IDictionaryBuilder<Type> }) => void
     }): Dictionary<Type> {
         return createDictionary(p.reporter, p.callback)
     }
     public createOrderedDictionary<Type, Orderings>(p: {
         reporter: IConflictingEntryReporter,
-        callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
-        createOrderings: (orderingCreator: IOrderingCreator<Type>) => Orderings
+        callback: (cp: { builder: IDictionaryBuilder<Type> }) => void,
+        createOrderings: (cp: { orderingCreator: IOrderingCreator<Type> }) => Orderings
     }) {
         return createOrderedDictionary(p.reporter, p.callback, p.createOrderings)
     }
@@ -65,7 +65,7 @@ class BuildContext implements IBuildContext {
     public createFailedLookup<Type>(): ILookup<Type> {
         return createFailedLookup()
     }
-    public createList<Type>(p: { callback: (arrayBuilder: IListBuilder<Type>) => void }): List<Type> {
+    public createList<Type>(p: { callback: (cp: { builder: IListBuilder<Type> }) => void }): List<Type> {
         return createList(p.callback)
     }
     public createLookup<Type>(p: { dict: Dictionary<Type> }): ILookup<Type> {

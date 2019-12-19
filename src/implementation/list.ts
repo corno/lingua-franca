@@ -64,8 +64,8 @@ class ListBuilder<Type> implements IListBuilder<Type> {
     }
 }
 
-export function createList<Type>(callback: (arrayBuilder: IListBuilder<Type>) => void): List<Type> {
+export function createList<Type>(callback: (cp: { builder: IListBuilder<Type> }) => void): List<Type> {
     const list = new ListBuilder<Type>()
-    callback(list)
+    callback({ builder: list })
     return list.finalize()
 }

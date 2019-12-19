@@ -13,7 +13,7 @@ class SimpleCircularConstraintReporter implements r.ICircularDependencyReporter 
     }
 }
 
-export function createSimpleCircularConstraintReporter(p: { typeInfo: string, reportError: (dependent: boolean, message: string) => void }) {
+export function createSimpleCircularConstraintReporter(p: { typeInfo: string, reportError: (dependent: boolean, message: string) => void }): r.ICircularDependencyReporter {
     return new SimpleCircularConstraintReporter(p)
 }
 
@@ -29,7 +29,7 @@ class SimpleConflictingEntryReporter implements r.IConflictingEntryReporter {
     }
 }
 
-export function createSimpleConflictingEntryReporter(p: { typeInfo: string, reportError: (dependent: boolean, message: string) => void }) {
+export function createSimpleConflictingEntryReporter(p: { typeInfo: string, reportError: (dependent: boolean, message: string) => void }): r.IConflictingEntryReporter {
     return new SimpleConflictingEntryReporter(p)
 }
 
@@ -50,7 +50,7 @@ class SimpleConstraintViolationReporter implements r.IConstraintViolationReporte
     }
 }
 
-export function createSimpleConstraintViolationReporter(p: { typeInfo: string, delayed: boolean, reportError: (dependent: boolean, message: string) => void }) {
+export function createSimpleConstraintViolationReporter(p: { typeInfo: string, delayed: boolean, reportError: (dependent: boolean, message: string) => void }): r.IConstraintViolationReporter {
     return new SimpleConstraintViolationReporter(p)
 }
 
@@ -77,7 +77,7 @@ class SimpleFulfillingDictionaryReporter implements r.IFulfillingDictionaryRepor
     }
 }
 
-export function createSimpleFulfillingDictionaryReporter(p: { typeInfo: string, delayed: boolean, reportError: (dependent: boolean, message: string) => void }) {
+export function createSimpleFulfillingDictionaryReporter(p: { typeInfo: string, delayed: boolean, reportError: (dependent: boolean, message: string) => void }): r.IFulfillingDictionaryReporter {
     return new SimpleFulfillingDictionaryReporter(p)
 }
 
@@ -101,7 +101,7 @@ class SimpleReferenceResolveReporter implements r.IReferenceResolveReporter {
     }
 }
 
-export function createSimpleReferenceResolveReporter(p: { typeInfo: string, delayed: boolean, reportError: (dependent: boolean, message: string) => void }) {
+export function createSimpleReferenceResolveReporter(p: { typeInfo: string, delayed: boolean, reportError: (dependent: boolean, message: string) => void }): r.IReferenceResolveReporter {
     return new SimpleReferenceResolveReporter(p)
 }
 
