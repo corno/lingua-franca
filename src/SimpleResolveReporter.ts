@@ -4,9 +4,9 @@ import * as r from "./reporters"
 export class SimpleCircularConstraintReporter implements r.ICircularDependencyReporter {
     private readonly typeInfo: string
     private readonly reportError: (dependent: boolean, message: string) => void
-    constructor(typeInfo: string, reportError: (dependent: boolean, message: string) => void) {
-        this.typeInfo = typeInfo
-        this.reportError = reportError
+    constructor(p: { typeInfo: string, reportError: (dependent: boolean, message: string) => void }) {
+        this.typeInfo = p.typeInfo
+        this.reportError = p.reportError
     }
     public reportCircularDependency(p: { key: string }) {
         this.reportError(false, `circular dependency: ${p.key} (${this.typeInfo})`)
@@ -16,9 +16,9 @@ export class SimpleCircularConstraintReporter implements r.ICircularDependencyRe
 export class SimpleConflictingEntryReporter implements r.IConflictingEntryReporter {
     private readonly typeInfo: string
     private readonly reportError: (dependent: boolean, message: string) => void
-    constructor(typeInfo: string, reportError: (dependent: boolean, message: string) => void) {
-        this.typeInfo = typeInfo
-        this.reportError = reportError
+    constructor(p: { typeInfo: string, reportError: (dependent: boolean, message: string) => void }) {
+        this.typeInfo = p.typeInfo
+        this.reportError = p.reportError
     }
     public reportConflictingEntry(p: { key: string }) {
         this.reportError(false, `conflicting entry: ${p.key} (${this.typeInfo})`)
@@ -29,10 +29,10 @@ export class SimpleConstraintViolationReporter implements r.IConstraintViolation
     private readonly typeInfo: string
     private readonly delayed: boolean
     private readonly reportError: (dependent: boolean, message: string) => void
-    constructor(typeInfo: string, delayed: boolean, reportError: (dependent: boolean, message: string) => void) {
-        this.typeInfo = typeInfo
-        this.delayed = delayed
-        this.reportError = reportError
+    constructor(p: { typeInfo: string, delayed: boolean, reportError: (dependent: boolean, message: string) => void }) {
+        this.typeInfo = p.typeInfo
+        this.delayed = p.delayed
+        this.reportError = p.reportError
     }
     public reportConstraintViolation(p: { expectedState: string, foundState: string }) {
         this.reportError(false, `${this.delayed ? "this.delayed " : ""}constraint violation: (${this.typeInfo}) expected '${p.expectedState}' but found '${p.foundState}'`)
@@ -46,15 +46,15 @@ export class SimpleFulfillingDictionaryReporter implements r.IFulfillingDictiona
     private readonly typeInfo: string
     private readonly delayed: boolean
     private readonly reportError: (dependent: boolean, message: string) => void
-    constructor(typeInfo: string, delayed: boolean, reportError: (dependent: boolean, message: string) => void) {
-        this.typeInfo = typeInfo
-        this.delayed = delayed
-        this.reportError = reportError
+    constructor(p: { typeInfo: string, delayed: boolean, reportError: (dependent: boolean, message: string) => void }) {
+        this.typeInfo = p.typeInfo
+        this.delayed = p.delayed
+        this.reportError = p.reportError
     }
     public reportMissingRequiredEntries(p: { missingEntries: string[], foundEntries: string[] }) {
         this.reportError(false, `missing required ${this.delayed ? "this.delayed " : ""}entry: ${p.missingEntries.join(`, `)} (${this.typeInfo}). found entries: ${p.foundEntries.join(`, `)}`)
     }
-    public reportLookupDoesNotExist(p: { keys: string[]}) {
+    public reportLookupDoesNotExist(p: { keys: string[] }) {
         this.reportError(false, `lookup for ${p.keys.concat(", ")} does not exist (${this.typeInfo})`)
     }
     public reportDependentUnresolvedEntry(p: { key: string }) {
