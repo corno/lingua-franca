@@ -17,47 +17,47 @@ import { createResolveBuilder } from "./instantResolve/resolved"
 import { createList } from "./list"
 
 class BuildContext implements IBuildContext {
-    public createAutoCreateDictionary<Type>(
+    public createAutoCreateDictionary<Type>(p: {
         reporter: IConflictingEntryReporter,
         callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
         missingEntryCreator: MissingEntryCreator<Type>,
         getParentKeys: () => string[]
-    ): IAutoCreateDictionary<Type> {
-        return createAutoCreateDictionary(reporter, callback, missingEntryCreator, getParentKeys)
+    }): IAutoCreateDictionary<Type> {
+        return createAutoCreateDictionary(p.reporter, p.callback, p.missingEntryCreator, p.getParentKeys)
     }
     public createDelayedResolvableBuilder<Type>(): IRootDelayedResolvableBuilder<Type> {
         return createDelayedResolvableBuilder()
     }
-    public createDelayedResolveFulfillingDictionary<Type, ReferencedType>(
+    public createDelayedResolveFulfillingDictionary<Type, ReferencedType>(p: {
         mrer: IFulfillingDictionaryReporter,
         cer: IConflictingEntryReporter,
         delayedResolveLookup: IDelayedResolveLookup<ReferencedType>,
         callback: (dictBuilder: IDictionaryBuilder<Type>, delayedResolveLookup: IDelayedResolveLookup<ReferencedType>) => void,
         requiresExhaustive: boolean
-    ): Dictionary<Type> {
-        return createDelayedResolveFulfillingDictionary(mrer, cer, delayedResolveLookup, callback, requiresExhaustive)
+    }): Dictionary<Type> {
+        return createDelayedResolveFulfillingDictionary(p.mrer, p.cer, p.delayedResolveLookup, p.callback, p.requiresExhaustive)
     }
-    public createFulfillingDictionary<Type, ReferencedType>(
+    public createFulfillingDictionary<Type, ReferencedType>(p: {
         mrer: IFulfillingDictionaryReporter,
         cer: IConflictingEntryReporter,
         lookup: ILookup<ReferencedType>,
         callback: (dictBuilder: IDictionaryBuilder<Type>, lookup: ILookup<ReferencedType>) => void,
         requiresExhaustive: boolean
-    ): Dictionary<Type> {
-        return createFulfillingDictionary(mrer, cer, lookup, callback, requiresExhaustive)
+    }): Dictionary<Type> {
+        return createFulfillingDictionary(p.mrer, p.cer, p.lookup, p.callback, p.requiresExhaustive)
     }
-    public createDictionary<Type>(
+    public createDictionary<Type>(p: {
         reporter: IConflictingEntryReporter,
         callback: (dictBuilder: IDictionaryBuilder<Type>) => void
-    ): Dictionary<Type> {
-        return createDictionary(reporter, callback)
+    }): Dictionary<Type> {
+        return createDictionary(p.reporter, p.callback)
     }
-    public createOrderedDictionary<Type, Orderings>(
+    public createOrderedDictionary<Type, Orderings>(p: {
         reporter: IConflictingEntryReporter,
         callback: (dictBuilder: IDictionaryBuilder<Type>) => void,
-        getOrderings: (orderingCreator: IOrderingCreator<Type>) => Orderings
-    ) {
-        return createOrderedDictionary(reporter, callback, getOrderings)
+        createOrderings: (orderingCreator: IOrderingCreator<Type>) => Orderings
+    }) {
+        return createOrderedDictionary(p.reporter, p.callback, p.createOrderings)
     }
     public createExistingContext<Type>(): IPossibleContext<Type> {
         return createExistingContext()
@@ -65,11 +65,11 @@ class BuildContext implements IBuildContext {
     public createFailedLookup<Type>(): ILookup<Type> {
         return createFailedLookup()
     }
-    public createList<Type>(callback: (arrayBuilder: IListBuilder<Type>) => void): List<Type> {
-        return createList(callback)
+    public createList<Type>(p: { callback: (arrayBuilder: IListBuilder<Type>) => void }): List<Type> {
+        return createList(p.callback)
     }
-    public createLookup<Type>(dict: Dictionary<Type>): ILookup<Type> {
-        return createLookup(dict)
+    public createLookup<Type>(p: { dict: Dictionary<Type> }): ILookup<Type> {
+        return createLookup(p.dict)
     }
     public createNonExistentAutoCreateContext<Type>(): IAutoCreateContext<Type> {
         return createNonExistentAutoCreateContext()
@@ -80,8 +80,8 @@ class BuildContext implements IBuildContext {
     public createNonExistentLookup<Type>(): ILookup<Type> {
         return createNonExistentLookupPlaceholder()
     }
-    public createResolveBuilder<Type>(value: Type): IDependentResolvedConstraintBuilder<Type> {
-        return createResolveBuilder(value)
+    public createResolveBuilder<Type>(p: { value: Type }): IDependentResolvedConstraintBuilder<Type> {
+        return createResolveBuilder(p.value)
     }
 }
 

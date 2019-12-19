@@ -224,8 +224,11 @@ export function createOrderedDictionary<Type, Orderings>(
     callback(db)
     db.finalize()
     const orderings = getOrderings({
-        createBasedOnDependency: (circularDependencyTypeInfo: ICircularDependencyReporter, getDependencies: (entry: Type) => string[]) => {
-            return createDictionaryOrdering(circularDependencyTypeInfo, dict, getDependencies)
+        createBasedOnDependency: (p: {
+            reporter: ICircularDependencyReporter,
+            getDependencies: (entry: Type) => string[]
+        }) => {
+            return createDictionaryOrdering(p.reporter, dict, p.getDependencies)
         },
         createBasedOnInsertionOrder: (): DictionaryOrdering<Type> => {
             return new DictionaryOrderingImp(dict.map((value, key) => ({ key: key, value: value })))
