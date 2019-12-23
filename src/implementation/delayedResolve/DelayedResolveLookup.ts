@@ -1,6 +1,6 @@
 // tslint:disable max-classes-per-file
-import { Dictionary } from "lingua-franca"
 import { IDelayedResolvableBuilder, IDelayedResolveConstrainedReference, IDelayedResolveLookup, IDelayedResolveReference } from "../../interfaces/delayedResolve"
+import { Dictionary } from "../../interfaces/Dictionary"
 import { IFulfillingDictionaryReporter, IReferenceResolveReporter } from "../../reporters"
 import { DelayedResolveReference } from "./delayedResolve"
 import { XBuilder } from "./delayedResolveConstraint"

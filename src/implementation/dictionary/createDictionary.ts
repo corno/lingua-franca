@@ -1,7 +1,7 @@
 // tslint:disable: max-classes-per-file
-import { Dictionary, DictionaryOrdering, OrderedDictionary } from "lingua-franca"
 import { IDelayedResolveLookup } from "../../interfaces/delayedResolve"
-import { IAutoCreateDictionary, IDictionaryBuilder } from "../../interfaces/dictionary"
+import { IAutoCreateDictionary, IDictionaryBuilder } from "../../interfaces/dictionaries"
+import { Dictionary, DictionaryOrdering, OrderedDictionary } from "../../interfaces/Dictionary"
 import { IOrderingCreator } from "../../interfaces/IBuildContext"
 import { ILookup, MissingEntryCreator } from "../../interfaces/instantResolve"
 import { ICircularDependencyReporter, IConflictingEntryReporter, IFulfillingDictionaryReporter } from "../../reporters"
@@ -98,10 +98,10 @@ class DictionaryOrderingImp<Type> implements DictionaryOrdering<Type> {
         return orderedIterate(this.orderedArray, p.callback)
     }
     public mapWithSeparator<NewType>(p: {
-        readonly onSepartor: () => NewType
+        readonly onSeparator: () => NewType
         readonly onElement: (element: Type, key: string) => NewType
     }) {
-        return orderedIterate(this.orderedArray, p.onElement, p.onSepartor)
+        return orderedIterate(this.orderedArray, p.onElement, p.onSeparator)
     }
     public filter<NewType>(p: {
         readonly callback: (element: Type) => null | NewType

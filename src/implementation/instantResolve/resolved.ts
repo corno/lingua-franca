@@ -1,7 +1,8 @@
 // tslint:disable: max-classes-per-file
-import { Constraint, Dictionary } from "lingua-franca"
 import { ConstraintCastResult } from "../../interfaces/ConstraintCastResult"
+import { Dictionary } from "../../interfaces/Dictionary"
 import { IDependentResolvedConstraintBuilder, ILookup, IResolvedConstrainedConstraint, IResolvedConstraint, Repeat } from "../../interfaces/instantResolve"
+import { Constraint } from "../../interfaces/Reference"
 import { IConstraintViolationReporter } from "../../reporters"
 import { createFailedLookup, createLookup } from "./lookup"
 import { createConstraint, createStateConstraint } from "./referenceBaseClasses"

@@ -1,12 +1,10 @@
-import {
-    Dictionary,
-    List,
-} from "lingua-franca"
 import { IDelayedResolveLookup, IPossibleContext, IRootDelayedResolvableBuilder } from "../interfaces/delayedResolve"
-import { IAutoCreateDictionary, IDictionaryBuilder } from "../interfaces/dictionary"
+import { IAutoCreateDictionary, IDictionaryBuilder } from "../interfaces/dictionaries"
+import { Dictionary } from "../interfaces/Dictionary"
 import { IBuildContext, IOrderingCreator } from "../interfaces/IBuildContext"
 import { IListBuilder } from "../interfaces/IListBuilder"
 import { IAutoCreateContext, IDependentResolvedConstraintBuilder, ILookup, MissingEntryCreator } from "../interfaces/instantResolve"
+import { List } from "../interfaces/List"
 import { IConflictingEntryReporter, IFulfillingDictionaryReporter } from "../reporters"
 import { createDelayedResolvableBuilder } from "./delayedResolve/delayedResolve"
 import { createExistingContext, createNonExistingContext } from "./delayedResolve/possibleContext"

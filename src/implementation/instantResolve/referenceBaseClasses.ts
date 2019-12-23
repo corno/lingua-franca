@@ -1,5 +1,5 @@
-import { Constraint } from "lingua-franca"
 import { IDependentResolvedConstraintBuilder, IResolvedConstrainedConstraint, IResolvedConstrainedReference, IResolvedConstraint } from "../../interfaces/instantResolve"
+import { Constraint } from "../../interfaces/Reference"
 
 class ConstraintImp<Type, Constraints> implements IResolvedConstrainedConstraint<Type, Constraints> {
     public readonly builder: IDependentResolvedConstraintBuilder<Type>

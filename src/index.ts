@@ -1,4 +1,4 @@
-export * from "./interfaces/dictionary"
+export * from "./interfaces/dictionaries"
 export * from "./interfaces/delayedResolve"
 export * from "./interfaces/IBuildContext"
 export * from "./interfaces/IListBuilder"

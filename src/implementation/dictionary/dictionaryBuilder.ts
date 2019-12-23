@@ -1,5 +1,5 @@
 //import { IDelayedResolveReference } from "../../interfaces/delayedResolve"
-import { IFinalizableDictionaryBuilder } from "../../interfaces/dictionary"
+import { IFinalizableDictionaryBuilder } from "../../interfaces/dictionaries"
 import { IConflictingEntryReporter } from "../../reporters"
 import { createLookup } from "../instantResolve/lookup"
 import { RawDictionary } from "../RawDictionary"

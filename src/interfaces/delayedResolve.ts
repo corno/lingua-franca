@@ -1,6 +1,7 @@
-import { ConstrainedConstraint, ConstrainedReference, Constraint, Dictionary, Reference } from "lingua-franca"
 import { IConstraintViolationReporter, IFulfillingDictionaryReporter, IReferenceResolveReporter } from "../reporters"
 import { ConstraintCastResult } from "./ConstraintCastResult"
+import { Dictionary } from "./Dictionary"
+import { ConstrainedConstraint, ConstrainedReference, Constraint, Reference } from "./Reference"
 
 export interface IDelayedResolveLookup<Type> {
     validateFulfillingEntries(keys: string[], mrer: IFulfillingDictionaryReporter, requiresExhaustive: boolean): void

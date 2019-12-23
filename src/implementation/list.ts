@@ -1,5 +1,5 @@
-import { List } from "lingua-franca"
 import { IListBuilder } from "../interfaces/IListBuilder"
+import { List } from "../interfaces/List"
 
 class ListImp<Type> implements List<Type> {
     private readonly imp: Type[]
@@ -12,13 +12,13 @@ class ListImp<Type> implements List<Type> {
         return this.imp.map(p.callback)
     }
     public mapWithSeparator<NewType>(p: {
-        readonly onSepartor: () => NewType
+        readonly onSeparator: () => NewType
         readonly onElement: (element: Type) => NewType
     }) {
         const target: Array<NewType> = []
         this.imp.forEach((element, index) => {
-            if (index !== 0 && p.onSepartor !== undefined) {
-                target.push(p.onSepartor())
+            if (index !== 0 && p.onSeparator !== undefined) {
+                target.push(p.onSeparator())
             }
             target.push(p.onElement(element))
         })

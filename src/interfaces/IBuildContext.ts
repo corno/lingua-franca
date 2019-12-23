@@ -1,14 +1,10 @@
-import {
-    Dictionary,
-    DictionaryOrdering,
-    List,
-    OrderedDictionary,
-} from "lingua-franca"
 import { ICircularDependencyReporter, IConflictingEntryReporter, IFulfillingDictionaryReporter } from "../reporters"
 import { IDelayedResolveLookup, IPossibleContext, IRootDelayedResolvableBuilder } from "./delayedResolve"
-import { IAutoCreateDictionary, IDictionaryBuilder } from "./dictionary"
+import { IAutoCreateDictionary, IDictionaryBuilder } from "./dictionaries"
+import { Dictionary, DictionaryOrdering, OrderedDictionary } from "./Dictionary"
 import { IListBuilder } from "./IListBuilder"
 import { IAutoCreateContext, IDependentResolvedConstraintBuilder, ILookup, MissingEntryCreator } from "./instantResolve"
+import { List } from "./List"
 
 
 export interface IOrderingCreator<Type> {
@@ -54,7 +50,7 @@ export interface IBuildContext {
     createExistingContext<Type>(p: {}): IPossibleContext<Type>
     createFailedLookup<Type>(p: {}): ILookup<Type>
     createList<Type>(p: { callback: (cp: { builder: IListBuilder<Type> }) => void }): List<Type>
-    createLookup<Type>(p: { dict: Dictionary<Type>}): ILookup<Type>
+    createLookup<Type>(p: { dict: Dictionary<Type> }): ILookup<Type>
     createNonExistentAutoCreateContext<Type>(p: {}): IAutoCreateContext<Type>
     createNonExistentContext<Type>(p: {}): IPossibleContext<Type>
     createNonExistentLookup<Type>(p: {}): ILookup<Type>

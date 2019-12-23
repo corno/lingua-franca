@@ -26,9 +26,7 @@
   "files": [
     "dist/*"
   ],
-  "dependencies": {
-    "lingua-franca": "^0.2.6"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/chai": "^4.2.7",
     "@types/mocha": "^5.2.7",
@@ -36,9 +34,9 @@
     "chai": "^4.2.0",
     "cross-env": "^6.0.3",
     "mocha": "^6.2.2",
-    "nyc": "^14.1.1",
+    "nyc": "^15.0.0",
     "ts-node": "^8.5.4",
     "tslint": "^5.20.1",
-    "typescript": "^3.7.3"
+    "typescript": "^3.7.4"
   }
 }

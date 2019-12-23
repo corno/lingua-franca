@@ -1,5 +1,4 @@
 // tslint:disable max-classes-per-file
-import { Sanitizer } from "lingua-franca"
 import { IDelayedResolvableBuilder, IDelayedResolveReference, IDelayedResolveStateConstraint, IRootDelayedResolvableBuilder } from "../../interfaces/delayedResolve"
 import { DelayedResolveConstraint, XBuilder } from "./delayedResolveConstraint"
 
@@ -22,7 +21,7 @@ export class DelayedResolveReference<Type, Constraints> extends DelayedResolveCo
         this.key = key
         this.constraints = constraints
     }
-    public getKey(p: { readonly sanitizer: Sanitizer}) {
+    public getKey(p: { readonly sanitizer: (str: string) => string}) {
         return p.sanitizer(this.key)
     }
     public getConstraints(_p: {}) {
