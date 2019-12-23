@@ -1,6 +1,6 @@
 {
   "name": "lingua-franca",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "package for building up 'AST's'",
   "main": "dist/src/index.js",
   "scripts": {
