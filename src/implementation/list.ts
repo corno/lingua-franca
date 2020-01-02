@@ -7,35 +7,37 @@ class ListImp<Type> implements List<Type> {
         this.imp = imp
     }
     public map<NewType>(p: {
-        readonly callback: (element: Type) => NewType
+        readonly callback: (cp: { readonly element: Type }) => NewType
     }) {
-        return this.imp.map(p.callback)
+        return this.imp.map(elm => {
+            return p.callback({ element: elm })
+        })
     }
     public mapWithSeparator<NewType>(p: {
-        readonly onSeparator: () => NewType
-        readonly onElement: (element: Type) => NewType
+        readonly onSeparator: (cp: {}) => NewType
+        readonly onElement: (cp: { readonly element: Type }) => NewType
     }) {
         const target: Array<NewType> = []
         this.imp.forEach((element, index) => {
             if (index !== 0 && p.onSeparator !== undefined) {
-                target.push(p.onSeparator())
+                target.push(p.onSeparator({}))
             }
-            target.push(p.onElement(element))
+            target.push(p.onElement({ element: element }))
         })
         return target
     }
     public onEmpty<NewType>(p: {
-      readonly  onEmpty: () => NewType
-      readonly  onNotEmpty: (list: List<Type>) => NewType
+        readonly onEmpty: (cp: {}) => NewType
+        readonly onNotEmpty: (cp: { readonly list: List<Type> }) => NewType
     }): NewType {
         if (this.imp.length === 0) {
-            return p.onEmpty()
+            return p.onEmpty({})
         } else {
-            return p.onNotEmpty(this)
+            return p.onNotEmpty({list: this})
         }
     }
     public filter<NewType>(p: {
-       readonly callback: (element: Type) => null | NewType
+        readonly callback: (element: Type) => null | NewType
     }) {
         const target: Array<NewType> = []
         this.imp.forEach(element => {

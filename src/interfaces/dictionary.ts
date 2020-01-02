@@ -18,7 +18,7 @@ export interface DictionaryOrdering<Type> {
      * @param onSeparator is called inbetween every element in the list
      */
     map<NewType>(p: {
-        readonly callback: (element: Type, key: string) => NewType
+        readonly callback: (cp: { readonly element: Type, readonly key: string }) => NewType
     }): NewType[]
     /**
      * iterates over the elements
@@ -26,16 +26,16 @@ export interface DictionaryOrdering<Type> {
      * @param onSeparator is called inbetween every element in the list
      */
     mapWithSeparator<NewType>(p: {
-        readonly onSeparator: () => NewType
-        readonly onElement: (element: Type, key: string) => NewType
+        readonly onSeparator: (cp: {}) => NewType
+        readonly onElement: (cp: { readonly element: Type, readonly key: string }) => NewType
     }): NewType[]
     onEmpty<NewType>(p: {
-        readonly onEmpty: () => NewType
-        readonly onNotEmpty: (dictionaryOrdering: DictionaryOrdering<Type>) => NewType
+        readonly onEmpty: (cp: {}) => NewType
+        readonly onNotEmpty: (cp: { readonly dictionaryOrdering: DictionaryOrdering<Type> }) => NewType
     }): NewType
     /**
      *
      * @param callback if the callback returns null, the element is excluded from the resulting List
      */
-    filter<NewType>(p: { readonly callback: (element: Type) => null | NewType }): DictionaryOrdering<NewType>
+    filter<NewType>(p: { readonly callback: (cp: { readonly element: Type }) => null | NewType }): DictionaryOrdering<NewType>
 }

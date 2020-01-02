@@ -3,56 +3,56 @@ import { IDelayedResolveLookup, IPossibleContext, IRootDelayedResolvableBuilder 
 import { IAutoCreateDictionary, IDictionaryBuilder } from "./dictionaries"
 import { Dictionary, DictionaryOrdering, OrderedDictionary } from "./Dictionary"
 import { IListBuilder } from "./IListBuilder"
-import { IAutoCreateContext, IDependentResolvedConstraintBuilder, ILookup, MissingEntryCreator } from "./instantResolve"
+import { IAutoCreateContext, IDependentResolvedConstraintBuilder, ILookup } from "./instantResolve"
 import { List } from "./List"
 
 
 export interface IOrderingCreator<Type> {
     createBasedOnDependency(p: {
-        reporter: ICircularDependencyReporter,
-        getDependencies: (cp: { entry: Type }) => string[]
+        readonly reporter: ICircularDependencyReporter,
+        readonly getDependencies: (cp: { readonly entry: Type }) => string[]
     }): DictionaryOrdering<Type>
     createBasedOnInsertionOrder(p: {}): DictionaryOrdering<Type>
 }
 
 export interface IBuildContext {
     createAutoCreateDictionary<Type>(p: {
-        reporter: IConflictingEntryReporter,
-        callback: (cp: { builder: IDictionaryBuilder<Type> }) => void,
-        missingEntryCreator: MissingEntryCreator<Type>,
-        getParentKeys: (cp: {}) => string[]
+        readonly reporter: IConflictingEntryReporter,
+        readonly callback: (cp: { readonly builder: IDictionaryBuilder<Type> }) => void,
+        readonly missingEntryCreator: (cp: { readonly key: string }) => null | Type,
+        readonly getParentKeys: (cp: {}) => string[]
     }): IAutoCreateDictionary<Type>
 
     createDelayedResolvableBuilder<Type>(p: {}): IRootDelayedResolvableBuilder<Type>
     createDelayedResolveFulfillingDictionary<Type, ReferencedType>(p: {
-        mrer: IFulfillingDictionaryReporter,
-        cer: IConflictingEntryReporter,
-        delayedResolveLookup: IDelayedResolveLookup<ReferencedType>,
-        callback: (cp: { builder: IDictionaryBuilder<Type>, lookup: IDelayedResolveLookup<ReferencedType> }) => void,
-        requiresExhaustive: boolean
+        readonly mrer: IFulfillingDictionaryReporter,
+        readonly cer: IConflictingEntryReporter,
+        readonly delayedResolveLookup: IDelayedResolveLookup<ReferencedType>,
+        readonly callback: (cp: { readonly builder: IDictionaryBuilder<Type>, readonly lookup: IDelayedResolveLookup<ReferencedType> }) => void,
+        readonly requiresExhaustive: boolean
     }): Dictionary<Type>
     createFulfillingDictionary<Type, ReferencedType>(p: {
-        mrer: IFulfillingDictionaryReporter,
-        cer: IConflictingEntryReporter,
-        lookup: ILookup<ReferencedType>,
-        callback: (cp: { builder: IDictionaryBuilder<Type>, lookup: ILookup<ReferencedType> }) => void,
-        requiresExhaustive: boolean
+        readonly mrer: IFulfillingDictionaryReporter,
+        readonly cer: IConflictingEntryReporter,
+        readonly lookup: ILookup<ReferencedType>,
+        readonly callback: (cp: { readonly builder: IDictionaryBuilder<Type>, readonly lookup: ILookup<ReferencedType> }) => void,
+        readonly requiresExhaustive: boolean
     }): Dictionary<Type>
     createDictionary<Type>(p: {
-        reporter: IConflictingEntryReporter,
-        callback: (cp: { builder: IDictionaryBuilder<Type> }) => void
+        readonly reporter: IConflictingEntryReporter,
+        readonly callback: (cp: { readonly builder: IDictionaryBuilder<Type> }) => void
     }): Dictionary<Type>
     createOrderedDictionary<Type, Orderings>(p: {
-        reporter: IConflictingEntryReporter,
-        callback: (cp: { builder: IDictionaryBuilder<Type> }) => void,
-        createOrderings: (cp: { orderingCreator: IOrderingCreator<Type> }) => Orderings
+        readonly reporter: IConflictingEntryReporter,
+        readonly callback: (cp: { readonly builder: IDictionaryBuilder<Type> }) => void,
+        readonly createOrderings: (cp: { readonly orderingCreator: IOrderingCreator<Type> }) => Orderings
     }): OrderedDictionary<Type, Orderings>
     createExistingContext<Type>(p: {}): IPossibleContext<Type>
     createFailedLookup<Type>(p: {}): ILookup<Type>
-    createList<Type>(p: { callback: (cp: { builder: IListBuilder<Type> }) => void }): List<Type>
-    createLookup<Type>(p: { dict: Dictionary<Type> }): ILookup<Type>
+    createList<Type>(p: { readonly callback: (cp: { readonly builder: IListBuilder<Type> }) => void }): List<Type>
+    createLookup<Type>(p: { readonly dict: Dictionary<Type> }): ILookup<Type>
     createNonExistentAutoCreateContext<Type>(p: {}): IAutoCreateContext<Type>
     createNonExistentContext<Type>(p: {}): IPossibleContext<Type>
     createNonExistentLookup<Type>(p: {}): ILookup<Type>
-    createResolveBuilder<Type>(p: { value: Type }): IDependentResolvedConstraintBuilder<Type>
+    createResolveBuilder<Type>(p: { readonly value: Type }): IDependentResolvedConstraintBuilder<Type>
 }

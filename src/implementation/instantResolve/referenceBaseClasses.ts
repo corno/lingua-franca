@@ -12,12 +12,15 @@ class ConstraintImp<Type, Constraints> implements IResolvedConstrainedConstraint
         return this.constraints
     }
     public mapResolved<NewType>(p: {
-        readonly callback: (type: Type) => NewType
-        readonly onNotResolved: () => NewType
+        readonly callback: (cp: { readonly type: Type }) => NewType
+        readonly onNotResolved: (cp: {}) => NewType
     }) {
         return this.builder.mapResolved({ callback: p.callback, onNotResolved: p.onNotResolved })
     }
-    public withResolved(p: { readonly callback: (type: Type) => void, readonly onNotResolved?: () => void }) {
+    public withResolved(p: {
+        readonly callback: (cp: { type: Type }) => void,
+        readonly onNotResolved?: (cp: {}) => void
+    }) {
         this.mapResolved({
             callback: p.callback,
             onNotResolved: p.onNotResolved === undefined ? () => { } : p.onNotResolved,
@@ -29,12 +32,12 @@ class ConstraintImp<Type, Constraints> implements IResolvedConstrainedConstraint
             onNotResolved: () => {
                 throw new Error("Reference failed to resolve")
             },
-        })
+        }).type
     }
-    public getConstraint<NewType>(p: { readonly callback: (type: Type) => Constraint<NewType> }): Constraint<NewType> {
+    public getConstraint<NewType>(p: { readonly callback: (cp: { readonly type: Type }) => Constraint<NewType> }): Constraint<NewType> {
         return this.builder.getConstraint(p)
     }
-    public getNonConstraint<NewType>(p: { readonly callback: (type: Type) => NewType }): Constraint<NewType> {
+    public getNonConstraint<NewType>(p: { readonly callback: (cp: { readonly type: Type }) => NewType }): Constraint<NewType> {
         return this.builder.getNonConstraint(p)
     }
 }
@@ -59,8 +62,8 @@ class ReferenceImp<ReferencedType, Constraints> extends ConstraintImp<Referenced
         super(value, constraints)
         this.key = key
     }
-    public getKey(p: { readonly sanitizer: (rawKey: string) => string }) {
-        return p.sanitizer(this.key)
+    public getKey(_p: {}) {
+        return this.key
     }
 }
 

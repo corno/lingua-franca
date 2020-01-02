@@ -21,16 +21,18 @@ class LookupImp<Type> implements ILookup<Type> {
         })
     }
     public createConstrainedReference<Constraints>(p: {
-        key: string, reporter: IReferenceResolveReporter, getConstraints: (reference: IDependentResolvedConstraintBuilder<Type>) => Constraints
+        readonly key: string,
+        readonly reporter: IReferenceResolveReporter,
+        readonly getConstraints: (cp: { readonly reference: IDependentResolvedConstraintBuilder<Type> }) => Constraints
     }): IResolvedConstrainedReference<Type, Constraints> {
         const entry = this.dictionary.getEntry({ key: p.key })
         if (entry === null) {
             p.reporter.reportUnresolvedReference({ key: p.key, options: this.dictionary.getKeys({}) })
             const failedResolved = createFailedResolvedBuilder<Type>()
-            return createReference(p.key, failedResolved, p.getConstraints(failedResolved))
+            return createReference(p.key, failedResolved, p.getConstraints({ reference: failedResolved }))
         }
         const resolved = createResolveBuilder(entry)
-        return createReference(p.key, resolved, p.getConstraints(resolved))
+        return createReference(p.key, resolved, p.getConstraints({ reference: resolved }))
     }
 
     public validateFulfillingEntries(p: { keys: string[], reporter: IFulfillingDictionaryReporter, requiresExhaustive: boolean }) {
@@ -67,11 +69,13 @@ class NonExistentLookup<Type> implements ILookup<Type> {
         })
     }
     public createConstrainedReference<Constraints>(p: {
-        key: string, reporter: IReferenceResolveReporter, getConstraints: (ref: IDependentResolvedConstraintBuilder<Type>) => Constraints
+        readonly key: string,
+        readonly reporter: IReferenceResolveReporter,
+        readonly getConstraints: (cp: { readonly reference: IDependentResolvedConstraintBuilder<Type> }) => Constraints
     }): IResolvedConstrainedReference<Type, Constraints> {
         p.reporter.reportLookupDoesNotExist({ key: p.key })
         const failedResolved = createFailedResolvedBuilder<Type>()
-        return createReference(p.key, failedResolved, p.getConstraints(failedResolved))
+        return createReference(p.key, failedResolved, p.getConstraints({ reference: failedResolved }))
     }
     public validateFulfillingEntries(p: { keys: string[], reporter: IFulfillingDictionaryReporter, requiresExhaustive: boolean }) {
         p.reporter.reportLookupDoesNotExist({ keys: p.keys })
@@ -86,11 +90,13 @@ class FailedLookup<Type> implements ILookup<Type> {
         return this.createConstrainedReference({ key: p.key, reporter: p.reporter, getConstraints: () => ({}) })
     }
     public createConstrainedReference<Constraints>(p: {
-        key: string, reporter: IReferenceResolveReporter, getConstraints: (ref: IDependentResolvedConstraintBuilder<Type>) => Constraints
+        readonly key: string,
+        readonly reporter: IReferenceResolveReporter,
+        readonly getConstraints: (cp: { readonly reference: IDependentResolvedConstraintBuilder<Type> }) => Constraints
     }): IResolvedConstrainedReference<Type, Constraints> {
         p.reporter.reportDependentUnresolvedReference({ key: p.key })
         const failedResolved = createFailedResolvedBuilder<Type>()
-        return createReference(p.key, failedResolved, p.getConstraints(failedResolved))
+        return createReference(p.key, failedResolved, p.getConstraints({ reference: failedResolved }))
     }
     public validateFulfillingEntries(p: { keys: string[], reporter: IFulfillingDictionaryReporter, requiresExhaustive: boolean }) {
         p.keys.forEach(key => {

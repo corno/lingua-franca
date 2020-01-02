@@ -21,15 +21,17 @@ class AutoCreateLookup<Type> implements ILookup<Type> {
         })
     }
     public createConstrainedReference<Constraints>(p: {
-        key: string, reporter: IReferenceResolveReporter, getConstraints: (ref: IDependentResolvedConstraintBuilder<Type>) => Constraints
+        readonly key: string,
+        readonly reporter: IReferenceResolveReporter,
+        readonly getConstraints: (cp: { readonly reference: IDependentResolvedConstraintBuilder<Type> }) => Constraints
     }): IResolvedConstrainedReference<Type, Constraints> {
         const entry = this.autoCreateContext.tryToCreateReference({ key: p.key })
         if (entry === null) {
             p.reporter.reportUnresolvedReference({ key: p.key, options: this.autoCreateContext.getKeys({}) })
             const failedResolved = createFailedResolvedBuilder<Type>()
-            return createReference(p.key, failedResolved, p.getConstraints(failedResolved))
+            return createReference(p.key, failedResolved, p.getConstraints({ reference: failedResolved }))
         }
-        return createReference(p.key, entry.builder, p.getConstraints(entry.builder))
+        return createReference(p.key, entry.builder, p.getConstraints({ reference: entry.builder }))
     }
     public validateFulfillingEntries(p: { keys: string[], reporter: IFulfillingDictionaryReporter, requiresExhaustive: boolean }) {
         const requiredKeys = this.autoCreateContext.getKeys({})
@@ -74,7 +76,7 @@ class AutoCreateContext<Type> implements IAutoCreateContext<Type> {
             return createReference(p.key, createResolvedBuilder(entry), {})
         } else {
             //entry does not exist
-            const possibleEntry = this.missingEntryCreator(p.key)
+            const possibleEntry = this.missingEntryCreator({ key: p.key })
             if (possibleEntry === null) {
                 return null
             } else {
@@ -116,14 +118,16 @@ class NonExistentAutoCreateLookup<Type> implements ILookup<Type> {
         })
     }
     public createConstrainedReference<Constraints>(p: {
-        key: string, reporter: IReferenceResolveReporter, getConstraints: (ref: IDependentResolvedConstraintBuilder<Type>) => Constraints
+        readonly key: string,
+        readonly reporter: IReferenceResolveReporter,
+        readonly getConstraints: (cp: { readonly reference: IDependentResolvedConstraintBuilder<Type> }) => Constraints
     }): IResolvedConstrainedReference<Type, Constraints> {
         p.reporter.reportLookupDoesNotExist({ key: p.key })
         const failedResolved = createFailedResolvedBuilder<Type>()
-        return createReference(p.key, failedResolved, p.getConstraints(failedResolved))
+        return createReference(p.key, failedResolved, p.getConstraints({ reference: failedResolved }))
     }
     public validateFulfillingEntries(p: { keys: string[], reporter: IFulfillingDictionaryReporter, requiresExhaustive: boolean }) {
-        p.reporter.reportLookupDoesNotExist({ keys: p.keys})
+        p.reporter.reportLookupDoesNotExist({ keys: p.keys })
     }
 }
 
@@ -134,7 +138,7 @@ class NonExistentAutoCreateContext<Type> implements IAutoCreateContext<Type> {
     public tryToCreateReference() {
         return null
     }
-    public toLookup() {
+    public toLookup(_p: {}) {
         return new NonExistentAutoCreateLookup<Type>()
     }
     public getKeys() {

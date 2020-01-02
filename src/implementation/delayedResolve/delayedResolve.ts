@@ -8,7 +8,7 @@ export class DelayedResolveStateConstraint<Type, Constraints> extends DelayedRes
         super(builder)
         this.constraints = constraints
     }
-    public getConstraints() {
+    public getConstraints(_cp: {}) {
         return this.constraints
     }
 }
@@ -21,8 +21,9 @@ export class DelayedResolveReference<Type, Constraints> extends DelayedResolveCo
         this.key = key
         this.constraints = constraints
     }
-    public getKey(p: { readonly sanitizer: (str: string) => string}) {
-        return p.sanitizer(this.key)
+    public getKey(_p: {
+    }) {
+        return this.key
     }
     public getConstraints(_p: {}) {
         return this.constraints
@@ -35,7 +36,7 @@ class DelayedResolvable<Type> implements IRootDelayedResolvableBuilder<Type> {
         this.builder = builder
     }
     public resolve(p: { value: Type }) {
-        this.builder.resolve(p.value)
+        this.builder.resolve({ value: p.value })
     }
 }
 

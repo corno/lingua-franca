@@ -57,8 +57,8 @@ class BuildContext implements IBuildContext {
     }) {
         return createOrderedDictionary(p.reporter, p.callback, p.createOrderings)
     }
-    public createExistingContext<Type>(): IPossibleContext<Type> {
-        return createExistingContext()
+    public createExistingContext<Type>(_p: {}): IPossibleContext<Type> {
+        return createExistingContext({})
     }
     public createFailedLookup<Type>(): ILookup<Type> {
         return createFailedLookup()

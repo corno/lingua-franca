@@ -17,7 +17,7 @@ export class DelayedResolveLookup<Type> implements IDelayedResolveLookup<Type> {
         this.addSubscriber(
             () => {
                 keys.forEach(key => {
-                    reporter.reportDependentUnresolvedEntry({key: key})
+                    reporter.reportDependentUnresolvedEntry({ key: key })
                 })
             },
             dict => {
@@ -46,29 +46,33 @@ export class DelayedResolveLookup<Type> implements IDelayedResolveLookup<Type> {
         key: string,
         reporter: IReferenceResolveReporter
     ): IDelayedResolveReference<Type> {
-        return this.createConstrainedReference(key, reporter, () => ({}))
+        return this.createConstrainedReference({
+            key: key,
+            reporter: reporter,
+            getConstraints: () => ({}),
+        })
     }
-    public createConstrainedReference<Constraints>(
-        key: string,
-        reporter: IReferenceResolveReporter,
-        getConstraints: (builder: IDelayedResolvableBuilder<Type>) => Constraints
-    ): IDelayedResolveConstrainedReference<Type, Constraints> {
+    public createConstrainedReference<Constraints>(p: {
+        readonly key: string,
+        readonly reporter: IReferenceResolveReporter,
+        readonly getConstraints: (cp: { readonly builder: IDelayedResolvableBuilder<Type> }) => Constraints
+    }): IDelayedResolveConstrainedReference<Type, Constraints> {
         const builder = new XBuilder<Type>()
-        const ref = new DelayedResolveReference<Type, Constraints>(key, builder, getConstraints(builder))
+        const ref = new DelayedResolveReference<Type, Constraints>(p.key, builder, p.getConstraints({ builder: builder }))
         this.addSubscriber(
             () => {
-                reporter.reportDependentUnresolvedReference({key: key})
+                p.reporter.reportDependentUnresolvedReference({ key: p.key })
             },
             dict => {
-                const entry = dict.getEntry({ key: key })
+                const entry = dict.getEntry({ key: p.key })
                 if (entry === null) {
-                    reporter.reportUnresolvedReference({
-                        key: key,
+                    p.reporter.reportUnresolvedReference({
+                        key: p.key,
                         options: dict.getKeys({}),
                     })
                     builder.setToFailedResolve()
                 } else {
-                    builder.resolve(entry)
+                    builder.resolve({ value: entry })
                 }
             }
         )

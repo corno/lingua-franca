@@ -18,7 +18,7 @@ export function createNonExistingContext<Type>() {
 class ExistingContext<Type> implements IPossibleContext<Type> {
     private readonly subscribers: Array<XBuilder<Type>> = []
     private isSet = false
-    public validateExistence() {
+    public validateExistence(_p: {}) {
         if (this.isSet) {
             throw new Error("UNEXPECTED")
         }
@@ -32,10 +32,10 @@ class ExistingContext<Type> implements IPossibleContext<Type> {
             throw new Error("UNEXPECTED")
         }
         this.isSet = true
-        this.subscribers.forEach(s => s.resolve(value))
+        this.subscribers.forEach(s => s.resolve({ value: value }))
     }
 }
 
-export function createExistingContext<Type>() {
+export function createExistingContext<Type>(_p: {}) {
     return new ExistingContext<Type>()
 }

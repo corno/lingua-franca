@@ -11,16 +11,26 @@ export interface Constraint<Type> {
      * @param callback is only called if the type was successfully resolved
      * @param onNotResolved optional, if provided, it will be called if the type was not succesfully resolved
      */
-    withResolved(p: { readonly callback: (type: Type) => void, readonly onNotResolved?: () => void }): void
+    withResolved(p: {
+        readonly callback: (cp: { readonly type: Type }) => void,
+        readonly onNotResolved?: (cp: {}) => void
+    }): void
     /**
      *
      * @param callback this callback is called when the type was resolved successfully
      * @param onNotResolved this callback is called when the type was not resolved successfully
      */
-    mapResolved<NewType>(p: { readonly callback: (type: Type) => NewType, readonly onNotResolved: () => NewType }): NewType
+    mapResolved<NewType>(p: {
+        readonly callback: (cp: { readonly type: Type }) => NewType
+        readonly onNotResolved: (cp: {}) => NewType
+    }): NewType
 
-    getConstraint<NewType>(p: { readonly callback: (type: Type) => Constraint<NewType> }): Constraint<NewType>
-    getNonConstraint<NewType>(p: { readonly callback: (type: Type) => NewType }): Constraint<NewType>
+    getConstraint<NewType>(p: {
+        readonly callback: (cp: { readonly type: Type }) => Constraint<NewType>
+    }): Constraint<NewType>
+    getNonConstraint<NewType>(p: {
+        readonly callback: (cp: { type: Type }) => NewType
+    }): Constraint<NewType>
 }
 
 export interface ConstrainedConstraint<Type, Constraints> extends Constraint<Type> {
@@ -32,7 +42,9 @@ export interface Reference<ReferencedType> extends Constraint<ReferencedType> {
      *
      * @param sanitizer callback to force the caller to be explicit on how the value should be printed
      */
-    getKey(p: { sanitizer: (rawValue: string) => string }): string
+    getKey(p: {
+        readonly sanitizer: (cp: { readonly rawValue: string }) => string
+    }): string
 }
 
 export interface ConstrainedReference<ReferencedType, Constraints> extends Reference<ReferencedType>, ConstrainedConstraint<ReferencedType, Constraints> {

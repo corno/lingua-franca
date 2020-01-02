@@ -23,18 +23,36 @@ export interface IFulfillingDictionaryReporter {
      * @param key
      * @param foundEntries
      */
-    reportMissingRequiredEntries(p: { missingEntries: string[], foundEntries: string[] }): void
-    reportUnresolvedEntry(p: { key: string, options: string[] }): void
-    reportDependentUnresolvedEntry(p: { key: string }): void
+    reportMissingRequiredEntries(p: {
+        readonly missingEntries: string[]
+        readonly foundEntries: string[]
+    }): void
+    reportUnresolvedEntry(p: {
+        readonly key: string,
+        readonly options: string[]
+    }): void
+    reportDependentUnresolvedEntry(p: {
+        readonly key: string
+    }): void
 }
 
 export interface IConstraintViolationReporter {
-    reportConstraintViolation(p: { expectedState: string, foundState: string }): void
-    reportDependentConstraintViolation(p: { }): void
+    reportConstraintViolation(p: {
+        readonly expectedState: string,
+        readonly foundState: string
+    }): void
+    reportDependentConstraintViolation(p: {}): void
 }
 
 export interface IReferenceResolveReporter {
-    reportLookupDoesNotExist(p: { key: string} ): void
-    reportUnresolvedReference(p: { key: string, options: string[] }): void
-    reportDependentUnresolvedReference(p: { key: string }): void
+    reportLookupDoesNotExist(p: {
+        readonly key: string
+    }): void
+    reportUnresolvedReference(p: {
+        readonly key: string,
+        readonly options: string[]
+    }): void
+    reportDependentUnresolvedReference(p: {
+        readonly key: string
+    }): void
 }
