@@ -38,12 +38,7 @@ export interface ConstrainedConstraint<Type, Constraints> extends Constraint<Typ
 }
 
 export interface Reference<ReferencedType> extends Constraint<ReferencedType> {
-    /**
-     *
-     * @param sanitizer callback to force the caller to be explicit on how the value should be printed
-     */
     getKey(p: {
-        readonly sanitizer: (cp: { readonly rawValue: string }) => string
     }): string
 }
 

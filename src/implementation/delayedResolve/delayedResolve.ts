@@ -21,8 +21,7 @@ export class DelayedResolveReference<Type, Constraints> extends DelayedResolveCo
         this.key = key
         this.constraints = constraints
     }
-    public getKey(_p: {
-    }) {
+    public getKey() {
         return this.key
     }
     public getConstraints(_p: {}) {

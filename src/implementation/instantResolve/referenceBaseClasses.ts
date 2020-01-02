@@ -62,7 +62,7 @@ class ReferenceImp<ReferencedType, Constraints> extends ConstraintImp<Referenced
         super(value, constraints)
         this.key = key
     }
-    public getKey(_p: {}) {
+    public getKey() {
         return this.key
     }
 }
