@@ -1,4 +1,3 @@
-// tslint:disable: interface-name
 
 export interface Constraint<Type> {
 
@@ -13,7 +12,8 @@ export interface Constraint<Type> {
      */
     withResolved(p: {
         readonly callback: (cp: {
-readonly type: Type }) => void
+            readonly type: Type
+        }) => void
         readonly onNotResolved?: (cp: {}) => void
     }): void
     /**
@@ -23,13 +23,15 @@ readonly type: Type }) => void
      */
     mapResolved<NewType>(p: {
         readonly callback: (cp: {
-readonly type: Type }) => NewType
+            readonly type: Type
+        }) => NewType
         readonly onNotResolved: (cp: {}) => NewType
     }): NewType
 
     getConstraint<NewType>(p: {
         readonly callback: (cp: {
-readonly type: Type }) => Constraint<NewType>
+            readonly type: Type
+        }) => Constraint<NewType>
     }): Constraint<NewType>
     getNonConstraint<NewType>(p: {
         readonly callback: (cp: { type: Type }) => NewType

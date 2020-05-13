@@ -1,6 +1,6 @@
 import { IConstraintViolationReporter, IFulfillingDictionaryReporter, IReferenceResolveReporter } from "../reporters"
 import { ConstraintCastResult } from "./ConstraintCastResult"
-import { Dictionary } from "./dictionary"
+import { Dictionary } from "./Dictionary"
 import { ConstrainedConstraint, ConstrainedReference, Constraint, Reference } from "./Reference"
 
 export interface IDelayedResolveLookup<Type> {

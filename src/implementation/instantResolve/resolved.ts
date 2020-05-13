@@ -2,7 +2,7 @@
     "max-classes-per-file": off,
 */
 import { ConstraintCastResult } from "../../interfaces/ConstraintCastResult"
-import { Dictionary } from "../../interfaces/dictionary"
+import { Dictionary } from "../../interfaces/Dictionary"
 import { IDependentResolvedConstraintBuilder, ILookup, IResolvedConstrainedConstraint, IResolvedConstraint, Repeat } from "../../interfaces/instantResolve"
 import { Constraint } from "../../interfaces/Reference"
 import { IConstraintViolationReporter } from "../../reporters"

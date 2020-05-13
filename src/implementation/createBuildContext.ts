@@ -1,6 +1,6 @@
 import { IDelayedResolveLookup, IPossibleContext, IRootDelayedResolvableBuilder } from "../interfaces/delayedResolve"
 import { IAutoCreateDictionary, IDictionaryBuilder } from "../interfaces/dictionaries"
-import { Dictionary } from "../interfaces/dictionary"
+import { Dictionary } from "../interfaces/Dictionary"
 import { IBuildContext, IOrderingCreator } from "../interfaces/IBuildContext"
 import { IListBuilder } from "../interfaces/IListBuilder"
 import { IAutoCreateContext, IDependentResolvedConstraintBuilder, ILookup, MissingEntryCreator } from "../interfaces/instantResolve"

@@ -1,7 +1,7 @@
 import { ICircularDependencyReporter, IConflictingEntryReporter, IFulfillingDictionaryReporter } from "../reporters"
 import { IDelayedResolveLookup, IPossibleContext, IRootDelayedResolvableBuilder } from "./delayedResolve"
 import { IAutoCreateDictionary, IDictionaryBuilder } from "./dictionaries"
-import { Dictionary, DictionaryOrdering, OrderedDictionary } from "./dictionary"
+import { Dictionary, DictionaryOrdering, OrderedDictionary } from "./Dictionary"
 import { IListBuilder } from "./IListBuilder"
 import { IAutoCreateContext, IDependentResolvedConstraintBuilder, ILookup } from "./instantResolve"
 import { List } from "./List"
@@ -11,7 +11,8 @@ export interface IOrderingCreator<Type> {
     createBasedOnDependency(p: {
         readonly reporter: ICircularDependencyReporter
         readonly getDependencies: (cp: {
-readonly entry: Type }) => string[]
+            readonly entry: Type
+        }) => string[]
     }): DictionaryOrdering<Type>
     createBasedOnInsertionOrder(p: {}): DictionaryOrdering<Type>
 }
@@ -20,9 +21,11 @@ export interface IBuildContext {
     createAutoCreateDictionary<Type>(p: {
         readonly reporter: IConflictingEntryReporter
         readonly callback: (cp: {
-readonly builder: IDictionaryBuilder<Type> }) => void
+            readonly builder: IDictionaryBuilder<Type>
+        }) => void
         readonly missingEntryCreator: (cp: {
-readonly key: string }) => null | Type
+            readonly key: string
+        }) => null | Type
         readonly getParentKeys: (cp: {}) => string[]
     }): IAutoCreateDictionary<Type>
 
@@ -76,5 +79,6 @@ readonly key: string }) => null | Type
     createNonExistentContext<Type>(p: {}): IPossibleContext<Type>
     createNonExistentLookup<Type>(p: {}): ILookup<Type>
     createResolveBuilder<Type>(p: {
-readonly value: Type }): IDependentResolvedConstraintBuilder<Type>
+        readonly value: Type
+    }): IDependentResolvedConstraintBuilder<Type>
 }

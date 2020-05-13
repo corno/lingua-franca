@@ -9,7 +9,7 @@ import {
     IDelayedResolveLookup,
     IDelayedResolveStateConstraint,
 } from "../../interfaces/delayedResolve"
-import { Dictionary } from "../../interfaces/dictionary"
+import { Dictionary } from "../../interfaces/Dictionary"
 import { Constraint } from "../../interfaces/Reference"
 import { IConstraintViolationReporter } from "../../reporters"
 import { DelayedResolveStateConstraint } from "./delayedResolve"

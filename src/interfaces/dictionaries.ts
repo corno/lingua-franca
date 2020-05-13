@@ -1,4 +1,4 @@
-import { Dictionary } from "./dictionary"
+import { Dictionary } from "./Dictionary"
 //import { IDelayedResolveBaseLookup } from "./delayedResolve"
 import { IAutoCreateContext, ILookup } from "./instantResolve"
 

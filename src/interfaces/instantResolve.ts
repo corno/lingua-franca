@@ -1,7 +1,7 @@
 
 import { IConstraintViolationReporter, IFulfillingDictionaryReporter, IReferenceResolveReporter } from "../reporters"
 import { ConstraintCastResult } from "./ConstraintCastResult"
-import { Dictionary } from "./dictionary"
+import { Dictionary } from "./Dictionary"
 import { ConstrainedConstraint, ConstrainedReference, Constraint, Reference } from "./Reference"
 
 export interface ILookup<Type> {
@@ -47,7 +47,8 @@ export interface IDependentResolvedConstraintBuilder<Type> {
     readonly value: Type | null
     castToConstraint<NewType>(p: {
         readonly callback: (cp: {
-readonly type: Type }) => ConstraintCastResult<NewType>
+            readonly type: Type
+        }) => ConstraintCastResult<NewType>
         readonly reporter: IConstraintViolationReporter
     }): IResolvedConstraint<NewType>
     castToConstrainedConstraint<NewType, Constraints>(p: {
@@ -59,33 +60,39 @@ readonly type: Type }) => ConstraintCastResult<NewType>
     }): IResolvedConstrainedConstraint<NewType, Constraints>
     navigateConstraint<NewType>(p: {
         readonly callback: (cp: {
-readonly type: Type }) => Constraint<NewType>
+            readonly type: Type
+        }) => Constraint<NewType>
         readonly reporter: IConstraintViolationReporter
     }): IDependentResolvedConstraintBuilder<NewType>
     //convert<NewType>(callback: (type: Type) => NewType): IResolvedConstraint<NewType>
     getLookup<NewType>(p: {
         readonly callback: (cp: {
-readonly value: Type }) => Dictionary<NewType>
+            readonly value: Type
+        }) => Dictionary<NewType>
     }): ILookup<NewType>
     //mapResolved<NewType>(callback: (type: Type) => NewType, onNotResolved: () => NewType): NewType
     repeatNavigate(p: {
         readonly callback: (cp: {
-readonly type: Type }) => Repeat<Type>
+            readonly type: Type
+        }) => Repeat<Type>
         readonly reporter: IConstraintViolationReporter
     }): IDependentResolvedConstraintBuilder<Type>
 
     mapResolved<NewType>(p: {
         readonly callback: (cp: {
-readonly type: Type }) => NewType
+            readonly type: Type
+        }) => NewType
         readonly onNotResolved: (cp: {}) => NewType
     }): NewType
     getConstraint<NewType>(p: {
         readonly callback: (cp: {
-readonly type: Type }) => Constraint<NewType>
+            readonly type: Type
+        }) => Constraint<NewType>
     }): IResolvedConstraint<NewType>
     getNonConstraint<NewType>(p: {
         readonly callback: (cp: {
-readonly type: Type }) => NewType
+            readonly type: Type
+        }) => NewType
     }): IResolvedConstraint<NewType>
 }
 

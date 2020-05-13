@@ -3,7 +3,7 @@
 */
 import { IDelayedResolveLookup } from "../../interfaces/delayedResolve"
 import { IAutoCreateDictionary, IDictionaryBuilder } from "../../interfaces/dictionaries"
-import { Dictionary, DictionaryOrdering, OrderedDictionary } from "../../interfaces/dictionary"
+import { Dictionary, DictionaryOrdering, OrderedDictionary } from "../../interfaces/Dictionary"
 import { IOrderingCreator } from "../../interfaces/IBuildContext"
 import { ILookup, MissingEntryCreator } from "../../interfaces/instantResolve"
 import { ICircularDependencyReporter, IConflictingEntryReporter, IFulfillingDictionaryReporter } from "../../reporters"

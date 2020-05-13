@@ -2,7 +2,7 @@
     "max-classes-per-file": off
 */
 
-import { Dictionary } from "../../interfaces/dictionary"
+import { Dictionary } from "../../interfaces/Dictionary"
 import { IDependentResolvedConstraintBuilder, ILookup, IResolvedConstrainedReference, IResolvedReference } from "../../interfaces/instantResolve"
 import { IFulfillingDictionaryReporter, IReferenceResolveReporter } from "../../reporters"
 import { createReference } from "./referenceBaseClasses"
