@@ -1,6 +1,6 @@
 import { IDelayedResolveLookup, IPossibleContext, IRootDelayedResolvableBuilder } from "../interfaces/delayedResolve"
 import { IAutoCreateDictionary, IDictionaryBuilder } from "../interfaces/dictionaries"
-import { Dictionary } from "../interfaces/Dictionary"
+import { Dictionary } from "../interfaces/dictionary"
 import { IBuildContext, IOrderingCreator } from "../interfaces/IBuildContext"
 import { IListBuilder } from "../interfaces/IListBuilder"
 import { IAutoCreateContext, IDependentResolvedConstraintBuilder, ILookup, MissingEntryCreator } from "../interfaces/instantResolve"
@@ -16,9 +16,9 @@ import { createList } from "./list"
 
 class BuildContext implements IBuildContext {
     public createAutoCreateDictionary<Type>(p: {
-        reporter: IConflictingEntryReporter,
-        callback: (cp: { builder: IDictionaryBuilder<Type> }) => void,
-        missingEntryCreator: MissingEntryCreator<Type>,
+        reporter: IConflictingEntryReporter
+        callback: (cp: { builder: IDictionaryBuilder<Type> }) => void
+        missingEntryCreator: MissingEntryCreator<Type>
         getParentKeys: () => string[]
     }): IAutoCreateDictionary<Type> {
         return createAutoCreateDictionary(p.reporter, p.callback, p.missingEntryCreator, p.getParentKeys)
@@ -27,32 +27,38 @@ class BuildContext implements IBuildContext {
         return createDelayedResolvableBuilder()
     }
     public createDelayedResolveFulfillingDictionary<Type, ReferencedType>(p: {
-        mrer: IFulfillingDictionaryReporter,
-        cer: IConflictingEntryReporter,
-        delayedResolveLookup: IDelayedResolveLookup<ReferencedType>,
-        callback: (cp: { builder: IDictionaryBuilder<Type>, lookup: IDelayedResolveLookup<ReferencedType> }) => void,
+        mrer: IFulfillingDictionaryReporter
+        cer: IConflictingEntryReporter
+        delayedResolveLookup: IDelayedResolveLookup<ReferencedType>
+        callback: (cp: {
+            readonly builder: IDictionaryBuilder<Type>
+            readonly lookup: IDelayedResolveLookup<ReferencedType>
+        }) => void
         requiresExhaustive: boolean
     }): Dictionary<Type> {
         return createDelayedResolveFulfillingDictionary(p.mrer, p.cer, p.delayedResolveLookup, p.callback, p.requiresExhaustive)
     }
     public createFulfillingDictionary<Type, ReferencedType>(p: {
-        mrer: IFulfillingDictionaryReporter,
-        cer: IConflictingEntryReporter,
-        lookup: ILookup<ReferencedType>,
-        callback: (p: { builder: IDictionaryBuilder<Type>, lookup: ILookup<ReferencedType> }) => void,
+        mrer: IFulfillingDictionaryReporter
+        cer: IConflictingEntryReporter
+        lookup: ILookup<ReferencedType>
+        callback: (p: {
+            readonly builder: IDictionaryBuilder<Type>
+            readonly lookup: ILookup<ReferencedType>
+        }) => void
         requiresExhaustive: boolean
     }): Dictionary<Type> {
         return createFulfillingDictionary(p.mrer, p.cer, p.lookup, p.callback, p.requiresExhaustive)
     }
     public createDictionary<Type>(p: {
-        reporter: IConflictingEntryReporter,
-        callback: (p: { builder: IDictionaryBuilder<Type> }) => void
+        readonly reporter: IConflictingEntryReporter
+        readonly callback: (p: { builder: IDictionaryBuilder<Type> }) => void
     }): Dictionary<Type> {
         return createDictionary(p.reporter, p.callback)
     }
     public createOrderedDictionary<Type, Orderings>(p: {
-        reporter: IConflictingEntryReporter,
-        callback: (cp: { builder: IDictionaryBuilder<Type> }) => void,
+        reporter: IConflictingEntryReporter
+        callback: (cp: { builder: IDictionaryBuilder<Type> }) => void
         createOrderings: (cp: { orderingCreator: IOrderingCreator<Type> }) => Orderings
     }) {
         return createOrderedDictionary(p.reporter, p.callback, p.createOrderings)

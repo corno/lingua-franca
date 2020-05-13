@@ -1,6 +1,9 @@
-// tslint:disable max-classes-per-file
+/* eslint
+    "max-classes-per-file": off,
+*/
+
 import { IDelayedResolvableBuilder, IDelayedResolveReference, IDelayedResolveStateConstraint, IRootDelayedResolvableBuilder } from "../../interfaces/delayedResolve"
-import { DelayedResolveConstraint, XBuilder } from "./delayedResolveConstraint"
+import { DelayedResolveConstraint, XBuilder } from "./DelayedResolveConstraint"
 
 export class DelayedResolveStateConstraint<Type, Constraints> extends DelayedResolveConstraint<Type> implements IDelayedResolveStateConstraint<Type> {
     private readonly constraints: Constraints

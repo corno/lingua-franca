@@ -1,3 +1,7 @@
+/* eslint
+    "max-classes-per-file": off
+*/
+
 import { IListBuilder } from "../interfaces/IListBuilder"
 import { List } from "../interfaces/List"
 
@@ -7,7 +11,8 @@ class ListImp<Type> implements List<Type> {
         this.imp = imp
     }
     public map<NewType>(p: {
-        readonly callback: (cp: { readonly element: Type }) => NewType
+        readonly callback: (cp: {
+readonly element: Type }) => NewType
     }) {
         return this.imp.map(elm => {
             return p.callback({ element: elm })
@@ -15,9 +20,10 @@ class ListImp<Type> implements List<Type> {
     }
     public mapWithSeparator<NewType>(p: {
         readonly onSeparator: (cp: {}) => NewType
-        readonly onElement: (cp: { readonly element: Type }) => NewType
+        readonly onElement: (cp: {
+readonly element: Type }) => NewType
     }) {
-        const target: Array<NewType> = []
+        const target: NewType[] = []
         this.imp.forEach((element, index) => {
             if (index !== 0 && p.onSeparator !== undefined) {
                 target.push(p.onSeparator({}))
@@ -28,7 +34,8 @@ class ListImp<Type> implements List<Type> {
     }
     public onEmpty<NewType>(p: {
         readonly onEmpty: (cp: {}) => NewType
-        readonly onNotEmpty: (cp: { readonly list: List<Type> }) => NewType
+        readonly onNotEmpty: (cp: {
+readonly list: List<Type> }) => NewType
     }): NewType {
         if (this.imp.length === 0) {
             return p.onEmpty({})
@@ -39,7 +46,7 @@ class ListImp<Type> implements List<Type> {
     public filter<NewType>(p: {
         readonly callback: (element: Type) => null | NewType
     }) {
-        const target: Array<NewType> = []
+        const target: NewType[] = []
         this.imp.forEach(element => {
             const result = p.callback(element)
             if (result !== null) {

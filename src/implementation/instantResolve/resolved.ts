@@ -1,6 +1,8 @@
-// tslint:disable: max-classes-per-file
+/* eslint
+    "max-classes-per-file": off,
+*/
 import { ConstraintCastResult } from "../../interfaces/ConstraintCastResult"
-import { Dictionary } from "../../interfaces/Dictionary"
+import { Dictionary } from "../../interfaces/dictionary"
 import { IDependentResolvedConstraintBuilder, ILookup, IResolvedConstrainedConstraint, IResolvedConstraint, Repeat } from "../../interfaces/instantResolve"
 import { Constraint } from "../../interfaces/Reference"
 import { IConstraintViolationReporter } from "../../reporters"
@@ -12,7 +14,11 @@ class ResolvedImp<Type> implements IDependentResolvedConstraintBuilder<Type> {
     constructor(value: Type) {
         this.value = value
     }
-    public getLookup<NewType>(p: { readonly callback: (cp: { readonly value: Type }) => Dictionary<NewType> }): ILookup<NewType> {
+    public getLookup<NewType>(p: {
+        readonly callback: (cp: {
+            readonly value: Type
+        }) => Dictionary<NewType>
+    }): ILookup<NewType> {
         return createLookup(p.callback({ value: this.value }))
     }
     // public mapResolved<NewType>(
@@ -33,7 +39,9 @@ class ResolvedImp<Type> implements IDependentResolvedConstraintBuilder<Type> {
     //     )
     // }
     public castToConstraint<NewType>(p: {
-        readonly callback: (cp: { readonly type: Type }) => ConstraintCastResult<NewType>,
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => ConstraintCastResult<NewType>
         readonly reporter: IConstraintViolationReporter
     }): IResolvedConstraint<NewType> {
         return this.castToConstrainedConstraint({
@@ -43,9 +51,13 @@ class ResolvedImp<Type> implements IDependentResolvedConstraintBuilder<Type> {
         })
     }
     public castToConstrainedConstraint<NewType, Constraints>(p: {
-        readonly callback: (cp: { readonly type: Type }) => ConstraintCastResult<NewType>,
-        readonly reporter: IConstraintViolationReporter,
-        readonly getConstraints: (cp: { readonly current: IDependentResolvedConstraintBuilder<NewType> }) => Constraints
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => ConstraintCastResult<NewType>
+        readonly reporter: IConstraintViolationReporter
+        readonly getConstraints: (cp: {
+            readonly current: IDependentResolvedConstraintBuilder<NewType>
+        }) => Constraints
     }): IResolvedConstrainedConstraint<NewType, Constraints> {
         const castResult = p.callback({ type: this.value })
         if (castResult[0] === false) {
@@ -61,7 +73,9 @@ class ResolvedImp<Type> implements IDependentResolvedConstraintBuilder<Type> {
         }
     }
     public navigateConstraint<NewType>(p: {
-        readonly callback: (cp: { readonly type: Type }) => Constraint<NewType>,
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => Constraint<NewType>
         readonly reporter: IConstraintViolationReporter
     }) {
         const result = p.callback({ type: this.value })
@@ -76,7 +90,10 @@ class ResolvedImp<Type> implements IDependentResolvedConstraintBuilder<Type> {
         })
     }
     public repeatNavigate(p: {
-        readonly callback: (cp: { readonly type: Type }) => Repeat<Type>, reporter: IConstraintViolationReporter
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => Repeat<Type>
+        readonly reporter: IConstraintViolationReporter
     }) {
         let currentValue = this.value
         while (true) {
@@ -97,13 +114,17 @@ class ResolvedImp<Type> implements IDependentResolvedConstraintBuilder<Type> {
         }
     }
     public mapResolved<NewType>(p: {
-        readonly callback: (cp: { readonly type: Type }) => NewType,
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => NewType
         readonly onNotResolved: (cp: {}) => NewType
     }) {
         return p.callback({ type: this.value })
     }
     public getConstraint<NewType>(p: {
-        readonly callback: (cp: { readonly type: Type }) => Constraint<NewType>
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => Constraint<NewType>
     }): IResolvedConstraint<NewType> {
         const constraint = p.callback({ type: this.value })
         return constraint.mapResolved({
@@ -112,9 +133,11 @@ class ResolvedImp<Type> implements IDependentResolvedConstraintBuilder<Type> {
         })
     }
     public getNonConstraint<NewType>(p: {
-        readonly callback: (cp: { readonly type: Type }) => NewType
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => NewType
     }) {
-        return createConstraint(createResolveBuilder(p.callback({type: this.value})), {})
+        return createConstraint(createResolveBuilder(p.callback({ type: this.value })), {})
     }
 }
 
@@ -131,7 +154,9 @@ class FailedResolved<Type> implements IDependentResolvedConstraintBuilder<Type> 
         return createFailedLookup()
     }
     public mapResolved<NewType>(p: {
-        readonly callback: (cp: { readonly type: Type }) => NewType,
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => NewType
         readonly onNotResolved: (cp: {}) => NewType
     }) {
         return p.onNotResolved({})
@@ -151,18 +176,28 @@ class FailedResolved<Type> implements IDependentResolvedConstraintBuilder<Type> 
         return createConstraint(createFailedResolvedBuilder(), {})
     }
     public castToConstraint<NewType>(p: {
-        readonly callback: (cp: { readonly type: Type }) => ConstraintCastResult<NewType>,
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => ConstraintCastResult<NewType>
         readonly reporter: IConstraintViolationReporter
     }): IResolvedConstraint<NewType> {
-        return this.castToConstrainedConstraint({ callback: p.callback, reporter: p.reporter, getConstraints: () => ({}) })
+        return this.castToConstrainedConstraint({
+            callback: p.callback,
+            reporter: p.reporter, getConstraints: () => ({}),
+        })
     }
     public castToConstrainedConstraint<NewType, Constraints>(p: {
-        readonly callback: (cp: { readonly type: Type }) => ConstraintCastResult<NewType>, reporter: IConstraintViolationReporter,
-        readonly getConstraints: (cp: { readonly current: IDependentResolvedConstraintBuilder<NewType> }) => Constraints
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => ConstraintCastResult<NewType>
+        readonly reporter: IConstraintViolationReporter
+        readonly getConstraints: (cp: {
+            readonly current: IDependentResolvedConstraintBuilder<NewType>
+        }) => Constraints
     }): IResolvedConstrainedConstraint<NewType, Constraints> {
         p.reporter.reportDependentConstraintViolation(false)
         const failedResolved = createFailedResolvedBuilder<NewType>()
-        return createStateConstraint(failedResolved, p.getConstraints({current: failedResolved}))
+        return createStateConstraint(failedResolved, p.getConstraints({ current: failedResolved }))
     }
     public navigateConstraint<NewType>(p: {
         readonly callback: (cp: { type: Type }) => Constraint<NewType>
@@ -172,7 +207,9 @@ class FailedResolved<Type> implements IDependentResolvedConstraintBuilder<Type> 
         return createFailedResolvedBuilder<NewType>()
     }
     public repeatNavigate(p: {
-        readonly callback: (cp: { readonly type: Type }) => Repeat<Type>,
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => Repeat<Type>
         readonly reporter: IConstraintViolationReporter
     }) {
         p.reporter.reportDependentConstraintViolation(false)

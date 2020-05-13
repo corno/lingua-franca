@@ -1,4 +1,6 @@
-// tslint:disable: max-classes-per-file
+/* eslint
+    "max-classes-per-file": off
+*/
 import { IAutoCreateContext, IDependentResolvedConstraintBuilder, ILookup, IResolvedConstrainedReference, IResolvedReference, MissingEntryCreator } from "../../interfaces/instantResolve"
 import { IFulfillingDictionaryReporter, IReferenceResolveReporter } from "../../reporters"
 import { RawDictionary } from "../RawDictionary"
@@ -13,7 +15,10 @@ class AutoCreateLookup<Type> implements ILookup<Type> {
     public has(p: { key: string }) {
         return this.autoCreateContext.has({ key: p.key })
     }
-    public createReference(p: { key: string, reporter: IReferenceResolveReporter }): IResolvedReference<Type> {
+    public createReference(p: {
+        readonly key: string
+        readonly reporter: IReferenceResolveReporter
+    }): IResolvedReference<Type> {
         return this.createConstrainedReference({
             key: p.key,
             reporter: p.reporter,
@@ -21,9 +26,11 @@ class AutoCreateLookup<Type> implements ILookup<Type> {
         })
     }
     public createConstrainedReference<Constraints>(p: {
-        readonly key: string,
-        readonly reporter: IReferenceResolveReporter,
-        readonly getConstraints: (cp: { readonly reference: IDependentResolvedConstraintBuilder<Type> }) => Constraints
+        readonly key: string
+        readonly reporter: IReferenceResolveReporter
+        readonly getConstraints: (cp: {
+            readonly reference: IDependentResolvedConstraintBuilder<Type>
+        }) => Constraints
     }): IResolvedConstrainedReference<Type, Constraints> {
         const entry = this.autoCreateContext.tryToCreateReference({ key: p.key })
         if (entry === null) {
@@ -33,10 +40,14 @@ class AutoCreateLookup<Type> implements ILookup<Type> {
         }
         return createReference(p.key, entry.builder, p.getConstraints({ reference: entry.builder }))
     }
-    public validateFulfillingEntries(p: { keys: string[], reporter: IFulfillingDictionaryReporter, requiresExhaustive: boolean }) {
+    public validateFulfillingEntries(p: {
+        readonly keys: string[]
+        readonly reporter: IFulfillingDictionaryReporter
+        readonly requiresExhaustive: boolean
+    }) {
         const requiredKeys = this.autoCreateContext.getKeys({})
         if (p.requiresExhaustive) {
-            const missingEntries = requiredKeys.filter(key => p.keys.indexOf(key) === -1)
+            const missingEntries = requiredKeys.filter(key => p.keys.includes(key))
             if (missingEntries.length > 0) {
                 p.reporter.reportMissingRequiredEntries({
                     missingEntries: missingEntries,
@@ -45,7 +56,7 @@ class AutoCreateLookup<Type> implements ILookup<Type> {
             }
         }
         p.keys.forEach(key => {
-            if (requiredKeys.indexOf(key) === -1) {
+            if (requiredKeys.includes(key)) {
                 p.reporter.reportUnresolvedEntry({
                     key: key,
                     options: requiredKeys,
@@ -110,7 +121,10 @@ class NonExistentAutoCreateLookup<Type> implements ILookup<Type> {
     public has() {
         return false
     }
-    public createReference(p: { key: string, reporter: IReferenceResolveReporter }): IResolvedReference<Type> {
+    public createReference(p: {
+        readonly key: string
+        readonly reporter: IReferenceResolveReporter
+    }): IResolvedReference<Type> {
         return this.createConstrainedReference({
             key: p.key,
             reporter: p.reporter,
@@ -118,15 +132,21 @@ class NonExistentAutoCreateLookup<Type> implements ILookup<Type> {
         })
     }
     public createConstrainedReference<Constraints>(p: {
-        readonly key: string,
-        readonly reporter: IReferenceResolveReporter,
-        readonly getConstraints: (cp: { readonly reference: IDependentResolvedConstraintBuilder<Type> }) => Constraints
+        readonly key: string
+        readonly reporter: IReferenceResolveReporter
+        readonly getConstraints: (cp: {
+            readonly reference: IDependentResolvedConstraintBuilder<Type>
+        }) => Constraints
     }): IResolvedConstrainedReference<Type, Constraints> {
         p.reporter.reportLookupDoesNotExist({ key: p.key })
         const failedResolved = createFailedResolvedBuilder<Type>()
         return createReference(p.key, failedResolved, p.getConstraints({ reference: failedResolved }))
     }
-    public validateFulfillingEntries(p: { keys: string[], reporter: IFulfillingDictionaryReporter, requiresExhaustive: boolean }) {
+    public validateFulfillingEntries(p: {
+        readonly keys: string[]
+        readonly reporter: IFulfillingDictionaryReporter
+        readonly requiresExhaustive: boolean
+    }) {
         p.reporter.reportLookupDoesNotExist({ keys: p.keys })
     }
 }

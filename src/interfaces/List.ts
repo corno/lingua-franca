@@ -7,7 +7,8 @@ export interface List<Type> {
      * @param onSeparator is called inbetween every element in the list
      */
     map<NewType>(p: {
-        readonly callback: (cp: { readonly element: Type }) => NewType
+        readonly callback: (cp: {
+readonly element: Type }) => NewType
     }): NewType[]
     /**
      * iterates over the elements
@@ -16,7 +17,8 @@ export interface List<Type> {
      */
     mapWithSeparator<NewType>(p: {
         readonly onSeparator: (cp: {}) => NewType
-        readonly onElement: (cp: { readonly element: Type }) => NewType
+        readonly onElement: (cp: {
+readonly element: Type }) => NewType
     }): NewType[]
     /**
      *
@@ -25,7 +27,8 @@ export interface List<Type> {
      */
     onEmpty<NewType>(p: {
         readonly onEmpty: (cp: {}) => NewType
-        readonly onNotEmpty: (cp: { readonly list: List<Type> }) => NewType
+        readonly onNotEmpty: (cp: {
+readonly list: List<Type> }) => NewType
     }): NewType
     /**
      *

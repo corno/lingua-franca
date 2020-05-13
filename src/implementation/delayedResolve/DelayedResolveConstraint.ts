@@ -1,26 +1,36 @@
-// tslint:disable max-classes-per-file
+/* eslint
+    "max-classes-per-file": off,
+*/
 import { ConstraintCastResult } from "../../interfaces/ConstraintCastResult"
-import { IDelayedResolvableBuilder, IDelayedResolveConstrainedStateConstraint, IDelayedResolveConstraint, IDelayedResolveLookup, IDelayedResolveStateConstraint } from "../../interfaces/delayedResolve"
-import { Dictionary } from "../../interfaces/Dictionary"
+import {
+    IDelayedResolvableBuilder,
+    IDelayedResolveConstrainedStateConstraint,
+    IDelayedResolveConstraint,
+    IDelayedResolveLookup,
+    IDelayedResolveStateConstraint,
+} from "../../interfaces/delayedResolve"
+import { Dictionary } from "../../interfaces/dictionary"
 import { Constraint } from "../../interfaces/Reference"
 import { IConstraintViolationReporter } from "../../reporters"
 import { DelayedResolveStateConstraint } from "./delayedResolve"
 import { DelayedResolveLookup } from "./DelayedResolveLookup"
 
 interface IResolvedSubscriber<Type> {
-    onSuccess: (value: Type) => void,
-    onFailed: () => void,
+    onSuccess: (value: Type) => void
+    onFailed: () => void
 }
 
 export class XBuilder<Type> implements IDelayedResolvableBuilder<Type> {
     private resolvedValue: undefined | [false] | [true, Type]
-    private readonly subscribers: Array<IResolvedSubscriber<Type>> = []
+    private readonly subscribers: IResolvedSubscriber<Type>[] = []
     public getValue(_p: {}) {
         return this.resolvedValue
     }
 
     //resolution methods
-    public resolve(p: { readonly value: Type }) {
+    public resolve(p: {
+        readonly value: Type
+    }) {
         this.resolvedValue = [true, p.value]
         this.subscribers.forEach(s => s.onSuccess(p.value))
     }
@@ -31,7 +41,9 @@ export class XBuilder<Type> implements IDelayedResolvableBuilder<Type> {
 
     //IDelayedResolveConstraint methods
     public castToConstraint<NewType>(p: {
-        readonly callback: (cp: { readonly type: Type }) => ConstraintCastResult<NewType>
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => ConstraintCastResult<NewType>
         readonly reporter: IConstraintViolationReporter
     }): IDelayedResolveStateConstraint<NewType> {
         return this.castToConstrainedConstraint({
@@ -43,9 +55,13 @@ export class XBuilder<Type> implements IDelayedResolvableBuilder<Type> {
 
     //IDelayedResolveConstraint methods
     public castToConstrainedConstraint<NewType, Constraints>(p: {
-        readonly callback: (cp: { readonly type: Type }) => ConstraintCastResult<NewType>,
-        readonly reporter: IConstraintViolationReporter,
-        readonly getConstraints: (cp: { readonly builder: IDelayedResolvableBuilder<NewType> }) => Constraints
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => ConstraintCastResult<NewType>
+        readonly reporter: IConstraintViolationReporter
+        readonly getConstraints: (cp: {
+            readonly builder: IDelayedResolvableBuilder<NewType>
+        }) => Constraints
     }): IDelayedResolveConstrainedStateConstraint<NewType, Constraints> {
         const builder = new XBuilder<NewType>()
         const constraints = p.getConstraints({ builder: builder })
@@ -71,7 +87,9 @@ export class XBuilder<Type> implements IDelayedResolvableBuilder<Type> {
         return constraint
     }
     public getLookup<NewType>(p: {
-        readonly callback: (cp: { readonly type: Type }) => Dictionary<NewType>
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => Dictionary<NewType>
     }): IDelayedResolveLookup<NewType> {
         const lookup = new DelayedResolveLookup<NewType>()
         this.addSubscriber(
@@ -85,7 +103,9 @@ export class XBuilder<Type> implements IDelayedResolvableBuilder<Type> {
         return lookup
     }
     public convert<NewType>(p: {
-        readonly callback: (cp: { readonly type: Type }) => NewType
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => NewType
     }): IDelayedResolveConstraint<NewType> {
         const builder = new XBuilder<NewType>()
         const newConstraint = new DelayedResolveConstraint<NewType>(builder)
@@ -94,7 +114,7 @@ export class XBuilder<Type> implements IDelayedResolvableBuilder<Type> {
                 builder.setToFailedResolve()
             },
             value => {
-                builder.resolve({ value: p.callback({ type: value })})
+                builder.resolve({ value: p.callback({ type: value }) })
             }
         )
         return newConstraint
@@ -125,7 +145,9 @@ export class DelayedResolveConstraint<Type> implements IDelayedResolveConstraint
     //Constraint methods
 
     public mapResolved<NewType>(p: {
-        readonly callback: (cp: { readonly type: Type }) => NewType,
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => NewType
         readonly onNotResolved: (cp: {}) => NewType
     }) {
         const resolvedValue = this.builder.getValue({})
@@ -148,10 +170,19 @@ export class DelayedResolveConstraint<Type> implements IDelayedResolveConstraint
         }
     }
     public withResolved(p: {
-        readonly callback: (cp: { readonly type: Type }) => void,
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => void
         readonly onNotResolved?: (cp: {}) => void
     }) {
-        this.mapResolved({ callback: p.callback, onNotResolved: p.onNotResolved === undefined ? () => { } : p.onNotResolved })
+        this.mapResolved({
+            callback: p.callback,
+            onNotResolved: p.onNotResolved === undefined
+                ? () => {
+                    //
+                }
+                : p.onNotResolved,
+        })
     }
     public getResolved(_p: {}) {
         return this.mapResolved({
@@ -161,10 +192,18 @@ export class DelayedResolveConstraint<Type> implements IDelayedResolveConstraint
             },
         }).type
     }
-    public getConstraint<NewType>(_p: { readonly callback: (cp: { readonly type: Type }) => Constraint<NewType> }): Constraint<NewType> {
+    public getConstraint<NewType>(_p: {
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => Constraint<NewType>
+    }): Constraint<NewType> {
         throw new Error("IMPLEMENT ME")
     }
-    public getNonConstraint<NewType>(_p: { readonly callback: (cp: { readonly type: Type }) => NewType }): Constraint<NewType> {
+    public getNonConstraint<NewType>(_p: {
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => NewType
+    }): Constraint<NewType> {
         throw new Error("IMPLEMENT ME")
     }
 

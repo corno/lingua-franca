@@ -4,14 +4,14 @@
   "description": "package for building up 'AST's'",
   "main": "dist/src/index.js",
   "scripts": {
-    "build": "mkdir .\\dist & rd /s /q .\\dist && tsc",
-    "lint": "tslint --project tsconfig.json",
+    "build": "rm -rf ./dist && tsc",
+    "lint": "node ./node_modules/eslint/bin/eslint.js src/**/*.ts",
     "buildLintAndTest": "npm run build && npm run lint && npm run test",
     "validatePublishReadiness": "git diff --exit-code && ncu -u --packageFile package.json && npm install && npm run buildLintAndTest",
     "pubMin": "npm run validatePublishReadiness && npm version minor && git push && npm publish",
     "pubPatch": "npm run validatePublishReadiness && npm version patch && git push && npm publish",
+    "update2latest": "ncu -u --packageFile package.json && nsi",
     "test": "cross-env TS_NODE_FILES=true mocha --exit --require ts-node/register --colors test/**/*.ts",
-    "u2l": "ncu -u --packageFile package.json && nsi",
     "coverage": "nyc npm run test"
   },
   "keywords": [],
@@ -28,15 +28,19 @@
   ],
   "dependencies": {},
   "devDependencies": {
-    "@types/chai": "^4.2.7",
-    "@types/mocha": "^5.2.7",
-    "@types/node": "^13.1.2",
+    "@types/chai": "^4.2.11",
+    "@types/mocha": "^7.0.2",
+    "@types/node": "^14.0.1",
+    "@typescript-eslint/eslint-plugin": "^2.33.0",
+    "@typescript-eslint/eslint-plugin-tslint": "^2.33.0",
+    "@typescript-eslint/parser": "^2.33.0",
     "chai": "^4.2.0",
-    "cross-env": "^6.0.3",
-    "mocha": "^6.2.2",
-    "nyc": "^15.0.0",
-    "ts-node": "^8.5.4",
-    "tslint": "^5.20.1",
-    "typescript": "^3.7.4"
+    "eslint": "^7.0.0",
+    "mocha": "^7.1.2",
+    "tslint": "^6.1.2",
+    "typescript": "^3.9.2",
+    "cross-env": "^7.0.2",
+    "nyc": "^15.0.1",
+    "ts-node": "^8.10.1"
   }
 }

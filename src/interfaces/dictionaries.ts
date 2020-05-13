@@ -1,4 +1,4 @@
-import { Dictionary } from "./Dictionary"
+import { Dictionary } from "./dictionary"
 //import { IDelayedResolveBaseLookup } from "./delayedResolve"
 import { IAutoCreateContext, ILookup } from "./instantResolve"
 
@@ -17,7 +17,10 @@ export interface ICurrentDictionary<Type> {
 }
 
 export interface IDictionaryBuilder<Type> extends ICurrentDictionary<Type> {
-    add(p: { key: string, entry: Type }): void
+    add(p: {
+        readonly key: string
+        readonly entry: Type
+    }): void
 }
 
 export interface IFinalizableDictionaryBuilder<Type> extends IDictionaryBuilder<Type> {
