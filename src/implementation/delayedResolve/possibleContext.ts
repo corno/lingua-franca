@@ -19,7 +19,7 @@ export function createNonExistingContext<Type>() {
 
 // tslint:disable-next-line: max-classes-per-file
 class ExistingContext<Type> implements IPossibleContext<Type> {
-    private readonly subscribers: Array<XBuilder<Type>> = []
+    private readonly subscribers: XBuilder<Type>[] = []
     private isSet = false
     public validateExistence(_p: {}) {
         if (this.isSet) {
