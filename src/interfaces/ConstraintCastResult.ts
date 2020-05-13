@@ -1,7 +1,7 @@
 
 export type ConstraintCastResult<Type> =
 | [false, {
-    found: string,
+    found: string
     expected: string
 }]
 | [true, Type]

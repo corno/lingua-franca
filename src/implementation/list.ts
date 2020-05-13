@@ -1,3 +1,7 @@
+/* eslint
+    "max-classes-per-file": off,
+*/
+
 import { IListBuilder } from "../interfaces/IListBuilder"
 import { List } from "../interfaces/List"
 
@@ -17,7 +21,7 @@ class ListImp<Type> implements List<Type> {
         readonly onSeparator: (cp: {}) => NewType
         readonly onElement: (cp: { readonly element: Type }) => NewType
     }) {
-        const target: Array<NewType> = []
+        const target: NewType[] = []
         this.imp.forEach((element, index) => {
             if (index !== 0 && p.onSeparator !== undefined) {
                 target.push(p.onSeparator({}))
@@ -39,7 +43,7 @@ class ListImp<Type> implements List<Type> {
     public filter<NewType>(p: {
         readonly callback: (element: Type) => null | NewType
     }) {
-        const target: Array<NewType> = []
+        const target: NewType[] = []
         this.imp.forEach(element => {
             const result = p.callback(element)
             if (result !== null) {

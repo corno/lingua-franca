@@ -1,4 +1,3 @@
-// tslint:disable: interface-name
 
 export interface Constraint<Type> {
 
@@ -12,7 +11,7 @@ export interface Constraint<Type> {
      * @param onNotResolved optional, if provided, it will be called if the type was not succesfully resolved
      */
     withResolved(p: {
-        readonly callback: (cp: { readonly type: Type }) => void,
+        readonly callback: (cp: { readonly type: Type }) => void
         readonly onNotResolved?: (cp: {}) => void
     }): void
     /**

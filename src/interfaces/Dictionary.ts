@@ -18,7 +18,10 @@ export interface DictionaryOrdering<Type> {
      * @param onSeparator is called inbetween every element in the list
      */
     map<NewType>(p: {
-        readonly callback: (cp: { readonly element: Type, readonly key: string }) => NewType
+        readonly callback: (cp: {
+            readonly element: Type
+            readonly key: string
+        }) => NewType
     }): NewType[]
     /**
      * iterates over the elements
@@ -27,7 +30,10 @@ export interface DictionaryOrdering<Type> {
      */
     mapWithSeparator<NewType>(p: {
         readonly onSeparator: (cp: {}) => NewType
-        readonly onElement: (cp: { readonly element: Type, readonly key: string }) => NewType
+        readonly onElement: (cp: {
+            readonly element: Type
+            readonly key: string
+        }) => NewType
     }): NewType[]
     onEmpty<NewType>(p: {
         readonly onEmpty: (cp: {}) => NewType

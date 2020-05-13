@@ -17,7 +17,10 @@ export interface ICurrentDictionary<Type> {
 }
 
 export interface IDictionaryBuilder<Type> extends ICurrentDictionary<Type> {
-    add(p: { key: string, entry: Type }): void
+    add(p: {
+        key: string
+        entry: Type
+    }): void
 }
 
 export interface IFinalizableDictionaryBuilder<Type> extends IDictionaryBuilder<Type> {

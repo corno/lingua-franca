@@ -1,5 +1,9 @@
-import { IPossibleContext } from "../../interfaces/delayedResolve";
-import { DelayedResolveConstraint, XBuilder } from "./delayedResolveConstraint";
+/*eslint
+    "max-classes-per-file": off
+*/
+
+import { IPossibleContext } from "../../interfaces/delayedResolve"
+import { DelayedResolveConstraint, XBuilder } from "./DelayedResolveConstraint"
 
 class NonExistentContext<Type> implements IPossibleContext<Type> {
     public validateExistence() {

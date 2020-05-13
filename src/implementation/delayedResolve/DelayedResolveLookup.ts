@@ -3,16 +3,16 @@ import { IDelayedResolvableBuilder, IDelayedResolveConstrainedReference, IDelaye
 import { Dictionary } from "../../interfaces/Dictionary"
 import { IFulfillingDictionaryReporter, IReferenceResolveReporter } from "../../reporters"
 import { DelayedResolveReference } from "./delayedResolve"
-import { XBuilder } from "./delayedResolveConstraint"
+import { XBuilder } from "./DelayedResolveConstraint"
 
 interface IResolvedSubscriber<Type> {
-    onSuccess: (value: Type) => void,
-    onFailed: () => void,
+    onSuccess: (value: Type) => void
+    onFailed: () => void
 }
 
 export class DelayedResolveLookup<Type> implements IDelayedResolveLookup<Type> {
     private resolvedDictionary: undefined | null | Dictionary<Type>
-    private readonly subscribers: Array<IResolvedSubscriber<Dictionary<Type>>> = []
+    private readonly subscribers: IResolvedSubscriber<Dictionary<Type>>[] = []
     public validateFulfillingEntries(keys: string[], reporter: IFulfillingDictionaryReporter, requiresExhaustive: boolean) {
         this.addSubscriber(
             () => {
@@ -23,7 +23,7 @@ export class DelayedResolveLookup<Type> implements IDelayedResolveLookup<Type> {
             dict => {
                 const requiredKeys = dict.getKeys({})
                 if (requiresExhaustive) {
-                    const missingEntries = requiredKeys.filter(key => keys.indexOf(key) === -1)
+                    const missingEntries = requiredKeys.filter(key => keys.includes(key))
                     if (missingEntries.length > 0) {
                         reporter.reportMissingRequiredEntries({
                             missingEntries: missingEntries,
@@ -32,7 +32,7 @@ export class DelayedResolveLookup<Type> implements IDelayedResolveLookup<Type> {
                     }
                 }
                 keys.forEach(key => {
-                    if (requiredKeys.indexOf(key) === -1) {
+                    if (requiredKeys.includes(key)) {
                         reporter.reportUnresolvedEntry({
                             key: key,
                             options: requiredKeys,
@@ -53,8 +53,8 @@ export class DelayedResolveLookup<Type> implements IDelayedResolveLookup<Type> {
         })
     }
     public createConstrainedReference<Constraints>(p: {
-        readonly key: string,
-        readonly reporter: IReferenceResolveReporter,
+        readonly key: string
+        readonly reporter: IReferenceResolveReporter
         readonly getConstraints: (cp: { readonly builder: IDelayedResolvableBuilder<Type> }) => Constraints
     }): IDelayedResolveConstrainedReference<Type, Constraints> {
         const builder = new XBuilder<Type>()
