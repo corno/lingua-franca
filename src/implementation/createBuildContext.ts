@@ -89,6 +89,6 @@ class BuildContext implements IBuildContext {
     }
 }
 
-export function createBuildContext() {
+export function createBuildContext(): IBuildContext {
     return new BuildContext()
 }
