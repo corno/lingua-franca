@@ -3,7 +3,8 @@
 export interface Dictionary<Type> {
     getAlphabeticalOrdering(p: {}): DictionaryOrdering<Type>
 
-    getEntry(p: { readonly key: string }): null | Type
+    getEntry(p: {
+readonly key: string }): null | Type
     getKeys(p: {}): string[]
 }
 
@@ -37,11 +38,14 @@ export interface DictionaryOrdering<Type> {
     }): NewType[]
     onEmpty<NewType>(p: {
         readonly onEmpty: (cp: {}) => NewType
-        readonly onNotEmpty: (cp: { readonly dictionaryOrdering: DictionaryOrdering<Type> }) => NewType
+        readonly onNotEmpty: (cp: {
+readonly dictionaryOrdering: DictionaryOrdering<Type> }) => NewType
     }): NewType
     /**
      *
      * @param callback if the callback returns null, the element is excluded from the resulting List
      */
-    filter<NewType>(p: { readonly callback: (cp: { readonly element: Type }) => null | NewType }): DictionaryOrdering<NewType>
+    filter<NewType>(p: {
+readonly callback: (cp: {
+readonly element: Type }) => null | NewType }): DictionaryOrdering<NewType>
 }

@@ -11,7 +11,9 @@ export interface Constraint<Type> {
      * @param onNotResolved optional, if provided, it will be called if the type was not succesfully resolved
      */
     withResolved(p: {
-        readonly callback: (cp: { readonly type: Type }) => void
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => void
         readonly onNotResolved?: (cp: {}) => void
     }): void
     /**
@@ -20,12 +22,16 @@ export interface Constraint<Type> {
      * @param onNotResolved this callback is called when the type was not resolved successfully
      */
     mapResolved<NewType>(p: {
-        readonly callback: (cp: { readonly type: Type }) => NewType
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => NewType
         readonly onNotResolved: (cp: {}) => NewType
     }): NewType
 
     getConstraint<NewType>(p: {
-        readonly callback: (cp: { readonly type: Type }) => Constraint<NewType>
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => Constraint<NewType>
     }): Constraint<NewType>
     getNonConstraint<NewType>(p: {
         readonly callback: (cp: { type: Type }) => NewType

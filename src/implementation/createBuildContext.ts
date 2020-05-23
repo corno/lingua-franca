@@ -31,8 +31,8 @@ class BuildContext implements IBuildContext {
         cer: IConflictingEntryReporter
         delayedResolveLookup: IDelayedResolveLookup<ReferencedType>
         callback: (cp: {
-            builder: IDictionaryBuilder<Type>
-            lookup: IDelayedResolveLookup<ReferencedType>
+            readonly builder: IDictionaryBuilder<Type>
+            readonly lookup: IDelayedResolveLookup<ReferencedType>
         }) => void
         requiresExhaustive: boolean
     }): Dictionary<Type> {
@@ -43,16 +43,16 @@ class BuildContext implements IBuildContext {
         cer: IConflictingEntryReporter
         lookup: ILookup<ReferencedType>
         callback: (p: {
-            builder: IDictionaryBuilder<Type>
-            lookup: ILookup<ReferencedType>
+            readonly builder: IDictionaryBuilder<Type>
+            readonly lookup: ILookup<ReferencedType>
         }) => void
         requiresExhaustive: boolean
     }): Dictionary<Type> {
         return createFulfillingDictionary(p.mrer, p.cer, p.lookup, p.callback, p.requiresExhaustive)
     }
     public createDictionary<Type>(p: {
-        reporter: IConflictingEntryReporter
-        callback: (p: { builder: IDictionaryBuilder<Type> }) => void
+        readonly reporter: IConflictingEntryReporter
+        readonly callback: (p: { builder: IDictionaryBuilder<Type> }) => void
     }): Dictionary<Type> {
         return createDictionary(p.reporter, p.callback)
     }

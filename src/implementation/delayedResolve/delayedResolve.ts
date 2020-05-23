@@ -1,6 +1,7 @@
 /* eslint
-    "max-classes-per-file": off
+    "max-classes-per-file": off,
 */
+
 import { IDelayedResolvableBuilder, IDelayedResolveReference, IDelayedResolveStateConstraint, IRootDelayedResolvableBuilder } from "../../interfaces/delayedResolve"
 import { DelayedResolveConstraint, XBuilder } from "./DelayedResolveConstraint"
 

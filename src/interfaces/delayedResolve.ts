@@ -12,23 +12,38 @@ export interface IDelayedResolveLookup<Type> {
     createConstrainedReference<Constraints>(p: {
         readonly key: string
         readonly reporter: IReferenceResolveReporter
-        readonly getConstraints: (cp: { readonly builder: IDelayedResolvableBuilder<Type> }) => Constraints
+        readonly getConstraints: (cp: {
+            readonly builder: IDelayedResolvableBuilder<Type>
+        }) => Constraints
     }): IDelayedResolveConstrainedReference<Type, Constraints>
 }
 
 export interface IDelayedResolvableBuilder<Type> {
     getValue(p: {}): undefined | [false] | [true, Type]
     castToConstraint<NewType>(p: {
-        readonly callback: (cp: { readonly type: Type }) => ConstraintCastResult<NewType>
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => ConstraintCastResult<NewType>
         readonly reporter: IConstraintViolationReporter
     }): IDelayedResolveStateConstraint<NewType>
     castToConstrainedConstraint<NewType, Constraints>(p: {
-        readonly callback: (cp: { readonly type: Type }) => ConstraintCastResult<NewType>
+        readonly callback: (cp: {
+readonly type: Type }) => ConstraintCastResult<NewType>
         readonly reporter: IConstraintViolationReporter
-        readonly getConstraints: (cp: { readonly builder: IDelayedResolvableBuilder<NewType> }) => Constraints
+        readonly getConstraints: (cp: {
+            readonly builder: IDelayedResolvableBuilder<NewType>
+        }) => Constraints
     }): IDelayedResolveConstrainedStateConstraint<NewType, Constraints>
-    getLookup<NewType>(p: { readonly callback: (cp: { readonly type: Type }) => Dictionary<NewType> }): IDelayedResolveLookup<NewType>
-    convert<NewType>(p: { readonly  callback: (cp: { readonly type: Type }) => NewType }): IDelayedResolveConstraint<NewType>
+    getLookup<NewType>(p: {
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => Dictionary<NewType>
+    }): IDelayedResolveLookup<NewType>
+    convert<NewType>(p: {
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => NewType
+    }): IDelayedResolveConstraint<NewType>
 }
 
 export interface IDelayedResolveConstraint<Type> extends Constraint<Type> {

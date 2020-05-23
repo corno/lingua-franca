@@ -1,3 +1,6 @@
+/* eslint
+    "max-classes-per-file": off,
+*/
 import { IDependentResolvedConstraintBuilder, IResolvedConstrainedConstraint, IResolvedConstrainedReference, IResolvedConstraint } from "../../interfaces/instantResolve"
 import { Constraint } from "../../interfaces/Reference"
 
@@ -12,18 +15,26 @@ class ConstraintImp<Type, Constraints> implements IResolvedConstrainedConstraint
         return this.constraints
     }
     public mapResolved<NewType>(p: {
-        readonly callback: (cp: { readonly type: Type }) => NewType
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => NewType
         readonly onNotResolved: (cp: {}) => NewType
     }) {
         return this.builder.mapResolved({ callback: p.callback, onNotResolved: p.onNotResolved })
     }
     public withResolved(p: {
-        readonly callback: (cp: { type: Type }) => void,
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => void
         readonly onNotResolved?: (cp: {}) => void
     }) {
         this.mapResolved({
             callback: p.callback,
-            onNotResolved: p.onNotResolved === undefined ? () => { } : p.onNotResolved,
+            onNotResolved: p.onNotResolved === undefined
+                ? () => {
+                    //
+                }
+                : p.onNotResolved,
         })
     }
     public getResolved(_p: {}) {
@@ -34,10 +45,18 @@ class ConstraintImp<Type, Constraints> implements IResolvedConstrainedConstraint
             },
         }).type
     }
-    public getConstraint<NewType>(p: { readonly callback: (cp: { readonly type: Type }) => Constraint<NewType> }): Constraint<NewType> {
+    public getConstraint<NewType>(p: {
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => Constraint<NewType>
+    }): Constraint<NewType> {
         return this.builder.getConstraint(p)
     }
-    public getNonConstraint<NewType>(p: { readonly callback: (cp: { readonly type: Type }) => NewType }): Constraint<NewType> {
+    public getNonConstraint<NewType>(p: {
+        readonly callback: (cp: {
+            readonly type: Type
+        }) => NewType
+    }): Constraint<NewType> {
         return this.builder.getNonConstraint(p)
     }
 }

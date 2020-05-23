@@ -55,7 +55,8 @@ export class DelayedResolveLookup<Type> implements IDelayedResolveLookup<Type> {
     public createConstrainedReference<Constraints>(p: {
         readonly key: string
         readonly reporter: IReferenceResolveReporter
-        readonly getConstraints: (cp: { readonly builder: IDelayedResolvableBuilder<Type> }) => Constraints
+        readonly getConstraints: (cp: {
+readonly builder: IDelayedResolvableBuilder<Type> }) => Constraints
     }): IDelayedResolveConstrainedReference<Type, Constraints> {
         const builder = new XBuilder<Type>()
         const ref = new DelayedResolveReference<Type, Constraints>(p.key, builder, p.getConstraints({ builder: builder }))

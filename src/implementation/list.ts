@@ -1,5 +1,5 @@
 /* eslint
-    "max-classes-per-file": off,
+    "max-classes-per-file": off
 */
 
 import { IListBuilder } from "../interfaces/IListBuilder"
@@ -11,7 +11,8 @@ class ListImp<Type> implements List<Type> {
         this.imp = imp
     }
     public map<NewType>(p: {
-        readonly callback: (cp: { readonly element: Type }) => NewType
+        readonly callback: (cp: {
+readonly element: Type }) => NewType
     }) {
         return this.imp.map(elm => {
             return p.callback({ element: elm })
@@ -19,7 +20,8 @@ class ListImp<Type> implements List<Type> {
     }
     public mapWithSeparator<NewType>(p: {
         readonly onSeparator: (cp: {}) => NewType
-        readonly onElement: (cp: { readonly element: Type }) => NewType
+        readonly onElement: (cp: {
+readonly element: Type }) => NewType
     }) {
         const target: NewType[] = []
         this.imp.forEach((element, index) => {
@@ -32,7 +34,8 @@ class ListImp<Type> implements List<Type> {
     }
     public onEmpty<NewType>(p: {
         readonly onEmpty: (cp: {}) => NewType
-        readonly onNotEmpty: (cp: { readonly list: List<Type> }) => NewType
+        readonly onNotEmpty: (cp: {
+readonly list: List<Type> }) => NewType
     }): NewType {
         if (this.imp.length === 0) {
             return p.onEmpty({})

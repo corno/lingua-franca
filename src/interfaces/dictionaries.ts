@@ -18,8 +18,8 @@ export interface ICurrentDictionary<Type> {
 
 export interface IDictionaryBuilder<Type> extends ICurrentDictionary<Type> {
     add(p: {
-        key: string
-        entry: Type
+        readonly key: string
+        readonly entry: Type
     }): void
 }
 
